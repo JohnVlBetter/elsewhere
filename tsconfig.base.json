@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "jsx": "react-jsx",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "@aigame/shared": ["packages/shared/src/index.ts"],
+      "@aigame/pack": ["packages/pack/src/index.ts"],
+      "@aigame/rules": ["packages/rules/src/index.ts"],
+      "@aigame/memory": ["packages/memory/src/index.ts"],
+      "@aigame/persistence": ["packages/persistence/src/index.ts"],
+      "@aigame/agents": ["packages/agents/src/index.ts"],
+      "@aigame/runtime": ["packages/runtime/src/index.ts"]
+    }
+  }
+}
