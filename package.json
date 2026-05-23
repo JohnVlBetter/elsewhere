@@ -14,7 +14,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.base.json --pretty false",
     "cli": "tsx apps/cli/src/main.ts",
     "web:dev": "next dev apps/web",
-    "web:build": "next build apps/web",
+    "web:build": "next build apps/web --webpack",
     "e2e": "playwright test"
   },
   "devDependencies": {
@@ -34,7 +34,7 @@
     "better-sqlite3": "^12.10.0",
     "commander": "^14.0.3",
     "minisearch": "^7.2.0",
-    "next": "^9.3.3",
+    "next": "^16.2.6",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "yaml": "^2.9.0",

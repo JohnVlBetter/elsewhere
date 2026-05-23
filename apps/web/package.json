@@ -1,0 +1,12 @@
+{
+  "name": "@aigame/web",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@aigame/pack": "*",
+    "@aigame/runtime": "*",
+    "@aigame/agents": "*",
+    "@aigame/shared": "*",
+    "@aigame/persistence": "*"
+  }
+}
