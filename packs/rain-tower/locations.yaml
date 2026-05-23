@@ -1,0 +1,15 @@
+- id: foyer
+  name: Foyer
+  description: A candlelit entry hall where the household waits in silence.
+  exits: [study, greenhouse]
+  visibleObjects: [silver_watch]
+- id: study
+  name: Study
+  description: Lord Halden's private room, lined with ledgers and a locked desk.
+  exits: [foyer]
+  visibleObjects: [torn_letter]
+- id: greenhouse
+  name: Greenhouse
+  description: Rain taps against glass panes and mud gathers near the rear door.
+  exits: [foyer]
+  visibleObjects: [muddy_bootprint]

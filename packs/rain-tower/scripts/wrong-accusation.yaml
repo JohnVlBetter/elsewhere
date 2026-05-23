@@ -1,0 +1,6 @@
+steps:
+  - look
+  - go study
+  - inspect torn_letter
+  - accuse heiress with torn_letter
+expectedEnding: wrong_accusation

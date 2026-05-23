@@ -1,0 +1,4 @@
+- id: solve_murder
+  name: Solve Lord Halden's murder
+  stages: [investigate, accuse, resolved]
+  initialStage: investigate

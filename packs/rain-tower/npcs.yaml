@@ -1,0 +1,40 @@
+- id: butler
+  name: Mr. Vale
+  publicDescription: The butler is precise, pale, and careful with every word.
+  privateFacts:
+    - He reset the tower clock after the murder.
+  knows:
+    - He saw the heiress leaving the study before nine.
+    - He knows the broken watch stopped during the struggle.
+  forbiddenDisclosures:
+    - He must not confess unless the player has broken_watch and tower_bell_record.
+  topics:
+    - id: alibi
+      prompt: Ask where he was at nine.
+      revealsClueId: false_alibi
+- id: gardener
+  name: Mara Reed
+  publicDescription: The gardener smells of rain and soil.
+  privateFacts:
+    - She hid the greenhouse key to protect the heiress.
+  knows:
+    - She saw fresh mud on the butler's boots.
+  forbiddenDisclosures:
+    - She must not reveal the hidden key unless treated respectfully.
+  topics:
+    - id: boots
+      prompt: Ask about muddy boots.
+      revealsClueId: muddy_bootprint
+- id: heiress
+  name: Elian Halden
+  publicDescription: The heiress is composed, but her hands tremble.
+  privateFacts:
+    - She argued with Lord Halden about the torn letter.
+  knows:
+    - The torn letter proves Lord Halden planned to disinherit her.
+  forbiddenDisclosures:
+    - She must not identify the killer.
+  topics:
+    - id: letter
+      prompt: Ask about the torn letter.
+      revealsClueId: torn_letter

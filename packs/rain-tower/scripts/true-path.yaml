@@ -1,0 +1,10 @@
+steps:
+  - look
+  - inspect broken_watch
+  - go greenhouse
+  - inspect muddy_bootprint
+  - go foyer
+  - go study
+  - inspect tower_bell_record
+  - accuse butler with broken_watch muddy_bootprint tower_bell_record
+expectedEnding: true_resolution

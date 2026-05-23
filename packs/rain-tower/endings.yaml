@@ -1,0 +1,22 @@
+- id: true_resolution
+  name: True Resolution
+  priority: 10
+  condition:
+    all:
+      - flag_true: accused_butler
+      - knows_clue: broken_watch
+      - knows_clue: muddy_bootprint
+      - knows_clue: tower_bell_record
+  text: The butler's alibi collapses, and he confesses to resetting the bell.
+- id: wrong_accusation
+  name: Wrong Accusation
+  priority: 5
+  condition:
+    flag_true: wrong_accusation
+  text: The accusation fails, and the household closes ranks.
+- id: unresolved_failure
+  name: Unresolved Failure
+  priority: 1
+  condition:
+    flag_true: case_failed
+  text: Dawn comes with the case unresolved.

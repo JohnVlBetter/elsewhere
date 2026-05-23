@@ -1,0 +1,38 @@
+- id: broken_watch
+  name: Broken Watch
+  description: A silver watch stopped at 8:47, earlier than the claimed bell time.
+  discoverableWhen:
+    location_is: foyer
+  accusationWeight: 3
+- id: muddy_bootprint
+  name: Muddy Bootprint
+  description: A bootprint in greenhouse mud matches the butler's narrow boots.
+  discoverableWhen:
+    location_is: greenhouse
+  accusationWeight: 3
+- id: torn_letter
+  name: Torn Letter
+  description: A torn letter gives the heiress a motive, but not opportunity.
+  discoverableWhen:
+    location_is: study
+  accusationWeight: 1
+- id: greenhouse_key
+  name: Greenhouse Key
+  description: A key hidden behind a cracked planter connects the greenhouse and service hall.
+  discoverableWhen:
+    all:
+      - location_is: greenhouse
+      - flag_true: gardener_trusts_player
+  accusationWeight: 2
+- id: tower_bell_record
+  name: Tower Bell Record
+  description: The tower mechanism was manually reset after the murder.
+  discoverableWhen:
+    location_is: study
+  accusationWeight: 3
+- id: false_alibi
+  name: False Alibi
+  description: The butler's statement conflicts with the stopped watch.
+  discoverableWhen:
+    knows_clue: broken_watch
+  accusationWeight: 2

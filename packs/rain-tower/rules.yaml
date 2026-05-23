@@ -1,0 +1,8 @@
+allowedPatchTypes:
+  - discover_clue
+  - add_item
+  - remove_item
+  - move_location
+  - set_flag
+  - adjust_npc_attitude
+  - set_quest_stage
