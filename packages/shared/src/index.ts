@@ -1,1 +1,1 @@
-export const workspaceReady = true;
+export * from "./domain";
