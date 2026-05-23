@@ -1,0 +1,12 @@
+{
+  "name": "@aigame/agents",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@aigame/shared": "*"
+  }
+}
