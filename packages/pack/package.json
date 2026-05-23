@@ -1,0 +1,12 @@
+{
+  "name": "@aigame/pack",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@aigame/shared": "*"
+  }
+}
