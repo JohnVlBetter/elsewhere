@@ -14,7 +14,8 @@
     "typecheck": "tsc --noEmit -p tsconfig.base.json --pretty false",
     "cli": "node --no-warnings=ExperimentalWarning --experimental-transform-types --experimental-loader ./scripts/extensionless-ts-loader.mjs apps/cli/src/main.ts",
     "web:dev": "node --require ./scripts/sandbox-node-compat.cjs ./scripts/next-dev-in-process.cjs",
-    "web:build": "node --require ./scripts/sandbox-node-compat.cjs ./node_modules/next/dist/bin/next build apps/web --webpack",
+    "web:build": "node --require ./scripts/sandbox-node-compat.cjs ./scripts/next-build.cjs",
+    "web:smoke": "npm run web:build && node --require ./scripts/sandbox-node-compat.cjs ./scripts/web-smoke.cjs",
     "e2e:install": "playwright install chromium",
     "e2e": "node --require ./scripts/sandbox-node-compat.cjs ./node_modules/@playwright/test/cli.js test"
   },
