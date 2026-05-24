@@ -4,3 +4,10 @@ steps:
   - inspect torn_letter
   - accuse heiress with torn_letter
 expectedEnding: wrong_accusation
+expectedKnownClues:
+  - torn_letter
+expectedFlags:
+  wrong_accusation: true
+  accused_butler: false
+forbiddenOutputPhrases:
+  - He reset the tower clock

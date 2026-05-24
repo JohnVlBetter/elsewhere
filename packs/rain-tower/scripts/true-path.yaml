@@ -8,3 +8,11 @@ steps:
   - inspect tower_bell_record
   - accuse butler with broken_watch muddy_bootprint tower_bell_record
 expectedEnding: true_resolution
+expectedKnownClues:
+  - broken_watch
+  - muddy_bootprint
+  - tower_bell_record
+expectedFlags:
+  accused_butler: true
+forbiddenOutputPhrases:
+  - She hid the greenhouse key

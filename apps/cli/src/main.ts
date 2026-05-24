@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import YAML from "yaml";
 import { buildPackArchive, loadWorldPack, validateWorldPack } from "@aigame/pack";
 import { createSqliteStore } from "@aigame/persistence";
-import { runSimulation, runTurn } from "@aigame/runtime";
+import { runSimulation, runTurn, type SimulationAssertions } from "@aigame/runtime";
 import { ActionSchema } from "@aigame/shared";
 import type { GamePatch, SessionState, WorldPack } from "@aigame/shared";
 
@@ -16,6 +16,11 @@ export interface CliResult {
 
 export interface RunCliOptions {
   dbPath?: string;
+}
+
+interface SimulationScript extends SimulationAssertions {
+  steps: string[];
+  expectedEnding?: string;
 }
 
 export async function runCli(args: string[], options: RunCliOptions = {}): Promise<CliResult> {
@@ -33,14 +38,22 @@ export async function runCli(args: string[], options: RunCliOptions = {}): Promi
 
   if (command === "simulate" && packPath && scriptPath) {
     const pack = loadWorldPack(packPath);
-    const script = YAML.parse(readFileSync(scriptPath, "utf8")) as { steps: string[]; expectedEnding?: string };
-    const result = await runSimulation({ pack, steps: script.steps });
+    const script = YAML.parse(readFileSync(scriptPath, "utf8")) as SimulationScript;
+    const result = await runSimulation({
+      pack,
+      steps: script.steps,
+      assertions: {
+        expectedKnownClues: script.expectedKnownClues,
+        expectedFlags: script.expectedFlags,
+        forbiddenOutputPhrases: script.forbiddenOutputPhrases
+      }
+    });
+    const failures = [...result.assertionFailures];
     if (script.expectedEnding && result.finalEndingId !== script.expectedEnding) {
-      return {
-        exitCode: 1,
-        stdout: "",
-        stderr: `Expected ending ${script.expectedEnding} but got ${result.finalEndingId ?? "none"}\n`
-      };
+      failures.unshift(`Expected ending ${script.expectedEnding} but got ${result.finalEndingId ?? "none"}`);
+    }
+    if (failures.length > 0) {
+      return { exitCode: 1, stdout: "", stderr: `${failures.join("\n")}\n` };
     }
     return {
       exitCode: 0,
