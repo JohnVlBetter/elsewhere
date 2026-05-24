@@ -1,6 +1,7 @@
 import Database from "better-sqlite3";
 import { randomUUID } from "node:crypto";
-import { GameAction, GamePatch, SessionState, SessionStateSchema } from "@aigame/shared";
+import { SessionStateSchema } from "@aigame/shared";
+import type { GameAction, GamePatch, SessionState } from "@aigame/shared";
 
 export interface StoredSession {
   id: string;

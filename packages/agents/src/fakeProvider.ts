@@ -1,5 +1,5 @@
-import { GamePatch } from "@aigame/shared";
-import { ModelProvider } from "./modelProvider";
+import type { GamePatch } from "@aigame/shared";
+import type { ModelProvider } from "./modelProvider";
 
 export interface AgentResponse {
   narration: string;

@@ -1,4 +1,4 @@
-import { GamePatch, SessionState, WorldPack } from "@aigame/shared";
+import type { GamePatch, SessionState, WorldPack } from "@aigame/shared";
 import { evaluateCondition } from "./conditions";
 
 export type PatchValidation = { ok: true } | { ok: false; reason: string };

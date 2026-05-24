@@ -9,14 +9,14 @@
   ],
   "scripts": {
     "build": "tsc --noEmit -p tsconfig.base.json",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "node --require ./scripts/vite-windows-net-use-shim.cjs ./node_modules/vitest/vitest.mjs run",
+    "test:watch": "node --require ./scripts/vite-windows-net-use-shim.cjs ./node_modules/vitest/vitest.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.base.json --pretty false",
-    "cli": "tsx apps/cli/src/main.ts",
-    "web:dev": "next dev apps/web",
-    "web:build": "next build apps/web --webpack",
+    "cli": "node --no-warnings=ExperimentalWarning --experimental-transform-types --experimental-loader ./scripts/extensionless-ts-loader.mjs apps/cli/src/main.ts",
+    "web:dev": "node --require ./scripts/sandbox-node-compat.cjs ./scripts/next-dev-in-process.cjs",
+    "web:build": "node --require ./scripts/sandbox-node-compat.cjs ./node_modules/next/dist/bin/next build apps/web --webpack",
     "e2e:install": "playwright install chromium",
-    "e2e": "playwright test"
+    "e2e": "node --require ./scripts/sandbox-node-compat.cjs ./node_modules/@playwright/test/cli.js test"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",

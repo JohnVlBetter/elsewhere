@@ -1,4 +1,4 @@
-import { GameAction } from "@aigame/shared";
+import type { GameAction } from "@aigame/shared";
 
 export function parseAction(inputText: string): GameAction {
   const rawText = inputText.trim();

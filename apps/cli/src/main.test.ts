@@ -1,5 +1,6 @@
+import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
-import { runCli } from "./main";
+import { isMainModule, runCli } from "./main";
 
 describe("CLI", () => {
   it("validates the sample pack", async () => {
@@ -14,5 +15,11 @@ describe("CLI", () => {
 
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain("Simulation completed");
+  });
+
+  it("detects the executable module when argv uses a Windows file path", () => {
+    const argvPath = "E:\\WorkSpace\\elsewhere\\apps\\cli\\src\\main.ts";
+
+    expect(isMainModule(pathToFileURL(argvPath).href, argvPath)).toBe(true);
   });
 });

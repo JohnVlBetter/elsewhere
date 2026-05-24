@@ -1,7 +1,8 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import YAML from "yaml";
-import { WorldPack, WorldPackSchema } from "@aigame/shared";
+import { WorldPackSchema } from "@aigame/shared";
+import type { WorldPack } from "@aigame/shared";
 
 function readRequiredFile(root: string, fileName: string): string {
   const path = join(root, fileName);

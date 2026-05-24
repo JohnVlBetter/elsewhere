@@ -1,4 +1,4 @@
-import { JsonSchema, ModelProvider, RuntimeMessage } from "./modelProvider";
+import type { JsonSchema, ModelProvider, RuntimeMessage } from "./modelProvider";
 
 export class OpenAICompatibleProvider implements ModelProvider {
   constructor(private readonly options: { apiKey: string; baseUrl: string }) {}

@@ -1,4 +1,4 @@
-import { SessionState, WorldPack } from "@aigame/shared";
+import type { SessionState, WorldPack } from "@aigame/shared";
 
 export function buildNarratorContext(pack: WorldPack, state: SessionState, input: { actionText: string }) {
   const location = pack.locations.find((candidate) => candidate.id === state.currentLocationId);

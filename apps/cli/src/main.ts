@@ -1,4 +1,6 @@
 import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import YAML from "yaml";
 import { loadWorldPack, validateWorldPack } from "@aigame/pack";
 import { runSimulation } from "@aigame/runtime";
@@ -46,7 +48,11 @@ export async function runCli(args: string[]): Promise<CliResult> {
   };
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+export function isMainModule(metaUrl: string, argvPath = process.argv[1]): boolean {
+  return argvPath !== undefined && resolve(fileURLToPath(metaUrl)) === resolve(argvPath);
+}
+
+if (isMainModule(import.meta.url)) {
   const result = await runCli(process.argv.slice(2));
   process.stdout.write(result.stdout);
   process.stderr.write(result.stderr);

@@ -1,4 +1,4 @@
-import { Condition, SessionState } from "@aigame/shared";
+import type { Condition, SessionState } from "@aigame/shared";
 
 export function evaluateCondition(condition: Condition | undefined, state: SessionState): boolean {
   if (!condition) {

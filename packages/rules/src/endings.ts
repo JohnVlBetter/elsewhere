@@ -1,4 +1,4 @@
-import { EndingDef, SessionState, WorldPack } from "@aigame/shared";
+import type { EndingDef, SessionState, WorldPack } from "@aigame/shared";
 import { evaluateCondition } from "./conditions";
 
 export function judgeEnding(pack: WorldPack, state: SessionState): EndingDef | undefined {

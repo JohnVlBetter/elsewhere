@@ -1,4 +1,4 @@
-import { WorldPack } from "@aigame/shared";
+import type { WorldPack } from "@aigame/shared";
 
 export interface ValidationResult {
   ok: boolean;

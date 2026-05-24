@@ -1,5 +1,6 @@
-import { auditOutput, buildNarratorContext, FakeModelProvider, ModelProvider } from "@aigame/agents";
-import { GameAction, GamePatch, SessionState, WorldPack } from "@aigame/shared";
+import { auditOutput, buildNarratorContext, FakeModelProvider } from "@aigame/agents";
+import type { ModelProvider } from "@aigame/agents";
+import type { GameAction, GamePatch, SessionState, WorldPack } from "@aigame/shared";
 import { applyAcceptedPatch, evaluateCondition, judgeEnding, validatePatch } from "@aigame/rules";
 import { parseAction } from "./actionParser";
 
