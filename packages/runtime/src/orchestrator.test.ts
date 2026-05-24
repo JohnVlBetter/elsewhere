@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { FakeModelProvider } from "@aigame/agents";
+import type { ModelProvider } from "@aigame/agents";
 import { WorldPack, SessionState } from "@aigame/shared";
 import { runTurn } from "./orchestrator";
 
@@ -43,5 +44,59 @@ describe("runTurn", () => {
     expect(result.state.knownClues).toEqual(["broken_watch"]);
     expect(result.state.turn).toBe(1);
     expect(result.rejectedPatches).toEqual([]);
+  });
+
+  it("routes ask actions to an on-demand NPC actor with scoped context", async () => {
+    const requests: Array<Parameters<ModelProvider["generateStructured"]>[0]> = [];
+    const model: ModelProvider = {
+      async generateStructured<T>(request: Parameters<ModelProvider["generateStructured"]>[0]): Promise<T> {
+        requests.push(request);
+        return {
+          narration: "Mr. Vale keeps his answer precise.",
+          spokenBy: [{ npcId: "butler", text: "I was checking the hall clock." }],
+          proposedPatches: [],
+          privateNotes: "npc actor raw output"
+        } as T;
+      }
+    };
+    const packWithNpcs: WorldPack = {
+      ...pack,
+      npcs: [
+        {
+          id: "butler",
+          name: "Mr. Vale",
+          publicDescription: "Precise.",
+          privateFacts: ["He reset the bell."],
+          knows: ["The watch stopped early."],
+          forbiddenDisclosures: ["He reset the bell."],
+          topics: []
+        },
+        {
+          id: "gardener",
+          name: "Mara",
+          publicDescription: "Mud on her boots.",
+          privateFacts: ["She hid the key."],
+          knows: [],
+          forbiddenDisclosures: ["She hid the key."],
+          topics: []
+        }
+      ]
+    };
+
+    const result = await runTurn({
+      pack: packWithNpcs,
+      state: { ...initialState, knownClues: ["broken_watch"] },
+      inputText: "ask butler alibi",
+      model
+    });
+
+    expect(requests).toHaveLength(1);
+    expect(requests[0]?.system).toContain("NPC Actor");
+    expect(requests[0]?.messages[0]?.content).toContain('"id":"butler"');
+    expect(requests[0]?.messages[0]?.content).not.toContain("gardener");
+    expect(result.outputText).toContain("Mr. Vale");
+    expect(result.trace.contextIds).toEqual(["location:foyer", "npc:butler"]);
+    expect(result.trace.agentRole).toBe("npc");
+    expect(result.trace.agentRawOutput).toMatchObject({ privateNotes: "npc actor raw output" });
   });
 });

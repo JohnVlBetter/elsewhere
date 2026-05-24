@@ -1,4 +1,4 @@
-import { auditOutput, buildNarratorContext, FakeModelProvider } from "@aigame/agents";
+import { auditOutput, buildNarratorContext, buildNpcContext, FakeModelProvider } from "@aigame/agents";
 import type { ModelProvider } from "@aigame/agents";
 import type { GameAction, GamePatch, SessionState, WorldPack } from "@aigame/shared";
 import { applyAcceptedPatch, evaluateCondition, judgeEnding, validatePatch } from "@aigame/rules";
@@ -21,7 +21,7 @@ export async function runTurn(input: {
 }): Promise<TurnResult> {
   const model = input.model ?? new FakeModelProvider();
   const action = parseAction(input.inputText);
-  const context = buildNarratorContext(input.pack, input.state, { actionText: input.inputText });
+  const agentRequest = buildAgentRequest(input.pack, input.state, input.inputText, action);
 
   const response = await model.generateStructured<{
     narration: string;
@@ -30,8 +30,8 @@ export async function runTurn(input: {
     privateNotes: string;
   }>({
     model: "fake",
-    system: "Return narration and proposed patches. Do not mutate state directly.",
-    messages: [{ role: "user", content: JSON.stringify({ action, context }) }],
+    system: agentRequest.system,
+    messages: [{ role: "user", content: JSON.stringify({ action, context: agentRequest.context }) }],
     schema: { type: "object" }
   });
 
@@ -63,10 +63,30 @@ export async function runTurn(input: {
     endingId: ending?.id,
     trace: {
       action,
-      contextIds: [`location:${input.state.currentLocationId}`],
+      contextIds: agentRequest.contextIds,
+      agentRole: agentRequest.agentRole,
+      agentRawOutput: response,
       privateNotes: response.privateNotes,
       audit
     }
+  };
+}
+
+function buildAgentRequest(pack: WorldPack, state: SessionState, inputText: string, action: GameAction) {
+  if (action.type === "ask") {
+    return {
+      agentRole: "npc",
+      context: buildNpcContext(pack, state, { npcId: action.npcId, topic: action.topic }),
+      contextIds: [`location:${state.currentLocationId}`, `npc:${action.npcId}`],
+      system: "NPC Actor Agent: answer as the scoped NPC only. Return narration, spokenBy, proposedPatches, and privateNotes. Do not mutate state directly."
+    };
+  }
+
+  return {
+    agentRole: "narrator",
+    context: buildNarratorContext(pack, state, { actionText: inputText }),
+    contextIds: [`location:${state.currentLocationId}`],
+    system: "Narrator Agent: return narration and proposed patches. Do not mutate state directly."
   };
 }
 

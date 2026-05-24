@@ -33,10 +33,10 @@ export function GameShell() {
       state: SessionState;
       acceptedPatches: unknown[];
       rejectedPatches: unknown[];
-      trace: { contextIds?: string[] };
+      trace: { contextIds?: string[]; agentRole?: string; agentRawOutput?: { narration?: string; privateNotes?: string } };
     };
     setState(body.state);
-    setTrace(`contexts=${body.trace.contextIds?.join(",") ?? ""}; accepted=${body.acceptedPatches.length}; rejected=${body.rejectedPatches.length}`);
+    setTrace(formatTraceSummary(body));
     setTurns((current) => [...current, `> ${input}`, body.outputText]);
     setInput("");
   }
@@ -84,4 +84,19 @@ export function GameShell() {
       </aside>
     </main>
   );
+}
+
+function formatTraceSummary(body: {
+  acceptedPatches: unknown[];
+  rejectedPatches: unknown[];
+  trace: { contextIds?: string[]; agentRole?: string; agentRawOutput?: { narration?: string; privateNotes?: string } };
+}): string {
+  const raw = body.trace.agentRawOutput?.narration ?? body.trace.agentRawOutput?.privateNotes ?? "none";
+  return [
+    `agent=${body.trace.agentRole ?? "unknown"}`,
+    `contexts=${body.trace.contextIds?.join(",") ?? ""}`,
+    `accepted=${body.acceptedPatches.length}`,
+    `rejected=${body.rejectedPatches.length}`,
+    `raw=${raw}`
+  ].join("; ");
 }
