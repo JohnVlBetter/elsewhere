@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import YAML from "yaml";
-import { loadWorldPack, validateWorldPack } from "@aigame/pack";
+import { buildPackArchive, loadWorldPack, validateWorldPack } from "@aigame/pack";
 import { createSqliteStore } from "@aigame/persistence";
 import { runSimulation, runTurn } from "@aigame/runtime";
 import { ActionSchema } from "@aigame/shared";
@@ -47,6 +47,27 @@ export async function runCli(args: string[], options: RunCliOptions = {}): Promi
       stdout: `Simulation completed: ${result.turns.length} turns\nEnding: ${result.finalEndingId ?? "none"}\nKnown clues: ${result.finalState.knownClues.join(",")}\n`,
       stderr: ""
     };
+  }
+
+  if (command === "pack" && packPath && scriptPath) {
+    try {
+      const result = buildPackArchive(packPath, scriptPath);
+      return {
+        exitCode: 0,
+        stdout: [
+          `Packaged ${result.manifest.id} -> ${result.outputPath}`,
+          `Validation: ${result.validation.ok ? "ok" : "failed"}`,
+          `Files: ${result.fileCount}`
+        ].join("\n") + "\n",
+        stderr: ""
+      };
+    } catch (error) {
+      return {
+        exitCode: 1,
+        stdout: "",
+        stderr: `${error instanceof Error ? error.message : String(error)}\n`
+      };
+    }
   }
 
   if (command === "play" && packPath && scriptPath) {
@@ -141,6 +162,7 @@ export async function runCli(args: string[], options: RunCliOptions = {}): Promi
       "Usage:",
       "  validate <packPath>",
       "  simulate <packPath> <scriptPath>",
+      "  pack <packPath> <output.aipack>",
       "  play <packPath> [--session <sessionId>] <action...>",
       "  state <sessionId>",
       "  clues <sessionId>",

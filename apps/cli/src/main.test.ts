@@ -1,5 +1,5 @@
 import { pathToFileURL } from "node:url";
-import { mkdtempSync } from "node:fs";
+import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -18,6 +18,18 @@ describe("CLI", () => {
 
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain("Simulation completed");
+  });
+
+  it("packages the sample pack into an aipack artifact", async () => {
+    const outputPath = join(mkdtempSync(join(tmpdir(), "aigame-cli-pack-")), "rain-tower.aipack");
+    const result = await runCli(["pack", "packs/rain-tower", outputPath]);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("Packaged rain-tower");
+    expect(result.stdout).toContain("Validation: ok");
+    const archive = JSON.parse(readFileSync(outputPath, "utf8")) as { manifest: { id: string }; validation: { ok: boolean } };
+    expect(archive.manifest.id).toBe("rain-tower");
+    expect(archive.validation.ok).toBe(true);
   });
 
   it("plays a turn and exposes state, clues, and last trace", async () => {

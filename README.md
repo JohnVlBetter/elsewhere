@@ -9,6 +9,7 @@ npm install
 npm test
 npm run typecheck
 npm run cli -- validate packs/rain-tower
+npm run cli -- pack packs/rain-tower dist/rain-tower.aipack
 npm run cli -- simulate packs/rain-tower packs/rain-tower/scripts/true-path.yaml
 npm run e2e:install
 npm run e2e
