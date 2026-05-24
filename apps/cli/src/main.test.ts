@@ -1,5 +1,5 @@
 import { pathToFileURL } from "node:url";
-import { mkdtempSync, readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -18,6 +18,25 @@ describe("CLI", () => {
 
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain("Simulation completed");
+  });
+
+  it("fails simulation when script assertions fail", async () => {
+    const scriptPath = join(mkdtempSync(join(tmpdir(), "aigame-cli-sim-")), "script.yaml");
+    writeFileSync(scriptPath, [
+      "steps:",
+      "  - look",
+      "expectedKnownClues:",
+      "  - broken_watch",
+      "expectedFlags:",
+      "  accused_butler: true",
+      ""
+    ].join("\n"));
+
+    const result = await runCli(["simulate", "packs/rain-tower", scriptPath]);
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("Expected known clue: broken_watch");
+    expect(result.stderr).toContain("Expected flag accused_butler=true but got undefined");
   });
 
   it("packages the sample pack into an aipack artifact", async () => {
