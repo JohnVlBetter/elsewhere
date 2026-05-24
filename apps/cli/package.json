@@ -5,6 +5,8 @@
   "main": "src/main.ts",
   "dependencies": {
     "@aigame/pack": "*",
+    "@aigame/persistence": "*",
+    "@aigame/shared": "*",
     "@aigame/runtime": "*"
   }
 }

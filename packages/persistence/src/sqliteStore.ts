@@ -23,6 +23,9 @@ export interface StoredEvent {
 
 export function createSqliteStore(path: string) {
   const db = new Database(path);
+  if (path !== ":memory:") {
+    db.pragma("journal_mode = PERSIST");
+  }
   db.exec(`
     create table if not exists sessions (
       id text primary key,

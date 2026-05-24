@@ -3,7 +3,10 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import YAML from "yaml";
 import { loadWorldPack, validateWorldPack } from "@aigame/pack";
-import { runSimulation } from "@aigame/runtime";
+import { createSqliteStore } from "@aigame/persistence";
+import { runSimulation, runTurn } from "@aigame/runtime";
+import { ActionSchema } from "@aigame/shared";
+import type { GamePatch, SessionState, WorldPack } from "@aigame/shared";
 
 export interface CliResult {
   exitCode: number;
@@ -11,8 +14,13 @@ export interface CliResult {
   stderr: string;
 }
 
-export async function runCli(args: string[]): Promise<CliResult> {
-  const [command, packPath, scriptPath] = args;
+export interface RunCliOptions {
+  dbPath?: string;
+}
+
+export async function runCli(args: string[], options: RunCliOptions = {}): Promise<CliResult> {
+  const parsed = parseOptions(args);
+  const [command, packPath, scriptPath] = parsed.positionals;
 
   if (command === "validate" && packPath) {
     const pack = loadWorldPack(packPath);
@@ -41,11 +49,191 @@ export async function runCli(args: string[]): Promise<CliResult> {
     };
   }
 
+  if (command === "play" && packPath && scriptPath) {
+    const pack = loadWorldPack(packPath);
+    const store = createSqliteStore(resolveCliDbPath(options));
+    const inputText = parsed.positionals.slice(2).join(" ");
+    const session = parsed.sessionId
+      ? store.getSession(parsed.sessionId)
+      : store.createSession({ packId: pack.manifest.id, initialState: createInitialState(pack) });
+
+    if (!session) {
+      return { exitCode: 1, stdout: "", stderr: `Session not found: ${parsed.sessionId}\n` };
+    }
+    if (session.packId !== pack.manifest.id) {
+      return {
+        exitCode: 1,
+        stdout: "",
+        stderr: `Session ${session.id} belongs to ${session.packId}, not ${pack.manifest.id}\n`
+      };
+    }
+
+    const result = await runTurn({ pack, state: session.state, inputText });
+    store.updateSessionState(session.id, result.state);
+    store.appendEvent({
+      sessionId: session.id,
+      turnNo: result.state.turn,
+      actor: "player",
+      inputText,
+      action: ActionSchema.parse(result.trace.action),
+      outputText: result.outputText,
+      patches: result.acceptedPatches,
+      trace: {
+        ...result.trace,
+        acceptedPatches: result.acceptedPatches,
+        rejectedPatches: result.rejectedPatches
+      }
+    });
+
+    return {
+      exitCode: 0,
+      stdout: [
+        `Session: ${session.id}`,
+        `Turn: ${result.state.turn}`,
+        `Output: ${result.outputText}`,
+        `Accepted patches: ${formatPatchList(result.acceptedPatches)}`,
+        `Rejected patches: ${result.rejectedPatches.length}`,
+        `Ending: ${result.endingId ?? "none"}`
+      ].join("\n") + "\n",
+      stderr: ""
+    };
+  }
+
+  if (command === "state" && packPath) {
+    const store = createSqliteStore(resolveCliDbPath(options));
+    const session = store.getSession(packPath);
+    if (!session) {
+      return { exitCode: 1, stdout: "", stderr: `Session not found: ${packPath}\n` };
+    }
+    return {
+      exitCode: 0,
+      stdout: formatState(session.state),
+      stderr: ""
+    };
+  }
+
+  if (command === "clues" && packPath) {
+    const store = createSqliteStore(resolveCliDbPath(options));
+    const session = store.getSession(packPath);
+    if (!session) {
+      return { exitCode: 1, stdout: "", stderr: `Session not found: ${packPath}\n` };
+    }
+    const clues = session.state.knownClues.length > 0
+      ? session.state.knownClues.map((clueId) => `- ${clueId}`).join("\n")
+      : "No known clues.";
+    return { exitCode: 0, stdout: `${clues}\n`, stderr: "" };
+  }
+
+  if (command === "trace" && packPath === "last" && scriptPath) {
+    const store = createSqliteStore(resolveCliDbPath(options));
+    const events = store.listEvents(scriptPath);
+    const event = events.at(-1);
+    if (!event) {
+      return { exitCode: 1, stdout: "", stderr: `No events found for session: ${scriptPath}\n` };
+    }
+    return { exitCode: 0, stdout: formatTrace(event), stderr: "" };
+  }
+
   return {
     exitCode: 1,
     stdout: "",
-    stderr: "Usage: validate <packPath> | simulate <packPath> <scriptPath>\n"
+    stderr: [
+      "Usage:",
+      "  validate <packPath>",
+      "  simulate <packPath> <scriptPath>",
+      "  play <packPath> [--session <sessionId>] <action...>",
+      "  state <sessionId>",
+      "  clues <sessionId>",
+      "  trace last <sessionId>"
+    ].join("\n") + "\n"
   };
+}
+
+function resolveCliDbPath(options: RunCliOptions): string {
+  return options.dbPath ?? process.env.AIGAME_CLI_DB_PATH ?? "aigame-cli.db";
+}
+
+function parseOptions(args: string[]): { positionals: string[]; sessionId?: string } {
+  const positionals: string[] = [];
+  let sessionId: string | undefined;
+
+  for (let index = 0; index < args.length; index += 1) {
+    if (args[index] === "--session") {
+      sessionId = args[index + 1];
+      index += 1;
+    } else {
+      positionals.push(args[index]);
+    }
+  }
+
+  return { positionals, sessionId };
+}
+
+function createInitialState(pack: WorldPack): SessionState {
+  return {
+    currentLocationId: pack.manifest.entryLocationId,
+    turn: 0,
+    inventory: [],
+    knownClues: [],
+    flags: {},
+    npcAttitudes: {},
+    questStages: Object.fromEntries(pack.quests.map((quest) => [quest.id, quest.initialStage]))
+  };
+}
+
+function formatState(state: SessionState): string {
+  const flags = Object.entries(state.flags)
+    .map(([key, value]) => `${key}=${value}`)
+    .join(", ");
+  const quests = Object.entries(state.questStages)
+    .map(([key, value]) => `${key}=${value}`)
+    .join(", ");
+
+  return [
+    `Location: ${state.currentLocationId}`,
+    `Turn: ${state.turn}`,
+    `Inventory: ${state.inventory.length > 0 ? state.inventory.join(", ") : "empty"}`,
+    `Known clues: ${state.knownClues.length > 0 ? state.knownClues.join(", ") : "none"}`,
+    `Flags: ${flags || "none"}`,
+    `Quest stages: ${quests || "none"}`
+  ].join("\n") + "\n";
+}
+
+function formatPatchList(patches: GamePatch[]): string {
+  if (patches.length === 0) return "none";
+  return patches.map(formatPatch).join(", ");
+}
+
+function formatPatch(patch: GamePatch): string {
+  if (patch.type === "discover_clue") return `${patch.type} ${patch.clueId}`;
+  if (patch.type === "move_location") return `${patch.type} ${patch.locationId}`;
+  if (patch.type === "add_item" || patch.type === "remove_item") return `${patch.type} ${patch.itemId}`;
+  if (patch.type === "set_flag") return `${patch.type} ${patch.flag}=${patch.value}`;
+  if (patch.type === "adjust_npc_attitude") return `${patch.type} ${patch.npcId} ${patch.delta}`;
+  return `${patch.type} ${patch.questId}=${patch.stage}`;
+}
+
+function formatTrace(event: {
+  turnNo: number;
+  inputText: string;
+  action: unknown;
+  outputText: string;
+  patches: GamePatch[];
+  trace: Record<string, unknown>;
+}): string {
+  const contextIds = Array.isArray(event.trace.contextIds) ? event.trace.contextIds.join(",") : "none";
+  const acceptedPatches = Array.isArray(event.trace.acceptedPatches) ? event.trace.acceptedPatches.length : event.patches.length;
+  const rejectedPatches = Array.isArray(event.trace.rejectedPatches) ? event.trace.rejectedPatches.length : 0;
+
+  return [
+    `Turn: ${event.turnNo}`,
+    `Input: ${event.inputText}`,
+    `Action: ${JSON.stringify(event.action)}`,
+    `Context IDs: ${contextIds}`,
+    `Accepted patches: ${acceptedPatches}`,
+    `Rejected patches: ${rejectedPatches}`,
+    `Output: ${event.outputText}`
+  ].join("\n") + "\n";
 }
 
 export function isMainModule(metaUrl: string, argvPath = process.argv[1]): boolean {

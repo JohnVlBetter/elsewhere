@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { createSqliteStore } from "./sqliteStore";
 
@@ -30,5 +31,23 @@ describe("sqlite store", () => {
 
     expect(store.getSession(session.id)?.state.currentLocationId).toBe("foyer");
     expect(store.listEvents(session.id)).toHaveLength(1);
+  });
+
+  it("writes to a workspace file database without deleting journal files", () => {
+    const store = createSqliteStore(`sqlite-store-workspace-${randomUUID()}.db`);
+    const session = store.createSession({
+      packId: "rain-tower",
+      initialState: {
+        currentLocationId: "foyer",
+        turn: 0,
+        inventory: [],
+        knownClues: [],
+        flags: {},
+        npcAttitudes: {},
+        questStages: { solve_murder: "investigate" }
+      }
+    });
+
+    expect(store.getSession(session.id)?.packId).toBe("rain-tower");
   });
 });
