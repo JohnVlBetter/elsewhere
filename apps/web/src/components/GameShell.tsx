@@ -65,20 +65,20 @@ export function GameShell() {
         </form>
       </section>
       <aside className="sidebar">
-        <section>
-          <h2>Current Location</h2>
+        <section aria-labelledby="current-location-heading">
+          <h2 id="current-location-heading">Current Location</h2>
           <p>{state?.currentLocationId ?? "Loading"}</p>
         </section>
-        <section>
-          <h2>Known Clues</h2>
+        <section aria-labelledby="known-clues-heading">
+          <h2 id="known-clues-heading">Known Clues</h2>
           <p>{state && state.knownClues.length > 0 ? state.knownClues.join(", ") : "No clues discovered."}</p>
         </section>
-        <section>
-          <h2>Inventory</h2>
+        <section aria-labelledby="inventory-heading">
+          <h2 id="inventory-heading">Inventory</h2>
           <p>{state && state.inventory.length > 0 ? state.inventory.join(", ") : "Empty"}</p>
         </section>
-        <section>
-          <h2>Developer Trace</h2>
+        <section aria-labelledby="developer-trace-heading">
+          <h2 id="developer-trace-heading">Developer Trace</h2>
           <p>{trace}</p>
         </section>
       </aside>
