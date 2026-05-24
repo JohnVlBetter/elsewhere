@@ -21,6 +21,21 @@ export async function runTurn(input: {
 }): Promise<TurnResult> {
   const model = input.model ?? new FakeModelProvider();
   const action = parseAction(input.inputText);
+  const precheck = precheckAction(action, input.pack, input.state);
+  if (!precheck.ok) {
+    return {
+      outputText: `That action is blocked: ${precheck.reason}`,
+      state: { ...input.state, turn: input.state.turn + 1 },
+      acceptedPatches: [],
+      rejectedPatches: [],
+      trace: {
+        action,
+        contextIds: [`location:${input.state.currentLocationId}`],
+        agentRole: "none",
+        precheck
+      }
+    };
+  }
   const agentRequest = buildAgentRequest(input.pack, input.state, input.inputText, action);
 
   const response = await model.generateStructured<{
@@ -66,10 +81,24 @@ export async function runTurn(input: {
       contextIds: agentRequest.contextIds,
       agentRole: agentRequest.agentRole,
       agentRawOutput: response,
+      precheck,
       privateNotes: response.privateNotes,
       audit
     }
   };
+}
+
+function precheckAction(action: GameAction, pack: WorldPack, state: SessionState): { ok: true } | { ok: false; reason: string } {
+  if (action.type === "move") {
+    const validation = validatePatch({ type: "move_location", locationId: action.locationId, reason: "Rules precheck." }, pack, state);
+    return validation.ok ? { ok: true } : validation;
+  }
+
+  if (action.type === "ask" && !pack.npcs.some((npc) => npc.id === action.npcId)) {
+    return { ok: false, reason: `Unknown NPC: ${action.npcId}` };
+  }
+
+  return { ok: true };
 }
 
 function buildAgentRequest(pack: WorldPack, state: SessionState, inputText: string, action: GameAction) {

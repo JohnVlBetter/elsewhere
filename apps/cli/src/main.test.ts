@@ -58,6 +58,19 @@ describe("CLI", () => {
     expect(trace.stdout).toContain('"type":"inspect"');
   });
 
+  it("shows rules precheck failures in trace output", async () => {
+    const dbPath = join(mkdtempSync(join(tmpdir(), "aigame-cli-")), "cli.db");
+    const play = await runCli(["play", "packs/rain-tower", "move", "tower"], { dbPath });
+    const sessionId = play.stdout.match(/Session: ([a-f0-9-]+)/)?.[1];
+    expect(sessionId).toBeDefined();
+
+    const trace = await runCli(["trace", "last", sessionId!], { dbPath });
+
+    expect(trace.exitCode).toBe(0);
+    expect(trace.stdout).toContain("Precheck: blocked - Location is not reachable: tower");
+    expect(trace.stdout).toContain("Accepted patches: 0");
+  });
+
   it("starts a file-backed play session with the default CLI database", async () => {
     const result = await runCli(["play", "packs/rain-tower", "look"]);
 

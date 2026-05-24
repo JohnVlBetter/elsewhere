@@ -33,7 +33,12 @@ export function GameShell() {
       state: SessionState;
       acceptedPatches: unknown[];
       rejectedPatches: unknown[];
-      trace: { contextIds?: string[]; agentRole?: string; agentRawOutput?: { narration?: string; privateNotes?: string } };
+      trace: {
+        contextIds?: string[];
+        agentRole?: string;
+        precheck?: { ok?: boolean; reason?: string };
+        agentRawOutput?: { narration?: string; privateNotes?: string };
+      };
     };
     setState(body.state);
     setTrace(formatTraceSummary(body));
@@ -89,11 +94,18 @@ export function GameShell() {
 function formatTraceSummary(body: {
   acceptedPatches: unknown[];
   rejectedPatches: unknown[];
-  trace: { contextIds?: string[]; agentRole?: string; agentRawOutput?: { narration?: string; privateNotes?: string } };
+  trace: {
+    contextIds?: string[];
+    agentRole?: string;
+    precheck?: { ok?: boolean; reason?: string };
+    agentRawOutput?: { narration?: string; privateNotes?: string };
+  };
 }): string {
   const raw = body.trace.agentRawOutput?.narration ?? body.trace.agentRawOutput?.privateNotes ?? "none";
+  const precheck = body.trace.precheck?.ok === false ? `blocked:${body.trace.precheck.reason ?? "unknown"}` : "ok";
   return [
     `agent=${body.trace.agentRole ?? "unknown"}`,
+    `precheck=${precheck}`,
     `contexts=${body.trace.contextIds?.join(",") ?? ""}`,
     `accepted=${body.acceptedPatches.length}`,
     `rejected=${body.rejectedPatches.length}`,

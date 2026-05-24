@@ -49,6 +49,7 @@ describe("GameShell", () => {
         acceptedPatches: [],
         rejectedPatches: [],
         trace: {
+          precheck: { ok: true },
           contextIds: ["location:foyer", "npc:butler"],
           agentRole: "npc",
           agentRawOutput: { narration: "Mr. Vale keeps his answer precise.", privateNotes: "npc actor raw output" }
@@ -63,6 +64,7 @@ describe("GameShell", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("region", { name: "Developer Trace" }).textContent).toContain("agent=npc");
+      expect(screen.getByRole("region", { name: "Developer Trace" }).textContent).toContain("precheck=ok");
       expect(screen.getByRole("region", { name: "Developer Trace" }).textContent).toContain("raw=Mr. Vale keeps his answer precise.");
     });
   });

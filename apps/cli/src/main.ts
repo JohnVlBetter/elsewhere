@@ -244,6 +244,7 @@ function formatTrace(event: {
   trace: Record<string, unknown>;
 }): string {
   const contextIds = Array.isArray(event.trace.contextIds) ? event.trace.contextIds.join(",") : "none";
+  const precheck = formatPrecheck(event.trace.precheck);
   const acceptedPatches = Array.isArray(event.trace.acceptedPatches) ? event.trace.acceptedPatches.length : event.patches.length;
   const rejectedPatches = Array.isArray(event.trace.rejectedPatches) ? event.trace.rejectedPatches.length : 0;
 
@@ -251,11 +252,23 @@ function formatTrace(event: {
     `Turn: ${event.turnNo}`,
     `Input: ${event.inputText}`,
     `Action: ${JSON.stringify(event.action)}`,
+    `Precheck: ${precheck}`,
     `Context IDs: ${contextIds}`,
     `Accepted patches: ${acceptedPatches}`,
     `Rejected patches: ${rejectedPatches}`,
     `Output: ${event.outputText}`
   ].join("\n") + "\n";
+}
+
+function formatPrecheck(precheck: unknown): string {
+  if (!precheck || typeof precheck !== "object") {
+    return "unknown";
+  }
+  if ((precheck as { ok?: unknown }).ok === true) {
+    return "ok";
+  }
+  const reason = (precheck as { reason?: unknown }).reason;
+  return `blocked - ${typeof reason === "string" ? reason : "unknown reason"}`;
 }
 
 export function isMainModule(metaUrl: string, argvPath = process.argv[1]): boolean {

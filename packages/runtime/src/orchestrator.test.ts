@@ -99,4 +99,26 @@ describe("runTurn", () => {
     expect(result.trace.agentRole).toBe("npc");
     expect(result.trace.agentRawOutput).toMatchObject({ privateNotes: "npc actor raw output" });
   });
+
+  it("runs rules precheck before model calls and blocks impossible actions", async () => {
+    const model: ModelProvider = {
+      async generateStructured<T>(): Promise<T> {
+        throw new Error("model should not be called when precheck fails");
+      }
+    };
+
+    const result = await runTurn({
+      pack,
+      state: initialState,
+      inputText: "move greenhouse",
+      model
+    });
+
+    expect(result.outputText).toBe("That action is blocked: Location is not reachable: greenhouse");
+    expect(result.state).toEqual({ ...initialState, turn: 1 });
+    expect(result.acceptedPatches).toEqual([]);
+    expect(result.rejectedPatches).toEqual([]);
+    expect(result.trace.precheck).toEqual({ ok: false, reason: "Location is not reachable: greenhouse" });
+    expect(result.trace.agentRawOutput).toBeUndefined();
+  });
 });
