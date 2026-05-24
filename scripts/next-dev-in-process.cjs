@@ -13,6 +13,7 @@ const port = Number.parseInt(readOption("--port", process.env.PORT ?? "3000"), 1
 const hostname = readOption("--hostname", "127.0.0.1");
 
 process.env.NEXT_PRIVATE_START_TIME = Date.now().toString();
+process.env.__NEXT_DEV_SERVER = "true";
 
 startServer({
   dir: path.resolve("apps/web"),

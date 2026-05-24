@@ -163,7 +163,7 @@ Use these core IDs in tests and the sample pack:
 - Create: `packages/shared/src/index.ts`
 - Test: `packages/shared/src/smoke.test.ts`
 
-- [ ] **Step 1: Create root workspace files**
+- [x] **Step 1: Create root workspace files**
 
 Create `package.json`:
 
@@ -282,7 +282,7 @@ playwright-report/
 test-results/
 ```
 
-- [ ] **Step 2: Create shared package smoke test**
+- [x] **Step 2: Create shared package smoke test**
 
 Create `packages/shared/package.json`:
 
@@ -317,7 +317,7 @@ describe("workspace", () => {
 });
 ```
 
-- [ ] **Step 3: Install dependencies**
+- [x] **Step 3: Install dependencies**
 
 Run:
 
@@ -329,7 +329,7 @@ npm install -D @types/better-sqlite3 @types/react @types/react-dom
 
 Expected: `package-lock.json` exists and `node_modules` exists.
 
-- [ ] **Step 4: Run smoke test**
+- [x] **Step 4: Run smoke test**
 
 Run:
 
@@ -339,7 +339,7 @@ npm test -- --run packages/shared/src/smoke.test.ts
 
 Expected: PASS with one test.
 
-- [ ] **Step 5: Commit scaffold**
+- [x] **Step 5: Commit scaffold**
 
 ```bash
 git add package.json package-lock.json tsconfig.base.json vitest.config.ts playwright.config.ts .gitignore packages/shared
@@ -355,7 +355,7 @@ git commit -m "chore: scaffold TypeScript workspace"
 - Create: `packages/shared/src/domain.ts`
 - Create: `packages/shared/src/domain.test.ts`
 
-- [ ] **Step 1: Write shared domain tests**
+- [x] **Step 1: Write shared domain tests**
 
 Create `packages/shared/src/domain.test.ts`:
 
@@ -433,7 +433,7 @@ describe("domain schemas", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run:
 
@@ -443,7 +443,7 @@ npm test -- --run packages/shared/src/domain.test.ts
 
 Expected: FAIL because `./domain` does not exist.
 
-- [ ] **Step 3: Add domain schemas**
+- [x] **Step 3: Add domain schemas**
 
 Create `packages/shared/src/domain.ts` with these exports:
 
@@ -607,7 +607,7 @@ Replace `packages/shared/src/index.ts`:
 export * from "./domain";
 ```
 
-- [ ] **Step 4: Run domain tests**
+- [x] **Step 4: Run domain tests**
 
 Run:
 
@@ -617,7 +617,7 @@ npm test -- --run packages/shared/src/domain.test.ts
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit shared domain**
+- [x] **Step 5: Commit shared domain**
 
 ```bash
 git add packages/shared/src/domain.ts packages/shared/src/domain.test.ts packages/shared/src/index.ts
@@ -634,7 +634,7 @@ git commit -m "feat: add shared game domain schemas"
 - Create: `packages/pack/src/loadPack.test.ts`
 - Create: `packages/pack/src/index.ts`
 
-- [ ] **Step 1: Write loader tests**
+- [x] **Step 1: Write loader tests**
 
 Create `packages/pack/src/loadPack.test.ts`:
 
@@ -686,7 +686,7 @@ describe("loadWorldPack", () => {
 });
 ```
 
-- [ ] **Step 2: Run loader tests to verify failure**
+- [x] **Step 2: Run loader tests to verify failure**
 
 Run:
 
@@ -696,7 +696,7 @@ npm test -- --run packages/pack/src/loadPack.test.ts
 
 Expected: FAIL because `./loadPack` does not exist.
 
-- [ ] **Step 3: Add loader implementation**
+- [x] **Step 3: Add loader implementation**
 
 Create `packages/pack/package.json`:
 
@@ -775,7 +775,7 @@ Create `packages/pack/src/index.ts`:
 export * from "./loadPack";
 ```
 
-- [ ] **Step 4: Run loader tests**
+- [x] **Step 4: Run loader tests**
 
 Run:
 
@@ -785,7 +785,7 @@ npm test -- --run packages/pack/src/loadPack.test.ts
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit loader**
+- [x] **Step 5: Commit loader**
 
 ```bash
 git add packages/pack
@@ -801,7 +801,7 @@ git commit -m "feat: load directory world packs"
 - Create: `packages/pack/src/validatePack.ts`
 - Create: `packages/pack/src/validatePack.test.ts`
 
-- [ ] **Step 1: Write validator tests**
+- [x] **Step 1: Write validator tests**
 
 Create `packages/pack/src/validatePack.test.ts`:
 
@@ -871,7 +871,7 @@ describe("validateWorldPack", () => {
 });
 ```
 
-- [ ] **Step 2: Run validator tests to verify failure**
+- [x] **Step 2: Run validator tests to verify failure**
 
 Run:
 
@@ -881,7 +881,7 @@ npm test -- --run packages/pack/src/validatePack.test.ts
 
 Expected: FAIL because `./validatePack` does not exist.
 
-- [ ] **Step 3: Add validator implementation**
+- [x] **Step 3: Add validator implementation**
 
 Create `packages/pack/src/validatePack.ts`:
 
@@ -976,7 +976,7 @@ export * from "./loadPack";
 export * from "./validatePack";
 ```
 
-- [ ] **Step 4: Run validator tests**
+- [x] **Step 4: Run validator tests**
 
 Run:
 
@@ -986,7 +986,7 @@ npm test -- --run packages/pack/src/validatePack.test.ts
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit validator**
+- [x] **Step 5: Commit validator**
 
 ```bash
 git add packages/pack/src/validatePack.ts packages/pack/src/validatePack.test.ts packages/pack/src/index.ts
@@ -1003,7 +1003,7 @@ git commit -m "feat: validate world pack references"
 - Create: `packages/rules/src/conditions.test.ts`
 - Create: `packages/rules/src/index.ts`
 
-- [ ] **Step 1: Write condition evaluator tests**
+- [x] **Step 1: Write condition evaluator tests**
 
 Create `packages/rules/src/conditions.test.ts`:
 
@@ -1047,7 +1047,7 @@ describe("evaluateCondition", () => {
 });
 ```
 
-- [ ] **Step 2: Run condition tests to verify failure**
+- [x] **Step 2: Run condition tests to verify failure**
 
 Run:
 
@@ -1057,7 +1057,7 @@ npm test -- --run packages/rules/src/conditions.test.ts
 
 Expected: FAIL because `./conditions` does not exist.
 
-- [ ] **Step 3: Add condition evaluator**
+- [x] **Step 3: Add condition evaluator**
 
 Create `packages/rules/package.json`:
 
@@ -1133,7 +1133,7 @@ Create `packages/rules/src/index.ts`:
 export * from "./conditions";
 ```
 
-- [ ] **Step 4: Run condition tests**
+- [x] **Step 4: Run condition tests**
 
 Run:
 
@@ -1143,7 +1143,7 @@ npm test -- --run packages/rules/src/conditions.test.ts
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit conditions**
+- [x] **Step 5: Commit conditions**
 
 ```bash
 git add packages/rules
@@ -1161,7 +1161,7 @@ git commit -m "feat: evaluate rule conditions"
 - Create: `packages/rules/src/endings.ts`
 - Create: `packages/rules/src/endings.test.ts`
 
-- [ ] **Step 1: Write patch tests**
+- [x] **Step 1: Write patch tests**
 
 Create `packages/rules/src/patches.test.ts`:
 
@@ -1211,7 +1211,7 @@ describe("patch validation", () => {
 });
 ```
 
-- [ ] **Step 2: Write ending tests**
+- [x] **Step 2: Write ending tests**
 
 Create `packages/rules/src/endings.test.ts`:
 
@@ -1257,7 +1257,7 @@ describe("judgeEnding", () => {
 });
 ```
 
-- [ ] **Step 3: Run tests to verify failure**
+- [x] **Step 3: Run tests to verify failure**
 
 Run:
 
@@ -1267,7 +1267,7 @@ npm test -- --run packages/rules/src/patches.test.ts packages/rules/src/endings.
 
 Expected: FAIL because `./patches` and `./endings` do not exist.
 
-- [ ] **Step 4: Add patch implementation**
+- [x] **Step 4: Add patch implementation**
 
 Create `packages/rules/src/patches.ts`:
 
@@ -1344,7 +1344,7 @@ export function applyAcceptedPatch(patch: GamePatch, state: SessionState): Sessi
 }
 ```
 
-- [ ] **Step 5: Add ending implementation**
+- [x] **Step 5: Add ending implementation**
 
 Create `packages/rules/src/endings.ts`:
 
@@ -1367,7 +1367,7 @@ export * from "./patches";
 export * from "./endings";
 ```
 
-- [ ] **Step 6: Run rule tests**
+- [x] **Step 6: Run rule tests**
 
 Run:
 
@@ -1377,7 +1377,7 @@ npm test -- --run packages/rules/src/conditions.test.ts packages/rules/src/patch
 
 Expected: PASS.
 
-- [ ] **Step 7: Commit rule patching and endings**
+- [x] **Step 7: Commit rule patching and endings**
 
 ```bash
 git add packages/rules/src
@@ -1405,7 +1405,7 @@ git commit -m "feat: validate patches and judge endings"
 - Create: `packs/rain-tower/scripts/wrong-accusation.yaml`
 - Create: `packages/pack/src/samplePack.test.ts`
 
-- [ ] **Step 1: Write sample pack regression test**
+- [x] **Step 1: Write sample pack regression test**
 
 Create `packages/pack/src/samplePack.test.ts`:
 
@@ -1433,7 +1433,7 @@ describe("rain-tower sample pack", () => {
 });
 ```
 
-- [ ] **Step 2: Run sample pack test to verify failure**
+- [x] **Step 2: Run sample pack test to verify failure**
 
 Run:
 
@@ -1443,7 +1443,7 @@ npm test -- --run packages/pack/src/samplePack.test.ts
 
 Expected: FAIL because `packs/rain-tower` does not exist.
 
-- [ ] **Step 3: Create sample pack metadata and world**
+- [x] **Step 3: Create sample pack metadata and world**
 
 Create `packs/rain-tower/manifest.yaml`:
 
@@ -1476,7 +1476,7 @@ allowedPatchTypes:
   - set_quest_stage
 ```
 
-- [ ] **Step 4: Create locations, NPCs, clues, items, quests, and endings**
+- [x] **Step 4: Create locations, NPCs, clues, items, quests, and endings**
 
 Create `packs/rain-tower/locations.yaml`:
 
@@ -1633,7 +1633,7 @@ Create `packs/rain-tower/endings.yaml`:
   text: Dawn comes with the case unresolved.
 ```
 
-- [ ] **Step 5: Create prompts and scripts**
+- [x] **Step 5: Create prompts and scripts**
 
 Create `packs/rain-tower/prompts/narrator.md`:
 
@@ -1679,7 +1679,7 @@ steps:
 expectedEnding: wrong_accusation
 ```
 
-- [ ] **Step 6: Run sample pack tests**
+- [x] **Step 6: Run sample pack tests**
 
 Run:
 
@@ -1689,7 +1689,7 @@ npm test -- --run packages/pack/src/samplePack.test.ts packages/pack/src/loadPac
 
 Expected: PASS.
 
-- [ ] **Step 7: Commit sample pack**
+- [x] **Step 7: Commit sample pack**
 
 ```bash
 git add packs/rain-tower packages/pack/src/samplePack.test.ts
@@ -1706,7 +1706,7 @@ git commit -m "feat: add Rain Tower sample pack"
 - Create: `packages/memory/src/packIndex.test.ts`
 - Create: `packages/memory/src/index.ts`
 
-- [ ] **Step 1: Write retrieval tests**
+- [x] **Step 1: Write retrieval tests**
 
 Create `packages/memory/src/packIndex.test.ts`:
 
@@ -1728,7 +1728,7 @@ describe("pack text index", () => {
 });
 ```
 
-- [ ] **Step 2: Run retrieval tests to verify failure**
+- [x] **Step 2: Run retrieval tests to verify failure**
 
 Run:
 
@@ -1738,7 +1738,7 @@ npm test -- --run packages/memory/src/packIndex.test.ts
 
 Expected: FAIL because `./packIndex` does not exist.
 
-- [ ] **Step 3: Add retrieval implementation**
+- [x] **Step 3: Add retrieval implementation**
 
 Create `packages/memory/package.json`:
 
@@ -1791,7 +1791,7 @@ Create `packages/memory/src/index.ts`:
 export * from "./packIndex";
 ```
 
-- [ ] **Step 4: Run retrieval tests**
+- [x] **Step 4: Run retrieval tests**
 
 Run:
 
@@ -1801,7 +1801,7 @@ npm test -- --run packages/memory/src/packIndex.test.ts
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit retrieval**
+- [x] **Step 5: Commit retrieval**
 
 ```bash
 git add packages/memory
@@ -1818,7 +1818,7 @@ git commit -m "feat: index pack narrative text"
 - Create: `packages/persistence/src/sqliteStore.test.ts`
 - Create: `packages/persistence/src/index.ts`
 
-- [ ] **Step 1: Write persistence tests**
+- [x] **Step 1: Write persistence tests**
 
 Create `packages/persistence/src/sqliteStore.test.ts`:
 
@@ -1859,7 +1859,7 @@ describe("sqlite store", () => {
 });
 ```
 
-- [ ] **Step 2: Run persistence tests to verify failure**
+- [x] **Step 2: Run persistence tests to verify failure**
 
 Run:
 
@@ -1869,7 +1869,7 @@ npm test -- --run packages/persistence/src/sqliteStore.test.ts
 
 Expected: FAIL because `./sqliteStore` does not exist.
 
-- [ ] **Step 3: Add SQLite store**
+- [x] **Step 3: Add SQLite store**
 
 Create `packages/persistence/package.json`:
 
@@ -1996,7 +1996,7 @@ Create `packages/persistence/src/index.ts`:
 export * from "./sqliteStore";
 ```
 
-- [ ] **Step 4: Run persistence tests**
+- [x] **Step 4: Run persistence tests**
 
 Run:
 
@@ -2006,7 +2006,7 @@ npm test -- --run packages/persistence/src/sqliteStore.test.ts
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit persistence**
+- [x] **Step 5: Commit persistence**
 
 ```bash
 git add packages/persistence
@@ -2028,7 +2028,7 @@ git commit -m "feat: persist sessions and events in sqlite"
 - Create: `packages/agents/src/auditor.test.ts`
 - Create: `packages/agents/src/index.ts`
 
-- [ ] **Step 1: Write scoped context tests**
+- [x] **Step 1: Write scoped context tests**
 
 Create `packages/agents/src/contexts.test.ts`:
 
@@ -2074,7 +2074,7 @@ describe("agent contexts", () => {
 });
 ```
 
-- [ ] **Step 2: Write auditor tests**
+- [x] **Step 2: Write auditor tests**
 
 Create `packages/agents/src/auditor.test.ts`:
 
@@ -2098,7 +2098,7 @@ describe("auditOutput", () => {
 });
 ```
 
-- [ ] **Step 3: Run agent tests to verify failure**
+- [x] **Step 3: Run agent tests to verify failure**
 
 Run:
 
@@ -2108,7 +2108,7 @@ npm test -- --run packages/agents/src/contexts.test.ts packages/agents/src/audit
 
 Expected: FAIL because agent files do not exist.
 
-- [ ] **Step 4: Add model provider and fake provider**
+- [x] **Step 4: Add model provider and fake provider**
 
 Create `packages/agents/package.json`:
 
@@ -2234,7 +2234,7 @@ export class OpenAICompatibleProvider implements ModelProvider {
 }
 ```
 
-- [ ] **Step 5: Add scoped contexts and auditor**
+- [x] **Step 5: Add scoped contexts and auditor**
 
 Create `packages/agents/src/contexts.ts`:
 
@@ -2302,7 +2302,7 @@ export * from "./contexts";
 export * from "./auditor";
 ```
 
-- [ ] **Step 6: Run agent tests**
+- [x] **Step 6: Run agent tests**
 
 Run:
 
@@ -2312,7 +2312,7 @@ npm test -- --run packages/agents/src/contexts.test.ts packages/agents/src/audit
 
 Expected: PASS.
 
-- [ ] **Step 7: Commit agents**
+- [x] **Step 7: Commit agents**
 
 ```bash
 git add packages/agents
@@ -2331,7 +2331,7 @@ git commit -m "feat: add scoped agent interfaces"
 - Create: `packages/runtime/src/orchestrator.test.ts`
 - Create: `packages/runtime/src/index.ts`
 
-- [ ] **Step 1: Write action parser tests**
+- [x] **Step 1: Write action parser tests**
 
 Create `packages/runtime/src/actionParser.test.ts`:
 
@@ -2359,7 +2359,7 @@ describe("parseAction", () => {
 });
 ```
 
-- [ ] **Step 2: Write orchestrator tests**
+- [x] **Step 2: Write orchestrator tests**
 
 Create `packages/runtime/src/orchestrator.test.ts`:
 
@@ -2413,7 +2413,7 @@ describe("runTurn", () => {
 });
 ```
 
-- [ ] **Step 3: Run runtime tests to verify failure**
+- [x] **Step 3: Run runtime tests to verify failure**
 
 Run:
 
@@ -2423,7 +2423,7 @@ npm test -- --run packages/runtime/src/actionParser.test.ts packages/runtime/src
 
 Expected: FAIL because runtime files do not exist.
 
-- [ ] **Step 4: Add action parser**
+- [x] **Step 4: Add action parser**
 
 Create `packages/runtime/package.json`:
 
@@ -2468,7 +2468,7 @@ export function parseAction(inputText: string): GameAction {
 }
 ```
 
-- [ ] **Step 5: Add orchestrator**
+- [x] **Step 5: Add orchestrator**
 
 Create `packages/runtime/src/orchestrator.ts`:
 
@@ -2584,7 +2584,7 @@ export * from "./actionParser";
 export * from "./orchestrator";
 ```
 
-- [ ] **Step 6: Run runtime tests**
+- [x] **Step 6: Run runtime tests**
 
 Run:
 
@@ -2594,7 +2594,7 @@ npm test -- --run packages/runtime/src/actionParser.test.ts packages/runtime/src
 
 Expected: PASS.
 
-- [ ] **Step 7: Commit runtime**
+- [x] **Step 7: Commit runtime**
 
 ```bash
 git add packages/runtime
@@ -2610,7 +2610,7 @@ git commit -m "feat: run rule-checked game turns"
 - Create: `packages/runtime/src/simulator.ts`
 - Create: `packages/runtime/src/simulator.test.ts`
 
-- [ ] **Step 1: Write simulator tests**
+- [x] **Step 1: Write simulator tests**
 
 Create `packages/runtime/src/simulator.test.ts`:
 
@@ -2640,7 +2640,7 @@ describe("runSimulation", () => {
 });
 ```
 
-- [ ] **Step 2: Run simulator tests to verify failure**
+- [x] **Step 2: Run simulator tests to verify failure**
 
 Run:
 
@@ -2650,7 +2650,7 @@ npm test -- --run packages/runtime/src/simulator.test.ts
 
 Expected: FAIL because `./simulator` does not exist.
 
-- [ ] **Step 3: Add simulator**
+- [x] **Step 3: Add simulator**
 
 Create `packages/runtime/src/simulator.ts`:
 
@@ -2693,7 +2693,7 @@ export * from "./orchestrator";
 export * from "./simulator";
 ```
 
-- [ ] **Step 4: Run simulator tests**
+- [x] **Step 4: Run simulator tests**
 
 Run:
 
@@ -2703,7 +2703,7 @@ npm test -- --run packages/runtime/src/simulator.test.ts
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit simulator**
+- [x] **Step 5: Commit simulator**
 
 ```bash
 git add packages/runtime/src/simulator.ts packages/runtime/src/simulator.test.ts packages/runtime/src/index.ts
@@ -2719,7 +2719,7 @@ git commit -m "feat: run scripted game simulations"
 - Create: `apps/cli/src/main.ts`
 - Create: `apps/cli/src/main.test.ts`
 
-- [ ] **Step 1: Write CLI tests**
+- [x] **Step 1: Write CLI tests**
 
 Create `apps/cli/src/main.test.ts`:
 
@@ -2744,7 +2744,7 @@ describe("CLI", () => {
 });
 ```
 
-- [ ] **Step 2: Run CLI tests to verify failure**
+- [x] **Step 2: Run CLI tests to verify failure**
 
 Run:
 
@@ -2754,7 +2754,7 @@ npm test -- --run apps/cli/src/main.test.ts
 
 Expected: FAIL because `apps/cli/src/main.ts` does not exist.
 
-- [ ] **Step 3: Add CLI implementation**
+- [x] **Step 3: Add CLI implementation**
 
 Create `apps/cli/package.json`:
 
@@ -2830,7 +2830,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 }
 ```
 
-- [ ] **Step 4: Run CLI tests**
+- [x] **Step 4: Run CLI tests**
 
 Run:
 
@@ -2840,7 +2840,7 @@ npm test -- --run apps/cli/src/main.test.ts
 
 Expected: PASS.
 
-- [ ] **Step 5: Manually verify CLI command**
+- [x] **Step 5: Manually verify CLI command**
 
 Run:
 
@@ -2854,7 +2854,7 @@ Expected stdout:
 Pack valid: rain-tower
 ```
 
-- [ ] **Step 6: Commit CLI**
+- [x] **Step 6: Commit CLI**
 
 ```bash
 git add apps/cli
@@ -2878,7 +2878,7 @@ git commit -m "feat: add pack validation and simulation CLI"
 - Create: `apps/web/src/components/GameShell.test.tsx`
 - Create: `apps/web/src/server/sessionStore.ts`
 
-- [ ] **Step 1: Write Web component test**
+- [x] **Step 1: Write Web component test**
 
 Create `apps/web/src/components/GameShell.test.tsx`:
 
@@ -2900,7 +2900,7 @@ describe("GameShell", () => {
 });
 ```
 
-- [ ] **Step 2: Run Web test to verify failure**
+- [x] **Step 2: Run Web test to verify failure**
 
 Run:
 
@@ -2910,7 +2910,7 @@ npm test -- --run apps/web/src/components/GameShell.test.tsx --environment jsdom
 
 Expected: FAIL because `GameShell` does not exist.
 
-- [ ] **Step 3: Add Next.js app shell files**
+- [x] **Step 3: Add Next.js app shell files**
 
 Create `apps/web/package.json`:
 
@@ -2987,7 +2987,7 @@ export default function Page() {
 }
 ```
 
-- [ ] **Step 4: Add GameShell component and CSS**
+- [x] **Step 4: Add GameShell component and CSS**
 
 Create `apps/web/src/components/GameShell.tsx`:
 
@@ -3157,7 +3157,7 @@ button {
 }
 ```
 
-- [ ] **Step 5: Add session store and API routes backed by runtime**
+- [x] **Step 5: Add session store and API routes backed by runtime**
 
 Create `apps/web/src/server/sessionStore.ts`:
 
@@ -3234,7 +3234,7 @@ export async function POST(request: NextRequest) {
 }
 ```
 
-- [ ] **Step 6: Run Web component test**
+- [x] **Step 6: Run Web component test**
 
 Run:
 
@@ -3244,7 +3244,7 @@ npm test -- --run apps/web/src/components/GameShell.test.tsx --environment jsdom
 
 Expected: PASS.
 
-- [ ] **Step 7: Build Web app**
+- [x] **Step 7: Build Web app**
 
 Run:
 
@@ -3254,7 +3254,7 @@ npm run web:build
 
 Expected: Next.js build succeeds.
 
-- [ ] **Step 8: Commit Web player shell**
+- [x] **Step 8: Commit Web player shell**
 
 ```bash
 git add apps/web
@@ -3268,7 +3268,7 @@ git commit -m "feat: add web player shell"
 **Files:**
 - Create: `apps/web/tests/player.spec.ts`
 
-- [ ] **Step 1: Add Playwright smoke test**
+- [x] **Step 1: Add Playwright smoke test**
 
 Create `apps/web/tests/player.spec.ts`:
 
@@ -3285,7 +3285,7 @@ test("player can see the case interface", async ({ page }) => {
 });
 ```
 
-- [ ] **Step 2: Run Playwright to verify the baseline**
+- [x] **Step 2: Run Playwright to verify the baseline**
 
 Run:
 
@@ -3295,7 +3295,7 @@ npm run e2e
 
 Expected: PASS with one browser test.
 
-- [ ] **Step 3: Extend Playwright test for a real turn**
+- [x] **Step 3: Extend Playwright test for a real turn**
 
 Modify `apps/web/tests/player.spec.ts`:
 
@@ -3319,7 +3319,7 @@ test("player can see the case interface", async ({ page }) => {
 });
 ```
 
-- [ ] **Step 4: Run Web and e2e tests**
+- [x] **Step 4: Run Web and e2e tests**
 
 Run:
 
@@ -3330,7 +3330,7 @@ npm run e2e
 
 Expected: both commands PASS.
 
-- [ ] **Step 5: Commit trace UI**
+- [x] **Step 5: Commit trace UI**
 
 ```bash
 git add apps/web/tests/player.spec.ts
@@ -3345,7 +3345,7 @@ git commit -m "feat: expose developer trace panel"
 - Modify: `docs/superpowers/specs/2026-05-23-ai-interactive-game-design.md`
 - Create: `README.md`
 
-- [ ] **Step 1: Create README with runnable commands**
+- [x] **Step 1: Create README with runnable commands**
 
 Create `README.md`:
 
@@ -3370,7 +3370,7 @@ npm run web:dev
 The runtime uses a programmatic Director Orchestrator, scoped Narrator and NPC Actor model calls, rule-checked patches, and event traces. AI proposes narrative and patches; rules decide state.
 ```
 
-- [ ] **Step 2: Mark the spec as implemented by MVP branch**
+- [x] **Step 2: Mark the spec as implemented by MVP branch**
 
 Modify the status line in `docs/superpowers/specs/2026-05-23-ai-interactive-game-design.md`:
 
@@ -3378,7 +3378,7 @@ Modify the status line in `docs/superpowers/specs/2026-05-23-ai-interactive-game
 Status: MVP implementation plan created; implementation follows this spec
 ```
 
-- [ ] **Step 3: Run complete verification**
+- [x] **Step 3: Run complete verification**
 
 Run:
 
@@ -3400,7 +3400,7 @@ Expected:
 - Web build succeeds.
 - Playwright passes the player smoke test.
 
-- [ ] **Step 4: Check git status**
+- [x] **Step 4: Check git status**
 
 Run:
 
@@ -3410,7 +3410,7 @@ git status --short
 
 Expected: only intended README and spec changes appear before commit.
 
-- [ ] **Step 5: Commit final docs**
+- [x] **Step 5: Commit final docs**
 
 ```bash
 git add README.md docs/superpowers/specs/2026-05-23-ai-interactive-game-design.md
