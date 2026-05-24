@@ -15,6 +15,7 @@
     "cli": "tsx apps/cli/src/main.ts",
     "web:dev": "next dev apps/web",
     "web:build": "next build apps/web --webpack",
+    "e2e:install": "playwright install chromium",
     "e2e": "playwright test"
   },
   "devDependencies": {
