@@ -13,15 +13,17 @@ describe("GameShell", () => {
   it("renders the player-facing panels", () => {
     render(<GameShell />);
 
-    expect(screen.getByRole("heading", { name: "Rain Tower Murder" })).toBeTruthy();
-    expect(screen.getByLabelText("Action input")).toBeTruthy();
-    expect(screen.getByText("Current Location")).toBeTruthy();
-    expect(screen.getByRole("region", { name: "Current Location" })).toBeTruthy();
-    expect(screen.getByText("Known Clues")).toBeTruthy();
-    expect(screen.getByText("Inventory")).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "雨塔谋杀案" })).toBeTruthy();
+    expect(screen.getByLabelText("行动指令")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "发送" })).toBeTruthy();
+    expect(screen.getByText("当前位置")).toBeTruthy();
+    expect(screen.getByRole("region", { name: "当前位置" })).toBeTruthy();
+    expect(screen.getByText("已知线索")).toBeTruthy();
+    expect(screen.getByText("随身物品")).toBeTruthy();
+    expect(screen.getByText("开发追踪")).toBeTruthy();
   });
 
-  it("shows agent role and raw output in the developer trace", async () => {
+  it("shows localized agent role and raw output in the developer trace", async () => {
     vi.spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(new Response(JSON.stringify({
         sessionId: "session-1",
@@ -52,20 +54,22 @@ describe("GameShell", () => {
           precheck: { ok: true },
           contextIds: ["location:foyer", "npc:butler"],
           agentRole: "npc",
+          modelName: "deepseek-v4-pro",
           agentRawOutput: { narration: "Mr. Vale keeps his answer precise.", privateNotes: "npc actor raw output" }
         }
       })));
 
     render(<GameShell />);
-    await waitFor(() => expect(screen.getByText("foyer")).toBeTruthy());
+    await waitFor(() => expect(screen.getByRole("region", { name: "当前位置" }).textContent).toContain("门厅"));
 
-    fireEvent.change(screen.getByLabelText("Action input"), { target: { value: "ask butler alibi" } });
-    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    fireEvent.change(screen.getByLabelText("行动指令"), { target: { value: "询问管家的不在场证明" } });
+    fireEvent.click(screen.getByRole("button", { name: "发送" }));
 
     await waitFor(() => {
-      expect(screen.getByRole("region", { name: "Developer Trace" }).textContent).toContain("agent=npc");
-      expect(screen.getByRole("region", { name: "Developer Trace" }).textContent).toContain("precheck=ok");
-      expect(screen.getByRole("region", { name: "Developer Trace" }).textContent).toContain("raw=Mr. Vale keeps his answer precise.");
+      expect(screen.getByRole("region", { name: "开发追踪" }).textContent).toContain("角色=npc");
+      expect(screen.getByRole("region", { name: "开发追踪" }).textContent).toContain("模型=deepseek-v4-pro");
+      expect(screen.getByRole("region", { name: "开发追踪" }).textContent).toContain("预检=通过");
+      expect(screen.getByRole("region", { name: "开发追踪" }).textContent).toContain("原始输出=Mr. Vale keeps his answer precise.");
     });
   });
 });

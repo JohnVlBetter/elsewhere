@@ -1,7 +1,13 @@
 import type { JsonSchema, ModelProvider, RuntimeMessage } from "./modelProvider";
 
+export type StructuredResponseFormat = "json_schema" | "json_object";
+
 export class OpenAICompatibleProvider implements ModelProvider {
-  constructor(private readonly options: { apiKey: string; baseUrl: string }) {}
+  constructor(private readonly options: {
+    apiKey: string;
+    baseUrl: string;
+    responseFormat?: StructuredResponseFormat;
+  }) {}
 
   async generateStructured<T>(request: {
     model: string;
@@ -25,13 +31,7 @@ export class OpenAICompatibleProvider implements ModelProvider {
           { role: "system", content: request.system },
           ...request.messages
         ],
-        response_format: {
-          type: "json_schema",
-          json_schema: {
-            name: "agent_response",
-            schema: request.schema
-          }
-        }
+        response_format: this.buildResponseFormat(request.schema)
       })
     });
 
@@ -45,5 +45,19 @@ export class OpenAICompatibleProvider implements ModelProvider {
       throw new Error("Model response did not include message content");
     }
     return JSON.parse(content) as T;
+  }
+
+  private buildResponseFormat(schema: JsonSchema): Record<string, unknown> {
+    if (this.options.responseFormat === "json_object") {
+      return { type: "json_object" };
+    }
+
+    return {
+      type: "json_schema",
+      json_schema: {
+        name: "agent_response",
+        schema
+      }
+    };
   }
 }

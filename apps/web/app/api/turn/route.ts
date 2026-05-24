@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { FakeModelProvider } from "@aigame/agents";
 import { loadWorldPack } from "@aigame/pack";
 import { runTurn } from "@aigame/runtime";
 import { ActionSchema } from "@aigame/shared";
+import { createRuntimeModelConfig } from "../../../src/server/modelProvider";
 import { sessionStore } from "../../../src/server/sessionStore";
 
 export async function POST(request: NextRequest) {
@@ -12,11 +12,13 @@ export async function POST(request: NextRequest) {
   if (!session) {
     return NextResponse.json({ error: "Session not found" }, { status: 404 });
   }
+  const runtimeModel = createRuntimeModelConfig();
   const result = await runTurn({
     pack,
     state: session.state,
     inputText: body.inputText,
-    model: new FakeModelProvider()
+    model: runtimeModel.model,
+    modelName: runtimeModel.modelName
   });
   sessionStore.updateSessionState(body.sessionId, result.state);
   sessionStore.appendEvent({

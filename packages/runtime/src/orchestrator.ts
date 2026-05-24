@@ -18,8 +18,10 @@ export async function runTurn(input: {
   state: SessionState;
   inputText: string;
   model?: ModelProvider;
+  modelName?: string;
 }): Promise<TurnResult> {
   const model = input.model ?? new FakeModelProvider();
+  const modelName = input.modelName ?? "fake";
   const action = parseAction(input.inputText);
   const precheck = precheckAction(action, input.pack, input.state);
   if (!precheck.ok) {
@@ -44,10 +46,10 @@ export async function runTurn(input: {
     proposedPatches: GamePatch[];
     privateNotes: string;
   }>({
-    model: "fake",
+    model: modelName,
     system: agentRequest.system,
     messages: [{ role: "user", content: JSON.stringify({ action, context: agentRequest.context }) }],
-    schema: { type: "object" }
+    schema: agentResponseSchema()
   });
 
   const acceptedPatches: GamePatch[] = [];
@@ -80,6 +82,7 @@ export async function runTurn(input: {
       action,
       contextIds: agentRequest.contextIds,
       agentRole: agentRequest.agentRole,
+      modelName,
       agentRawOutput: response,
       precheck,
       privateNotes: response.privateNotes,
@@ -102,12 +105,18 @@ function precheckAction(action: GameAction, pack: WorldPack, state: SessionState
 }
 
 function buildAgentRequest(pack: WorldPack, state: SessionState, inputText: string, action: GameAction) {
+  const responseInstruction =
+    "Return only a valid JSON object with keys narration (string), spokenBy (array), proposedPatches (array), and privateNotes (string). Do not wrap it in markdown.";
+
   if (action.type === "ask") {
     return {
       agentRole: "npc",
       context: buildNpcContext(pack, state, { npcId: action.npcId, topic: action.topic }),
       contextIds: [`location:${state.currentLocationId}`, `npc:${action.npcId}`],
-      system: "NPC Actor Agent: answer as the scoped NPC only. Return narration, spokenBy, proposedPatches, and privateNotes. Do not mutate state directly."
+      system: [
+        "NPC Actor Agent: answer as the scoped NPC only. Do not mutate state directly.",
+        responseInstruction
+      ].join("\n\n")
     };
   }
 
@@ -115,7 +124,23 @@ function buildAgentRequest(pack: WorldPack, state: SessionState, inputText: stri
     agentRole: "narrator",
     context: buildNarratorContext(pack, state, { actionText: inputText }),
     contextIds: [`location:${state.currentLocationId}`],
-    system: "Narrator Agent: return narration and proposed patches. Do not mutate state directly."
+    system: [
+      "Narrator Agent: describe the immediate in-world result and do not mutate state directly.",
+      responseInstruction
+    ].join("\n\n")
+  };
+}
+
+function agentResponseSchema() {
+  return {
+    type: "object",
+    properties: {
+      narration: { type: "string" },
+      spokenBy: { type: "array" },
+      proposedPatches: { type: "array" },
+      privateNotes: { type: "string" }
+    },
+    required: ["narration", "spokenBy", "proposedPatches", "privateNotes"]
   };
 }
 

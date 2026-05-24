@@ -100,6 +100,32 @@ describe("runTurn", () => {
     expect(result.trace.agentRawOutput).toMatchObject({ privateNotes: "npc actor raw output" });
   });
 
+  it("passes the configured model name to the provider", async () => {
+    const requests: Array<Parameters<ModelProvider["generateStructured"]>[0]> = [];
+    const model: ModelProvider = {
+      async generateStructured<T>(request: Parameters<ModelProvider["generateStructured"]>[0]): Promise<T> {
+        requests.push(request);
+        return {
+          narration: "The room answers with a useful detail.",
+          spokenBy: [],
+          proposedPatches: [],
+          privateNotes: "configured model used"
+        } as T;
+      }
+    };
+
+    await runTurn({
+      pack,
+      state: initialState,
+      inputText: "look",
+      model,
+      modelName: "deepseek-v4-pro"
+    });
+
+    expect(requests[0]?.model).toBe("deepseek-v4-pro");
+    expect(requests[0]?.system).toContain("JSON");
+  });
+
   it("runs rules precheck before model calls and blocks impossible actions", async () => {
     const model: ModelProvider = {
       async generateStructured<T>(): Promise<T> {
