@@ -112,8 +112,7 @@ export const WorldPackSchema = z.object({
   clues: z.array(ClueSchema),
   items: z.array(ItemSchema),
   quests: z.array(QuestSchema),
-  endings: z.array(EndingSchema),
-  prompts: z.record(z.string(), z.string()).default({})
+  endings: z.array(EndingSchema)
 });
 
 export const SessionStateSchema = z.object({

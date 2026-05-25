@@ -1,4 +1,4 @@
-import { auditOutput, buildNarratorContext, buildNpcContext, FakeModelProvider } from "@aigame/agents";
+import { auditOutput, buildNarratorContext, buildNpcContext, buildSystemPrompt, FakeModelProvider } from "@aigame/agents";
 import type { ModelProvider } from "@aigame/agents";
 import { PatchSchema } from "@aigame/shared";
 import type { GameAction, GamePatch, SessionState, TurnMessage, WorldPack } from "@aigame/shared";
@@ -241,28 +241,12 @@ function precheckAction(action: GameAction, pack: WorldPack, state: SessionState
 }
 
 function buildAgentRequest(pack: WorldPack, state: SessionState, inputText: string, action: GameAction) {
-  const coreInstruction = [
-    "你是一个受规则引擎约束的互动剧情代理，必须把 context 里的事实当作唯一权威。",
-    "不要发明 NPC、地点、道具、线索、时间、ID 或状态变化；尤其是时间、日期、物品归属和已发现线索必须与 context.canonicalClues、context.canonicalItems、currentState 完全一致。",
-    "如果玩家没有成功获得道具、发现线索或移动地点，不要在 narration 里声称已经成功；状态变化只能通过 proposedPatches 表达。",
-    "narration 只写环境、动作结果和可感知反应，不写 NPC 台词。NPC 的原话必须放在 spokenBy 里。"
-  ].join("\n");
-  const responseInstruction =
-    "只返回一个有效 JSON 对象，不要用 Markdown 包裹。字段必须是：narration (string)、spokenBy (array of { npcId, text })、proposedPatches (array)、privateNotes (string)。proposedPatches 只能使用 discover_clue/add_item/remove_item/move_location/set_flag/adjust_npc_attitude/set_quest_stage 的精确字段名和已有 ID；严禁使用 JSON Patch 风格的 op/path/value。";
-  const languageInstruction = pack.prompts.language?.trim() || "默认使用简体中文回应玩家。";
-
   if (action.type === "ask") {
     return {
       agentRole: "npc",
       context: buildNpcContext(pack, state, { npcId: action.npcId, topic: action.topic }),
       contextIds: [`location:${state.currentLocationId}`, `npc:${action.npcId}`],
-      system: [
-        languageInstruction,
-        coreInstruction,
-        pack.prompts.npc?.trim() || "NPC 角色代理：只能以当前指定 NPC 的身份回应，不要直接修改状态。",
-        "本轮是 NPC 回应：spokenBy 必须只包含当前 NPC 的台词；不要让旁白代替 NPC 回答。",
-        responseInstruction
-      ].join("\n\n")
+      system: buildSystemPrompt("npc")
     };
   }
 
@@ -270,13 +254,7 @@ function buildAgentRequest(pack: WorldPack, state: SessionState, inputText: stri
     agentRole: "narrator",
     context: buildNarratorContext(pack, state, { actionText: inputText }),
     contextIds: [`location:${state.currentLocationId}`],
-    system: [
-      languageInstruction,
-      coreInstruction,
-      pack.prompts.narrator?.trim() || "旁白代理：描述当前行动在世界内造成的直接结果，不要直接修改状态。",
-      "本轮是旁白/环境处理：如果确实需要角色说话，必须放入 spokenBy；否则 spokenBy 返回空数组。",
-      responseInstruction
-    ].join("\n\n")
+    system: buildSystemPrompt("narrator")
   };
 }
 

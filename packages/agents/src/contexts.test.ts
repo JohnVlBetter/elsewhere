@@ -11,8 +11,7 @@ const pack: WorldPack = {
   clues: [{ id: "broken_watch", name: "Broken Watch", description: "Stopped.", accusationWeight: 2 }],
   items: [],
   quests: [],
-  endings: [],
-  prompts: {}
+  endings: []
 };
 
 const state: SessionState = {

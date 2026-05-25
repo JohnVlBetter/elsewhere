@@ -49,10 +49,11 @@ function readPackFiles(packRoot: string): Record<string, string> {
   return Object.fromEntries(
     listFiles(packRoot)
       .sort()
-      .map((filePath) => [
-        relative(packRoot, filePath).split(sep).join("/"),
-        readFileSync(filePath, "utf8")
-      ])
+      .flatMap((filePath) => {
+        const archivePath = relative(packRoot, filePath).split(sep).join("/");
+        if (archivePath.startsWith("prompts/")) return [];
+        return [[archivePath, readFileSync(filePath, "utf8")]];
+      })
   );
 }
 

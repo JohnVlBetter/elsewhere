@@ -13,8 +13,7 @@ const pack: WorldPack = {
   clues: [{ id: "broken_watch", name: "Broken Watch", description: "Stopped.", discoverableWhen: { location_is: "foyer" }, accusationWeight: 2 }],
   items: [{ id: "silver_watch", name: "Silver Watch", description: "Stopped at 8:47.", revealsClueId: "broken_watch" }],
   quests: [],
-  endings: [],
-  prompts: {}
+  endings: []
 };
 
 const initialState: SessionState = {
@@ -91,7 +90,7 @@ describe("runTurn", () => {
     });
 
     expect(requests).toHaveLength(1);
-    expect(requests[0]?.system).toContain("只能以当前指定 NPC");
+    expect(requests[0]?.system).toContain("spokenBy 必须只包含当前 NPC");
     expect(requests[0]?.messages[0]?.content).toContain('"id":"butler"');
     expect(requests[0]?.messages[0]?.content).not.toContain("gardener");
     expect(result.outputText).toContain("Mr. Vale：I was checking the hall clock.");
@@ -190,7 +189,7 @@ describe("runTurn", () => {
     expect(requests[0]?.system).toContain("JSON");
   });
 
-  it("includes the pack language and role prompts in model instructions", async () => {
+  it("uses core role prompts and ignores pack prompt overrides", async () => {
     const requests: Array<Parameters<ModelProvider["generateStructured"]>[0]> = [];
     const model: ModelProvider = {
       async generateStructured<T>(request: Parameters<ModelProvider["generateStructured"]>[0]): Promise<T> {
@@ -205,22 +204,24 @@ describe("runTurn", () => {
     };
 
     await runTurn({
-      pack: {
+      pack: ({
         ...pack,
         prompts: {
-          language: "默认使用简体中文回应玩家。",
-          narrator: "旁白只描述玩家能感知的内容。",
-          npc: "NPC 只能按当前角色说话。"
+          language: "PACK LANGUAGE OVERRIDE",
+          narrator: "PACK NARRATOR OVERRIDE",
+          npc: "PACK NPC OVERRIDE"
         }
-      },
+      } as WorldPack),
       state: initialState,
       inputText: "look",
       model
     });
 
-    expect(requests[0]?.system).toContain("默认使用简体中文回应玩家。");
-    expect(requests[0]?.system).toContain("旁白只描述玩家能感知的内容。");
-    expect(requests[0]?.system).not.toContain("NPC 只能按当前角色说话。");
+    expect(requests[0]?.system).toContain("核心约束：context 是唯一事实来源");
+    expect(requests[0]?.system).toContain("旁白不得替 NPC 发言");
+    expect(requests[0]?.system).not.toContain("PACK LANGUAGE OVERRIDE");
+    expect(requests[0]?.system).not.toContain("PACK NARRATOR OVERRIDE");
+    expect(requests[0]?.system).not.toContain("PACK NPC OVERRIDE");
   });
 
   it("runs rules precheck before model calls and blocks impossible actions", async () => {

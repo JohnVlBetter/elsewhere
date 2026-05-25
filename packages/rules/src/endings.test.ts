@@ -24,8 +24,7 @@ const pack: WorldPack = {
   endings: [
     { id: "wrong_accusation", name: "Wrong", priority: 1, condition: { flag_true: "wrong_accusation" }, text: "The truth slips away." },
     { id: "true_resolution", name: "True", priority: 10, condition: { all: [{ flag_true: "accused_butler" }, { knows_clue: "broken_watch" }, { knows_clue: "muddy_bootprint" }] }, text: "The butler confesses." }
-  ],
-  prompts: {}
+  ]
 };
 
 describe("judgeEnding", () => {

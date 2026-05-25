@@ -63,9 +63,10 @@ describe("domain schemas", () => {
       items: [],
       quests: [],
       endings: [],
-      prompts: {}
+      prompts: { narrator: "pack override should be ignored" }
     });
 
     expect(pack.manifest.id).toBe("rain-tower");
+    expect("prompts" in pack).toBe(false);
   });
 });

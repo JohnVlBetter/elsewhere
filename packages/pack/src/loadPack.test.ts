@@ -25,7 +25,7 @@ function writeMiniPack(root: string) {
 }
 
 describe("loadWorldPack", () => {
-  it("loads a directory world pack", () => {
+  it("loads a directory world pack without exposing prompt overrides", () => {
     const root = mkdtempSync(join(tmpdir(), "pack-"));
     writeMiniPack(root);
 
@@ -34,7 +34,7 @@ describe("loadWorldPack", () => {
     expect(pack.manifest.id).toBe("rain-tower");
     expect(pack.worldText).toContain("locked-room");
     expect(pack.locations[0]?.id).toBe("foyer");
-    expect(pack.prompts.narrator).toContain("visible facts");
+    expect("prompts" in pack).toBe(false);
   });
 
   it("reports the missing pack file path", () => {

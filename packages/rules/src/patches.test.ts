@@ -13,8 +13,7 @@ const pack: WorldPack = {
     { id: "greenhouse_key", name: "Greenhouse key", description: "A brass key.", pickupCondition: { flag_true: "gardener_trusts_player" } }
   ],
   quests: [],
-  endings: [],
-  prompts: {}
+  endings: []
 };
 
 const state: SessionState = {

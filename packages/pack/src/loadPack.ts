@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import YAML from "yaml";
 import { WorldPackSchema } from "@aigame/shared";
@@ -16,22 +16,6 @@ function readYamlFile(root: string, fileName: string): unknown {
   return YAML.parse(readRequiredFile(root, fileName));
 }
 
-function readPrompts(root: string): Record<string, string> {
-  const promptRoot = join(root, "prompts");
-  if (!existsSync(promptRoot)) {
-    return {};
-  }
-
-  return Object.fromEntries(
-    readdirSync(promptRoot)
-      .filter((fileName) => fileName.endsWith(".md"))
-      .map((fileName) => [
-        fileName.replace(/\.md$/, ""),
-        readFileSync(join(promptRoot, fileName), "utf8")
-      ])
-  );
-}
-
 export function loadWorldPack(root: string): WorldPack {
   const pack = {
     manifest: readYamlFile(root, "manifest.yaml"),
@@ -42,8 +26,7 @@ export function loadWorldPack(root: string): WorldPack {
     clues: readYamlFile(root, "clues.yaml"),
     items: readYamlFile(root, "items.yaml"),
     quests: readYamlFile(root, "quests.yaml"),
-    endings: readYamlFile(root, "endings.yaml"),
-    prompts: readPrompts(root)
+    endings: readYamlFile(root, "endings.yaml")
   };
 
   return WorldPackSchema.parse(pack);

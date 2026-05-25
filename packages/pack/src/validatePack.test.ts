@@ -18,8 +18,7 @@ function basePack(): WorldPack {
     clues: [{ id: "broken_watch", name: "Broken watch", description: "Stopped at nine.", accusationWeight: 2 }],
     items: [],
     quests: [{ id: "solve_murder", name: "Solve murder", stages: ["investigate", "accuse"], initialStage: "investigate" }],
-    endings: [{ id: "unresolved_failure", name: "Unresolved", priority: 0, condition: { flag_true: "case_failed" }, text: "The case goes cold." }],
-    prompts: {}
+    endings: [{ id: "unresolved_failure", name: "Unresolved", priority: 0, condition: { flag_true: "case_failed" }, text: "The case goes cold." }]
   };
 }
 
