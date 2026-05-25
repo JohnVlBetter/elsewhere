@@ -91,7 +91,7 @@ describe("runTurn", () => {
     });
 
     expect(requests).toHaveLength(1);
-    expect(requests[0]?.system).toContain("NPC Actor");
+    expect(requests[0]?.system).toContain("只能以当前指定 NPC");
     expect(requests[0]?.messages[0]?.content).toContain('"id":"butler"');
     expect(requests[0]?.messages[0]?.content).not.toContain("gardener");
     expect(result.outputText).toContain("Mr. Vale");
@@ -126,6 +126,39 @@ describe("runTurn", () => {
     expect(requests[0]?.system).toContain("JSON");
   });
 
+  it("includes the pack language and role prompts in model instructions", async () => {
+    const requests: Array<Parameters<ModelProvider["generateStructured"]>[0]> = [];
+    const model: ModelProvider = {
+      async generateStructured<T>(request: Parameters<ModelProvider["generateStructured"]>[0]): Promise<T> {
+        requests.push(request);
+        return {
+          narration: "门厅的烛光晃了一下。",
+          spokenBy: [],
+          proposedPatches: [],
+          privateNotes: "prompt capture"
+        } as T;
+      }
+    };
+
+    await runTurn({
+      pack: {
+        ...pack,
+        prompts: {
+          language: "默认使用简体中文回应玩家。",
+          narrator: "旁白只描述玩家能感知的内容。",
+          npc: "NPC 只能按当前角色说话。"
+        }
+      },
+      state: initialState,
+      inputText: "look",
+      model
+    });
+
+    expect(requests[0]?.system).toContain("默认使用简体中文回应玩家。");
+    expect(requests[0]?.system).toContain("旁白只描述玩家能感知的内容。");
+    expect(requests[0]?.system).not.toContain("NPC 只能按当前角色说话。");
+  });
+
   it("runs rules precheck before model calls and blocks impossible actions", async () => {
     const model: ModelProvider = {
       async generateStructured<T>(): Promise<T> {
@@ -140,7 +173,7 @@ describe("runTurn", () => {
       model
     });
 
-    expect(result.outputText).toBe("That action is blocked: Location is not reachable: greenhouse");
+    expect(result.outputText).toBe("行动暂时无法完成：当前位置无法前往 greenhouse。");
     expect(result.state).toEqual({ ...initialState, turn: 1 });
     expect(result.acceptedPatches).toEqual([]);
     expect(result.rejectedPatches).toEqual([]);

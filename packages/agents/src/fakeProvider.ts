@@ -10,7 +10,7 @@ export interface AgentResponse {
 
 export class FakeModelProvider implements ModelProvider {
   constructor(private readonly response: AgentResponse = {
-    narration: "The scene remains quiet.",
+    narration: "现场暂时没有新的变化。",
     spokenBy: [],
     proposedPatches: [],
     privateNotes: "fake response"

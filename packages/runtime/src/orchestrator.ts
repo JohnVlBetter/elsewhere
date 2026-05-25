@@ -26,7 +26,7 @@ export async function runTurn(input: {
   const precheck = precheckAction(action, input.pack, input.state);
   if (!precheck.ok) {
     return {
-      outputText: `That action is blocked: ${precheck.reason}`,
+      outputText: formatBlockedAction(precheck.reason),
       state: { ...input.state, turn: input.state.turn + 1 },
       acceptedPatches: [],
       rejectedPatches: [],
@@ -73,7 +73,7 @@ export async function runTurn(input: {
   const audit = auditOutput(outputText, { forbiddenPhrases: collectForbiddenPhrases(input.pack), requireInWorld: true });
 
   return {
-    outputText: audit.ok ? outputText : "The moment feels unclear. Rephrase your action.",
+    outputText: audit.ok ? outputText : "这一刻的反馈不够清晰，请换一种行动说法。",
     state: nextState,
     acceptedPatches,
     rejectedPatches,
@@ -106,7 +106,8 @@ function precheckAction(action: GameAction, pack: WorldPack, state: SessionState
 
 function buildAgentRequest(pack: WorldPack, state: SessionState, inputText: string, action: GameAction) {
   const responseInstruction =
-    "Return only a valid JSON object with keys narration (string), spokenBy (array), proposedPatches (array), and privateNotes (string). Do not wrap it in markdown.";
+    "只返回一个有效 JSON 对象，字段必须包含 narration (string)、spokenBy (array)、proposedPatches (array) 和 privateNotes (string)。字段名保持英文，不要用 Markdown 包裹。";
+  const languageInstruction = pack.prompts.language?.trim() || "默认使用简体中文回应玩家。";
 
   if (action.type === "ask") {
     return {
@@ -114,7 +115,8 @@ function buildAgentRequest(pack: WorldPack, state: SessionState, inputText: stri
       context: buildNpcContext(pack, state, { npcId: action.npcId, topic: action.topic }),
       contextIds: [`location:${state.currentLocationId}`, `npc:${action.npcId}`],
       system: [
-        "NPC Actor Agent: answer as the scoped NPC only. Do not mutate state directly.",
+        languageInstruction,
+        pack.prompts.npc?.trim() || "NPC 角色代理：只能以当前指定 NPC 的身份回应，不要直接修改状态。",
         responseInstruction
       ].join("\n\n")
     };
@@ -125,7 +127,8 @@ function buildAgentRequest(pack: WorldPack, state: SessionState, inputText: stri
     context: buildNarratorContext(pack, state, { actionText: inputText }),
     contextIds: [`location:${state.currentLocationId}`],
     system: [
-      "Narrator Agent: describe the immediate in-world result and do not mutate state directly.",
+      languageInstruction,
+      pack.prompts.narrator?.trim() || "旁白代理：描述当前行动在世界内造成的直接结果，不要直接修改状态。",
       responseInstruction
     ].join("\n\n")
   };
@@ -146,6 +149,29 @@ function agentResponseSchema() {
 
 function collectForbiddenPhrases(pack: WorldPack): string[] {
   return pack.npcs.flatMap((npc) => npc.forbiddenDisclosures);
+}
+
+function formatBlockedAction(reason: string): string {
+  return `行动暂时无法完成：${localizeRuleReason(reason)}`;
+}
+
+function localizeRuleReason(reason: string): string {
+  const unreachable = reason.match(/^Location is not reachable: (.+)$/);
+  if (unreachable) return `当前位置无法前往 ${unreachable[1]}。`;
+
+  const unknownNpc = reason.match(/^Unknown NPC: (.+)$/);
+  if (unknownNpc) return `没有找到角色 ${unknownNpc[1]}。`;
+
+  const unknownClue = reason.match(/^Unknown clue: (.+)$/);
+  if (unknownClue) return `没有找到线索 ${unknownClue[1]}。`;
+
+  const failedClue = reason.match(/^Clue discovery condition failed: (.+)$/);
+  if (failedClue) return `现在还不能发现线索 ${failedClue[1]}。`;
+
+  const disallowedPatch = reason.match(/^Patch type not allowed: (.+)$/);
+  if (disallowedPatch) return `规则不允许这类变更 ${disallowedPatch[1]}。`;
+
+  return reason;
 }
 
 function deriveRulePatches(action: GameAction, pack: WorldPack, state: SessionState): GamePatch[] {

@@ -1,14 +1,17 @@
 import { defineConfig } from "@playwright/test";
 
+const e2ePort = Number(process.env.PLAYWRIGHT_PORT ?? "3000");
+const e2eBaseUrl = `http://127.0.0.1:${e2ePort}`;
+
 export default defineConfig({
   testDir: "apps/web/tests",
   webServer: {
-    command: "npm run web:dev",
-    url: "http://127.0.0.1:3000",
+    command: `node --require ./scripts/sandbox-node-compat.cjs ./scripts/next-dev-fake-provider.cjs --port ${e2ePort} --hostname 127.0.0.1`,
+    url: e2eBaseUrl,
     reuseExistingServer: true,
     timeout: 120000
   },
   use: {
-    baseURL: "http://127.0.0.1:3000"
+    baseURL: e2eBaseUrl
   }
 });

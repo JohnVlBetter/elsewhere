@@ -22,6 +22,7 @@ describe("pack archive builder", () => {
     expect(archive.manifest.name).toBe("Rain Tower Murder");
     expect(archive.validation.ok).toBe(true);
     expect(archive.files["manifest.yaml"]).toContain("id: rain-tower");
-    expect(archive.files["prompts/narrator.md"]).toContain("Narrate only what the player can perceive");
+    expect(archive.files["prompts/language.md"]).toContain("默认使用简体中文");
+    expect(archive.files["prompts/narrator.md"]).toContain("只描述玩家当前能够感知到的内容");
   });
 });

@@ -10,6 +10,14 @@ export interface RuntimeModelConfig {
 }
 
 export function createRuntimeModelConfig(env: EnvLike = process.env): RuntimeModelConfig {
+  if (env.AIGAME_MODEL_PROVIDER === "fake") {
+    return {
+      providerName: "fake",
+      modelName: "fake",
+      model: new FakeModelProvider()
+    };
+  }
+
   if (env.DEEPSEEK_API_KEY) {
     return {
       providerName: "deepseek",

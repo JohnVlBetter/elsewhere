@@ -1,9 +1,9 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { SessionState } from "@aigame/shared";
 
-type StoryTone = "scene" | "player" | "narrator" | "system";
+type StoryTone = "scene" | "player" | "narrator" | "system" | "pending";
 
 type StoryEntry = {
   id: number;
@@ -39,6 +39,8 @@ const QUICK_ACTIONS = [
   { label: "询问管家", command: "ask butler alibi" },
   { label: "前往书房", command: "move study" }
 ];
+const WAITING_TEXT = "已发送，等待回应...";
+const TURN_TIMEOUT_MS = 45_000;
 
 const LOCATION_LABELS: Record<string, string> = {
   foyer: "门厅",
@@ -60,6 +62,12 @@ const ITEM_LABELS: Record<string, string> = {
   silver_watch: "银怀表"
 };
 
+const NPC_LABELS: Record<string, string> = {
+  butler: "管家",
+  gardener: "园丁",
+  heiress: "继承人"
+};
+
 const QUEST_STAGE_LABELS: Record<string, string> = {
   investigate: "调查中",
   accuse: "准备指认",
@@ -74,6 +82,13 @@ export function GameShell() {
   const [trace, setTrace] = useState("尚未提交行动。");
   const [sessionError, setSessionError] = useState<string | undefined>();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const nextStoryId = useRef(INITIAL_STORY.id + 1);
+
+  function createStoryEntry(tone: StoryTone, text: string): StoryEntry {
+    const entry = { id: nextStoryId.current, tone, text };
+    nextStoryId.current += 1;
+    return entry;
+  }
 
   useEffect(() => {
     void fetch("/api/session", { method: "POST" })
@@ -94,36 +109,54 @@ export function GameShell() {
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    const command = input.trim();
-    if (!command || !sessionId || isSubmitting) return;
+    const actionInput = resolveActionInput(input);
+    if (!actionInput.command || !sessionId || isSubmitting) return;
 
     setIsSubmitting(true);
+    setInput("");
+    setTrace("行动已送达，正在等待回应。");
+    const playerEntry = createStoryEntry("player", actionInput.displayText);
+    const pendingEntry = createStoryEntry("pending", WAITING_TEXT);
+    setTurns((current) => [
+      ...current,
+      playerEntry,
+      pendingEntry
+    ]);
+
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), TURN_TIMEOUT_MS);
+
     try {
       const response = await fetch("/api/turn", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ sessionId, inputText: command })
+        body: JSON.stringify({ sessionId, inputText: actionInput.command }),
+        signal: controller.signal
       });
       if (!response.ok) throw new Error("Turn API failed");
 
       const body = await response.json() as TurnResponse;
       setState(body.state);
       setTrace(formatTraceSummary(body));
-      setTurns((current) => [
-        ...current,
-        { id: current.length + 1, tone: "player", text: command },
-        { id: current.length + 2, tone: "narrator", text: body.outputText }
-      ]);
-      setInput("");
-    } catch {
-      setTrace("行动提交失败，请检查服务状态后重试。");
-      setTurns((current) => [
-        ...current,
-        { id: current.length + 1, tone: "system", text: "行动没有送达。命令已保留，可以稍后重试。" }
-      ]);
+      replaceStoryEntry(pendingEntry.id, { tone: "narrator", text: body.outputText });
+    } catch (error) {
+      const isTimeout = isAbortError(error);
+      const message = isTimeout
+        ? "回应等待超时。刚才的行动没有生效，输入已保留，可稍后重试。"
+        : "行动提交失败。刚才的行动没有生效，输入已保留，可稍后重试。";
+      setTrace(message);
+      setInput(actionInput.displayText);
+      replaceStoryEntry(pendingEntry.id, { tone: "system", text: message });
     } finally {
+      window.clearTimeout(timeoutId);
       setIsSubmitting(false);
     }
+  }
+
+  function replaceStoryEntry(entryId: number, replacement: Pick<StoryEntry, "tone" | "text">) {
+    setTurns((current) =>
+      current.map((entry) => entry.id === entryId ? { ...entry, ...replacement } : entry)
+    );
   }
 
   const questStage = useMemo(() => {
@@ -210,7 +243,7 @@ function StoryLog({ turns }: { turns: StoryEntry[] }) {
         <p className="eyebrow">调查记录</p>
         <h2 id="story-heading">当前叙事</h2>
       </div>
-      <div className="story-log">
+      <div className="story-log" aria-live="polite">
         {turns.map((turn) => (
           <article className={`story-entry story-entry--${turn.tone}`} key={turn.id}>
             <span className="story-marker">{storyMarker(turn.tone)}</span>
@@ -237,34 +270,37 @@ function ActionComposer({
   onQuickAction: (value: string) => void;
   onSubmit: (event: FormEvent) => void;
 }) {
+  const statusText = isSubmitting ? "已发送，等待回应" : isReady ? "等待你的下一步" : "正在连接案卷";
+
   return (
     <form onSubmit={onSubmit} className="action-composer">
       <div className="composer-label-row">
         <label htmlFor="action-input">行动指令</label>
-        <span>{isReady ? "等待你的下一步" : "正在连接案卷"}</span>
+        <span role="status" aria-live="polite">{statusText}</span>
       </div>
       <div className="action-row">
         <input
           id="action-input"
           value={input}
           onChange={(event) => onInputChange(event.target.value)}
-          placeholder="例如：inspect silver_watch"
+          placeholder="例如：检查银怀表"
           autoComplete="off"
+          disabled={!isReady || isSubmitting}
         />
         <button type="submit" disabled={!input.trim() || !isReady || isSubmitting}>
-          {isSubmitting ? "发送中" : "发送"}
+          {isSubmitting ? "等待回应" : "发送"}
         </button>
       </div>
-      <QuickActions onPick={onQuickAction} />
+      <QuickActions disabled={!isReady || isSubmitting} onPick={onQuickAction} />
     </form>
   );
 }
 
-function QuickActions({ onPick }: { onPick: (value: string) => void }) {
+function QuickActions({ disabled, onPick }: { disabled: boolean; onPick: (value: string) => void }) {
   return (
     <div className="quick-actions" aria-label="快捷行动">
       {QUICK_ACTIONS.map((action) => (
-        <button type="button" key={action.command} onClick={() => onPick(action.command)}>
+        <button type="button" disabled={disabled} key={action.command} onClick={() => onPick(action.label)}>
           {action.label}
         </button>
       ))}
@@ -323,8 +359,8 @@ function CollectionPanel({
 
 function TracePanel({ trace }: { trace: string }) {
   return (
-    <section className="case-card trace-card" aria-labelledby="developer-trace-heading">
-      <h2 id="developer-trace-heading">开发追踪</h2>
+    <section className="case-card trace-card" aria-labelledby="runtime-status-heading">
+      <h2 id="runtime-status-heading">运行状态</h2>
       <p>{trace}</p>
     </section>
   );
@@ -338,6 +374,8 @@ function storyMarker(tone: StoryTone): string {
       return "叙";
     case "system":
       return "!";
+    case "pending":
+      return "等";
     case "scene":
       return "案";
   }
@@ -348,17 +386,63 @@ function formatTraceSummary(body: {
   rejectedPatches: unknown[];
   trace: TracePayload;
 }): string {
-  const raw = body.trace.agentRawOutput?.narration ?? body.trace.agentRawOutput?.privateNotes ?? "无";
-  const precheck = body.trace.precheck?.ok === false ? `阻止:${body.trace.precheck.reason ?? "未知原因"}` : "通过";
+  const precheck = body.trace.precheck?.ok === false
+    ? `未通过：${localizeRuleReason(body.trace.precheck.reason ?? "未知原因")}`
+    : "通过";
   return [
-    `角色=${body.trace.agentRole ?? "unknown"}`,
-    `模型=${body.trace.modelName ?? "unknown"}`,
-    `预检=${precheck}`,
-    `上下文=${body.trace.contextIds?.join(",") ?? "无"}`,
-    `accepted=${body.acceptedPatches.length}`,
-    `rejected=${body.rejectedPatches.length}`,
-    `原始输出=${raw}`
+    `处理=${labelAgentRole(body.trace.agentRole)}`,
+    `模型=${body.trace.modelName ?? "默认模拟"}`,
+    `校验=${precheck}`,
+    `上下文=${formatContextIds(body.trace.contextIds)}`,
+    `采纳=${body.acceptedPatches.length}`,
+    `拒绝=${body.rejectedPatches.length}`
   ].join("；");
+}
+
+function resolveActionInput(value: string): { command: string; displayText: string } {
+  const displayText = value.trim();
+  const quickAction = QUICK_ACTIONS.find((action) => action.label === displayText);
+  return {
+    command: quickAction?.command ?? displayText,
+    displayText
+  };
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof Error && error.name === "AbortError";
+}
+
+function labelAgentRole(role: string | undefined): string {
+  switch (role) {
+    case "npc":
+      return "角色回应";
+    case "narrator":
+      return "旁白";
+    case "none":
+      return "未调用模型";
+    default:
+      return "未知";
+  }
+}
+
+function formatContextIds(contextIds: string[] | undefined): string {
+  if (!contextIds?.length) return "无";
+  return contextIds.map((contextId) => {
+    const [kind, id] = contextId.split(":");
+    if (kind === "location" && id) return `位置:${labelLocation(id)}`;
+    if (kind === "npc" && id) return `角色:${labelNpc(id)}`;
+    return contextId;
+  }).join("、");
+}
+
+function localizeRuleReason(reason: string): string {
+  const unreachable = reason.match(/^Location is not reachable: (.+)$/);
+  if (unreachable) return `当前位置无法前往 ${labelLocation(unreachable[1] ?? "")}。`;
+
+  const unknownNpc = reason.match(/^Unknown NPC: (.+)$/);
+  if (unknownNpc) return `没有找到角色 ${labelNpc(unknownNpc[1] ?? "")}。`;
+
+  return reason;
 }
 
 function labelLocation(id: string): string {
@@ -371,6 +455,10 @@ function labelClue(id: string): string {
 
 function labelItem(id: string): string {
   return ITEM_LABELS[id] ?? labelClue(id);
+}
+
+function labelNpc(id: string): string {
+  return NPC_LABELS[id] ?? formatId(id);
 }
 
 function labelQuestStage(stage: string): string {
