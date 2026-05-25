@@ -1,3 +1,3 @@
-# Rain Tower Murder
+# 雨塔谋杀案
 
-Lord Halden is found dead below the old tower during a storm. The household claims the tower bell rang by itself at nine. The player must inspect the estate, compare alibis, and accuse the correct suspect with enough evidence.
+暴雨夜，哈尔登爵士被发现死在旧塔下。宅邸众人都声称九点时塔钟自行响起。玩家是受邀调查此案的侦探，需要检查宅邸、比对不在场证明，并用足够证据指认真凶。

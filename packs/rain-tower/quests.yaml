@@ -1,4 +1,4 @@
 - id: solve_murder
-  name: Solve Lord Halden's murder
+  name: 查清哈尔登爵士之死
   stages: [investigate, accuse, resolved]
   initialStage: investigate

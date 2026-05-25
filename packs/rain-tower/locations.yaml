@@ -1,15 +1,18 @@
 - id: foyer
-  name: Foyer
-  description: A candlelit entry hall where the household waits in silence.
+  name: 门厅
+  aliases: [foyer, 门厅, 大厅]
+  description: 烛光摇晃的入口大厅，宅邸众人沉默地等在这里。
   exits: [study, greenhouse]
   visibleObjects: [silver_watch]
 - id: study
-  name: Study
-  description: Lord Halden's private room, lined with ledgers and a locked desk.
+  name: 书房
+  aliases: [study, 书房]
+  description: 哈尔登爵士的私人房间，四周摆着账本，书桌上了锁。
   exits: [foyer]
   visibleObjects: [torn_letter]
 - id: greenhouse
-  name: Greenhouse
-  description: Rain taps against glass panes and mud gathers near the rear door.
+  name: 温室
+  aliases: [greenhouse, 温室]
+  description: 雨点敲打玻璃，后门附近积着新鲜泥水。
   exits: [foyer]
   visibleObjects: [muddy_bootprint]

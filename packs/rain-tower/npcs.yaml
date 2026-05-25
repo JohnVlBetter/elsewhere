@@ -1,40 +1,46 @@
 - id: butler
-  name: Mr. Vale
-  publicDescription: The butler is precise, pale, and careful with every word.
+  name: 管家维尔
+  aliases: [Mr. Vale, Vale, 管家, 维尔]
+  publicDescription: 管家脸色苍白，说话谨慎而精确。
   privateFacts:
-    - He reset the tower clock after the murder.
+    - 命案后他重置过塔钟机关。
   knows:
-    - He saw the heiress leaving the study before nine.
-    - He knows the broken watch stopped during the struggle.
+    - 他看见继承人在九点前离开书房。
+    - 他知道破损怀表是在搏斗中停下的。
   forbiddenDisclosures:
-    - He must not confess unless the player has broken_watch and tower_bell_record.
+    - 除非玩家同时掌握 broken_watch 和 tower_bell_record，否则他不能认罪。
   topics:
     - id: alibi
-      prompt: Ask where he was at nine.
+      prompt: 询问他九点时在哪里。
+      aliases: [alibi, 不在场证明, 行踪, 九点, 在哪里]
       revealsClueId: false_alibi
 - id: gardener
-  name: Mara Reed
-  publicDescription: The gardener smells of rain and soil.
+  name: 园丁玛拉
+  aliases: [Mara Reed, Mara, 园丁, 玛拉]
+  publicDescription: 园丁身上有雨水和泥土的气味。
   privateFacts:
-    - She hid the greenhouse key to protect the heiress.
+    - 她为了保护继承人，把温室钥匙藏了起来。
   knows:
-    - She saw fresh mud on the butler's boots.
+    - 她见过管家靴子上的新鲜泥迹。
   forbiddenDisclosures:
-    - She must not reveal the hidden key unless treated respectfully.
+    - 除非玩家礼貌对待她，否则她不能说出钥匙藏在哪里。
   topics:
     - id: boots
-      prompt: Ask about muddy boots.
+      prompt: 询问泥靴和温室里的脚印。
+      aliases: [boots, muddy boots, 靴子, 泥靴, 脚印, 靴印]
       revealsClueId: muddy_bootprint
 - id: heiress
-  name: Elian Halden
-  publicDescription: The heiress is composed, but her hands tremble.
+  name: 继承人伊莲
+  aliases: [Elian Halden, Elian, heiress, 继承人, 伊莲, 夫人, 女士]
+  publicDescription: 继承人努力保持镇定，但手指仍在发抖。
   privateFacts:
-    - She argued with Lord Halden about the torn letter.
+    - 她曾因那封被撕裂的信与哈尔登爵士争吵。
   knows:
-    - The torn letter proves Lord Halden planned to disinherit her.
+    - 那封信证明哈尔登爵士打算剥夺她的继承权。
   forbiddenDisclosures:
-    - She must not identify the killer.
+    - 她不能直接指出凶手。
   topics:
     - id: letter
-      prompt: Ask about the torn letter.
+      prompt: 询问那封被撕裂的信。
+      aliases: [letter, torn letter, 信, 信件, 撕裂信件]
       revealsClueId: torn_letter

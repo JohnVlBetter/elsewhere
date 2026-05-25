@@ -1,38 +1,44 @@
 - id: broken_watch
-  name: Broken Watch
-  description: A silver watch stopped at 8:47, earlier than the claimed bell time.
+  name: 破损怀表
+  aliases: [broken watch, silver watch, 怀表, 银怀表, 银表]
+  description: 银质怀表停在 8:47，早于众人声称听见塔钟自鸣的九点。
   discoverableWhen:
     location_is: foyer
   accusationWeight: 3
 - id: muddy_bootprint
-  name: Muddy Bootprint
-  description: A bootprint in greenhouse mud matches the butler's narrow boots.
+  name: 泥靴印
+  aliases: [muddy bootprint, bootprint, 脚印, 靴印, 泥靴印]
+  description: 温室泥地里的靴印很窄，和管家的靴子相符。
   discoverableWhen:
     location_is: greenhouse
   accusationWeight: 3
 - id: torn_letter
-  name: Torn Letter
-  description: A torn letter gives the heiress a motive, but not opportunity.
+  name: 撕裂信件
+  aliases: [torn letter, letter, 信, 信件, 撕裂信件]
+  description: 被撕裂的信说明继承人有动机，但不能证明她有作案机会。
   discoverableWhen:
     location_is: study
   accusationWeight: 1
 - id: greenhouse_key
-  name: Greenhouse Key
-  description: A key hidden behind a cracked planter connects the greenhouse and service hall.
+  name: 温室钥匙
+  aliases: [greenhouse key, key, 钥匙, 温室钥匙]
+  description: 藏在裂纹花盆后的钥匙连接了温室和仆役通道。
   discoverableWhen:
     all:
       - location_is: greenhouse
       - flag_true: gardener_trusts_player
   accusationWeight: 2
 - id: tower_bell_record
-  name: Tower Bell Record
-  description: The tower mechanism was manually reset after the murder.
+  name: 钟楼记录
+  aliases: [tower bell record, bell record, 钟楼记录, 钟声记录]
+  description: 钟楼机关在命案后被人手动重置过。
   discoverableWhen:
     location_is: study
   accusationWeight: 3
 - id: false_alibi
-  name: False Alibi
-  description: The butler's statement conflicts with the stopped watch.
+  name: 虚假不在场证明
+  aliases: [false alibi, alibi, 不在场证明, 口供矛盾]
+  description: 管家的说法与停在 8:47 的怀表互相冲突。
   discoverableWhen:
     knows_clue: broken_watch
   accusationWeight: 2

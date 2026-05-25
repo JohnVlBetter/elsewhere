@@ -25,7 +25,7 @@ async function main() {
   const baseUrl = "http://127.0.0.1:3130";
   const page = await fetch(baseUrl);
   const pageText = await page.text();
-  if (!page.ok || !pageText.includes("Rain Tower Murder")) {
+  if (!page.ok || !pageText.includes("雨塔谋杀案")) {
     throw new Error(`Page smoke failed with ${page.status}`);
   }
 
@@ -40,7 +40,7 @@ async function main() {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         sessionId: session.sessionId,
-        inputText: "inspect broken_watch"
+        inputText: "inspect silver_watch"
       })
     }),
     "turn API"

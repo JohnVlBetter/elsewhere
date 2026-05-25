@@ -38,6 +38,7 @@ export const ConditionSchema: z.ZodType<Condition> = z.lazy(() =>
 export const LocationSchema = z.object({
   id: IdSchema,
   name: z.string().min(1),
+  aliases: z.array(z.string().min(1)).optional(),
   description: z.string().min(1),
   exits: z.array(IdSchema),
   entryCondition: ConditionSchema.optional(),
@@ -47,6 +48,7 @@ export const LocationSchema = z.object({
 export const NpcSchema = z.object({
   id: IdSchema,
   name: z.string().min(1),
+  aliases: z.array(z.string().min(1)).optional(),
   publicDescription: z.string().min(1),
   privateFacts: z.array(z.string()).default([]),
   knows: z.array(z.string()).default([]),
@@ -56,6 +58,7 @@ export const NpcSchema = z.object({
       z.object({
         id: IdSchema,
         prompt: z.string().min(1),
+        aliases: z.array(z.string().min(1)).optional(),
         unlockCondition: ConditionSchema.optional(),
         revealsClueId: IdSchema.optional()
       })
@@ -66,6 +69,7 @@ export const NpcSchema = z.object({
 export const ClueSchema = z.object({
   id: IdSchema,
   name: z.string().min(1),
+  aliases: z.array(z.string().min(1)).optional(),
   description: z.string().min(1),
   discoverableWhen: ConditionSchema.optional(),
   accusationWeight: z.number().int().min(0).default(0)
@@ -74,7 +78,9 @@ export const ClueSchema = z.object({
 export const ItemSchema = z.object({
   id: IdSchema,
   name: z.string().min(1),
+  aliases: z.array(z.string().min(1)).optional(),
   description: z.string().min(1),
+  revealsClueId: IdSchema.optional(),
   pickupCondition: ConditionSchema.optional()
 });
 
@@ -125,6 +131,7 @@ export const ActionSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("inspect"), targetId: IdSchema, rawText: z.string() }),
   z.object({ type: z.literal("move"), locationId: IdSchema, rawText: z.string() }),
   z.object({ type: z.literal("ask"), npcId: IdSchema, topic: z.string().min(1), rawText: z.string() }),
+  z.object({ type: z.literal("take"), itemId: IdSchema, rawText: z.string() }),
   z.object({ type: z.literal("use"), itemId: IdSchema, targetId: IdSchema.optional(), rawText: z.string() }),
   z.object({ type: z.literal("accuse"), npcId: IdSchema, clueIds: z.array(IdSchema), rawText: z.string() }),
   z.object({ type: z.literal("unknown"), rawText: z.string() })
@@ -140,11 +147,21 @@ export const PatchSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("set_quest_stage"), questId: IdSchema, stage: z.string().min(1), reason: z.string().min(1) })
 ]);
 
+export const TurnMessageSchema = z.object({
+  type: z.enum(["environment", "narration", "npc", "system", "item", "clue"]),
+  text: z.string().min(1),
+  label: z.string().min(1).optional(),
+  npcId: IdSchema.optional(),
+  itemId: IdSchema.optional(),
+  clueId: IdSchema.optional()
+});
+
 export type Manifest = z.infer<typeof ManifestSchema>;
 export type WorldPack = z.infer<typeof WorldPackSchema>;
 export type SessionState = z.infer<typeof SessionStateSchema>;
 export type GameAction = z.infer<typeof ActionSchema>;
 export type GamePatch = z.infer<typeof PatchSchema>;
+export type TurnMessage = z.infer<typeof TurnMessageSchema>;
 export type LocationDef = z.infer<typeof LocationSchema>;
 export type NpcDef = z.infer<typeof NpcSchema>;
 export type ClueDef = z.infer<typeof ClueSchema>;

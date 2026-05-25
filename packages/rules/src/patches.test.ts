@@ -5,11 +5,13 @@ import { applyAcceptedPatch, validatePatch } from "./patches";
 const pack: WorldPack = {
   manifest: { id: "rain-tower", name: "Rain Tower Murder", version: "0.1.0", runtimeVersion: "0.1.0", entryLocationId: "foyer" },
   worldText: "",
-  rules: { allowedPatchTypes: ["discover_clue", "move_location", "set_flag"] },
+  rules: { allowedPatchTypes: ["discover_clue", "add_item", "move_location", "set_flag"] },
   locations: [{ id: "foyer", name: "Foyer", description: "Entry.", exits: ["study"], visibleObjects: [] }, { id: "study", name: "Study", description: "Books.", exits: [], visibleObjects: [] }],
   npcs: [],
   clues: [{ id: "broken_watch", name: "Broken watch", description: "Stopped.", accusationWeight: 2 }],
-  items: [],
+  items: [
+    { id: "greenhouse_key", name: "Greenhouse key", description: "A brass key.", pickupCondition: { flag_true: "gardener_trusts_player" } }
+  ],
   quests: [],
   endings: [],
   prompts: {}
@@ -34,6 +36,16 @@ describe("patch validation", () => {
   it("rejects unknown clue discovery", () => {
     const result = validatePatch({ type: "discover_clue", clueId: "invented", reason: "AI guessed." }, pack, state);
     expect(result).toEqual({ ok: false, reason: "Unknown clue: invented" });
+  });
+
+  it("rejects unknown item pickup", () => {
+    const result = validatePatch({ type: "add_item", itemId: "invented", reason: "AI guessed." }, pack, state);
+    expect(result).toEqual({ ok: false, reason: "Unknown item: invented" });
+  });
+
+  it("rejects item pickup when its pickup condition is not met", () => {
+    const result = validatePatch({ type: "add_item", itemId: "greenhouse_key", reason: "Picked up key." }, pack, state);
+    expect(result).toEqual({ ok: false, reason: "Item pickup condition failed: greenhouse_key" });
   });
 
   it("moves only to valid connected locations", () => {

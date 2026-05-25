@@ -9,6 +9,7 @@ export function validateWorldPack(pack: WorldPack): ValidationResult {
   const errors: string[] = [];
   const locationIds = new Set(pack.locations.map((location) => location.id));
   const clueIds = new Set(pack.clues.map((clue) => clue.id));
+  const itemIds = new Set(pack.items.map((item) => item.id));
   const questIds = new Set(pack.quests.map((quest) => quest.id));
 
   if (!locationIds.has(pack.manifest.entryLocationId)) {
@@ -21,6 +22,11 @@ export function validateWorldPack(pack: WorldPack): ValidationResult {
         errors.push(`Location ${location.id} exits to missing location: ${exitId}`);
       }
     }
+    for (const visibleObjectId of location.visibleObjects) {
+      if (!clueIds.has(visibleObjectId) && !itemIds.has(visibleObjectId)) {
+        errors.push(`Location ${location.id} references missing visible object: ${visibleObjectId}`);
+      }
+    }
   }
 
   for (const npc of pack.npcs) {
@@ -28,6 +34,12 @@ export function validateWorldPack(pack: WorldPack): ValidationResult {
       if (topic.revealsClueId && !clueIds.has(topic.revealsClueId)) {
         errors.push(`NPC ${npc.id} topic ${topic.id} reveals missing clue: ${topic.revealsClueId}`);
       }
+    }
+  }
+
+  for (const item of pack.items) {
+    if (item.revealsClueId && !clueIds.has(item.revealsClueId)) {
+      errors.push(`Item ${item.id} reveals missing clue: ${item.revealsClueId}`);
     }
   }
 

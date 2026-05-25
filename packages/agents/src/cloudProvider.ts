@@ -17,6 +17,28 @@ export class OpenAICompatibleProvider implements ModelProvider {
     temperature?: number;
     maxTokens?: number;
   }): Promise<T> {
+    let lastBody: unknown;
+
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const body = await this.requestChatCompletion(request);
+      lastBody = body;
+      const content = body.choices?.[0]?.message?.content;
+      if (content) {
+        return JSON.parse(content) as T;
+      }
+    }
+
+    throw new Error(`Model response did not include message content: ${JSON.stringify(lastBody)}`);
+  }
+
+  private async requestChatCompletion(request: {
+    model: string;
+    system: string;
+    messages: RuntimeMessage[];
+    schema: JsonSchema;
+    temperature?: number;
+    maxTokens?: number;
+  }): Promise<{ choices?: Array<{ message?: { content?: string } }> }> {
     const response = await fetch(`${this.options.baseUrl.replace(/\/$/, "")}/chat/completions`, {
       method: "POST",
       headers: {
@@ -39,12 +61,7 @@ export class OpenAICompatibleProvider implements ModelProvider {
       throw new Error(`Model request failed: ${response.status} ${await response.text()}`);
     }
 
-    const body = await response.json() as { choices?: Array<{ message?: { content?: string } }> };
-    const content = body.choices?.[0]?.message?.content;
-    if (!content) {
-      throw new Error("Model response did not include message content");
-    }
-    return JSON.parse(content) as T;
+    return await response.json() as { choices?: Array<{ message?: { content?: string } }> };
   }
 
   private buildResponseFormat(schema: JsonSchema): Record<string, unknown> {

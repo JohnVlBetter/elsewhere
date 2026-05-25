@@ -7,11 +7,11 @@ import { runTurn } from "./orchestrator";
 const pack: WorldPack = {
   manifest: { id: "rain-tower", name: "Rain Tower Murder", version: "0.1.0", runtimeVersion: "0.1.0", entryLocationId: "foyer" },
   worldText: "Stormy estate.",
-  rules: { allowedPatchTypes: ["discover_clue", "move_location", "set_flag"] },
-  locations: [{ id: "foyer", name: "Foyer", description: "Entry.", exits: ["study"], visibleObjects: ["broken_watch"] }, { id: "study", name: "Study", description: "Books.", exits: [], visibleObjects: [] }],
+  rules: { allowedPatchTypes: ["discover_clue", "add_item", "move_location", "set_flag"] },
+  locations: [{ id: "foyer", name: "Foyer", description: "Entry.", exits: ["study"], visibleObjects: ["broken_watch", "silver_watch"] }, { id: "study", name: "Study", description: "Books.", exits: [], visibleObjects: [] }],
   npcs: [],
   clues: [{ id: "broken_watch", name: "Broken Watch", description: "Stopped.", discoverableWhen: { location_is: "foyer" }, accusationWeight: 2 }],
-  items: [],
+  items: [{ id: "silver_watch", name: "Silver Watch", description: "Stopped at 8:47.", revealsClueId: "broken_watch" }],
   quests: [],
   endings: [],
   prompts: {}
@@ -94,10 +94,74 @@ describe("runTurn", () => {
     expect(requests[0]?.system).toContain("只能以当前指定 NPC");
     expect(requests[0]?.messages[0]?.content).toContain('"id":"butler"');
     expect(requests[0]?.messages[0]?.content).not.toContain("gardener");
-    expect(result.outputText).toContain("Mr. Vale");
+    expect(result.outputText).toContain("Mr. Vale：I was checking the hall clock.");
+    expect(result.messages).toContainEqual({
+      type: "npc",
+      npcId: "butler",
+      label: "Mr. Vale",
+      text: "I was checking the hall clock."
+    });
     expect(result.trace.contextIds).toEqual(["location:foyer", "npc:butler"]);
     expect(result.trace.agentRole).toBe("npc");
     expect(result.trace.agentRawOutput).toMatchObject({ privateNotes: "npc actor raw output" });
+  });
+
+  it("keeps canonical item facts stable when inspecting an item that reveals a clue", async () => {
+    const result = await runTurn({
+      pack: {
+        ...pack,
+        clues: [
+          {
+            id: "broken_watch",
+            name: "Broken Watch",
+            description: "The silver pocket watch is cracked and stopped at 8:47.",
+            discoverableWhen: { location_is: "foyer" },
+            accusationWeight: 2
+          }
+        ]
+      },
+      state: initialState,
+      inputText: "inspect silver_watch",
+      model: new FakeModelProvider({
+        narration: "The watch is stopped at exactly nine o'clock.",
+        spokenBy: [],
+        proposedPatches: [],
+        privateNotes: "wrong model detail"
+      })
+    });
+
+    expect(result.state.knownClues).toEqual(["broken_watch"]);
+    expect(result.outputText).toContain("8:47");
+    expect(result.outputText).not.toContain("nine o'clock");
+    expect(result.messages).toContainEqual({
+      type: "clue",
+      clueId: "broken_watch",
+      label: "Broken Watch",
+      text: "The silver pocket watch is cracked and stopped at 8:47."
+    });
+  });
+
+  it("adds visible picked-up items to inventory and reports the item gain", async () => {
+    const result = await runTurn({
+      pack,
+      state: initialState,
+      inputText: "take silver_watch",
+      model: new FakeModelProvider({
+        narration: "You take the silver watch.",
+        spokenBy: [],
+        proposedPatches: [],
+        privateNotes: "take item"
+      })
+    });
+
+    expect(result.state.inventory).toEqual(["silver_watch"]);
+    expect(result.acceptedPatches).toEqual([{ type: "add_item", itemId: "silver_watch", reason: "Took silver_watch." }]);
+    expect(result.messages).toContainEqual({
+      type: "item",
+      itemId: "silver_watch",
+      label: "Silver Watch",
+      text: "Stopped at 8:47."
+    });
   });
 
   it("passes the configured model name to the provider", async () => {

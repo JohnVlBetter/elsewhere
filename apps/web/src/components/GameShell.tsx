@@ -1,14 +1,24 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, RefObject, useEffect, useMemo, useRef, useState } from "react";
 import type { SessionState } from "@aigame/shared";
 
-type StoryTone = "scene" | "player" | "narrator" | "system" | "pending";
+type StoryTone = "scene" | "player" | "narrator" | "environment" | "npc" | "system" | "pending" | "item" | "clue";
 
 type StoryEntry = {
   id: number;
   tone: StoryTone;
   text: string;
+  label?: string;
+};
+
+type TurnMessage = {
+  type: "environment" | "narration" | "npc" | "system" | "item" | "clue";
+  text: string;
+  label?: string;
+  npcId?: string;
+  itemId?: string;
+  clueId?: string;
 };
 
 type TracePayload = {
@@ -21,10 +31,17 @@ type TracePayload = {
 
 type TurnResponse = {
   outputText: string;
+  messages?: TurnMessage[];
   state: SessionState;
   acceptedPatches: unknown[];
   rejectedPatches: unknown[];
   trace: TracePayload;
+};
+
+type SessionResponse = {
+  sessionId: string;
+  state: SessionState;
+  intro?: string;
 };
 
 const INITIAL_STORY: StoryEntry = {
@@ -83,9 +100,10 @@ export function GameShell() {
   const [sessionError, setSessionError] = useState<string | undefined>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const nextStoryId = useRef(INITIAL_STORY.id + 1);
+  const storyLogRef = useRef<HTMLDivElement>(null);
 
-  function createStoryEntry(tone: StoryTone, text: string): StoryEntry {
-    const entry = { id: nextStoryId.current, tone, text };
+  function createStoryEntry(tone: StoryTone, text: string, label?: string): StoryEntry {
+    const entry = { id: nextStoryId.current, tone, text, label };
     nextStoryId.current += 1;
     return entry;
   }
@@ -96,9 +114,11 @@ export function GameShell() {
         if (!response.ok) throw new Error("Session API failed");
         return response.json();
       })
-      .then((body: { sessionId: string; state: SessionState }) => {
+      .then((body: SessionResponse) => {
         setSessionId(body.sessionId);
         setState(body.state);
+        setTurns([{ ...INITIAL_STORY, text: body.intro ?? INITIAL_STORY.text }]);
+        nextStoryId.current = INITIAL_STORY.id + 1;
         setSessionError(undefined);
       })
       .catch(() => {
@@ -138,7 +158,7 @@ export function GameShell() {
       const body = await response.json() as TurnResponse;
       setState(body.state);
       setTrace(formatTraceSummary(body));
-      replaceStoryEntry(pendingEntry.id, { tone: "narrator", text: body.outputText });
+      replaceStoryEntry(pendingEntry.id, storyEntriesFromTurnResponse(body));
     } catch (error) {
       const isTimeout = isAbortError(error);
       const message = isTimeout
@@ -146,18 +166,36 @@ export function GameShell() {
         : "行动提交失败。刚才的行动没有生效，输入已保留，可稍后重试。";
       setTrace(message);
       setInput(actionInput.displayText);
-      replaceStoryEntry(pendingEntry.id, { tone: "system", text: message });
+      replaceStoryEntry(pendingEntry.id, [{ tone: "system", text: message }]);
     } finally {
       window.clearTimeout(timeoutId);
       setIsSubmitting(false);
     }
   }
 
-  function replaceStoryEntry(entryId: number, replacement: Pick<StoryEntry, "tone" | "text">) {
+  function replaceStoryEntry(entryId: number, replacements: Array<Omit<StoryEntry, "id">>) {
+    const entries = replacements.map((replacement) => createStoryEntry(replacement.tone, replacement.text, replacement.label));
     setTurns((current) =>
-      current.map((entry) => entry.id === entryId ? { ...entry, ...replacement } : entry)
+      current.flatMap((entry) => entry.id === entryId ? entries : [entry])
     );
   }
+
+  function storyEntriesFromTurnResponse(body: TurnResponse): Array<Omit<StoryEntry, "id">> {
+    const messages = body.messages?.length
+      ? body.messages
+      : [{ type: "narration" as const, text: body.outputText }];
+    return messages.map((message) => ({
+      tone: storyToneFromMessage(message),
+      text: message.text,
+      label: storyLabelFromMessage(message)
+    }));
+  }
+
+  useEffect(() => {
+    const log = storyLogRef.current;
+    if (!log) return;
+    log.scrollTop = log.scrollHeight;
+  }, [turns]);
 
   const questStage = useMemo(() => {
     const stage = state?.questStages.solve_murder;
@@ -168,7 +206,7 @@ export function GameShell() {
     <main className="game-shell">
       <section className="game-board" aria-label="案件主界面">
         <HeroPanel state={state} questStage={questStage} sessionError={sessionError} />
-        <StoryLog turns={turns} />
+        <StoryLog turns={turns} storyLogRef={storyLogRef} />
         <ActionComposer
           input={input}
           isSubmitting={isSubmitting}
@@ -236,18 +274,21 @@ function HeroPanel({
   );
 }
 
-function StoryLog({ turns }: { turns: StoryEntry[] }) {
+function StoryLog({ turns, storyLogRef }: { turns: StoryEntry[]; storyLogRef: RefObject<HTMLDivElement | null> }) {
   return (
     <section className="story-panel" aria-labelledby="story-heading">
       <div className="panel-heading">
         <p className="eyebrow">调查记录</p>
         <h2 id="story-heading">当前叙事</h2>
       </div>
-      <div className="story-log" aria-live="polite">
+      <div className="story-log" aria-live="polite" ref={storyLogRef}>
         {turns.map((turn) => (
           <article className={`story-entry story-entry--${turn.tone}`} key={turn.id}>
             <span className="story-marker">{storyMarker(turn.tone)}</span>
-            <p>{turn.text}</p>
+            <div className="story-body">
+              {turn.label ? <span className="story-label">{turn.label}</span> : null}
+              <p>{turn.text}</p>
+            </div>
           </article>
         ))}
       </div>
@@ -372,12 +413,54 @@ function storyMarker(tone: StoryTone): string {
       return "你";
     case "narrator":
       return "叙";
+    case "environment":
+      return "境";
+    case "npc":
+      return "角";
     case "system":
       return "!";
     case "pending":
       return "等";
+    case "item":
+      return "物";
+    case "clue":
+      return "线";
     case "scene":
       return "案";
+  }
+}
+
+function storyToneFromMessage(message: TurnMessage): StoryTone {
+  switch (message.type) {
+    case "environment":
+      return "environment";
+    case "npc":
+      return "npc";
+    case "item":
+      return "item";
+    case "clue":
+      return "clue";
+    case "system":
+      return "system";
+    case "narration":
+      return "narrator";
+  }
+}
+
+function storyLabelFromMessage(message: TurnMessage): string | undefined {
+  switch (message.type) {
+    case "npc":
+      return message.label ?? (message.npcId ? labelNpc(message.npcId) : "角色");
+    case "item":
+      return "道具";
+    case "clue":
+      return "线索";
+    case "environment":
+      return "环境";
+    case "system":
+      return "系统";
+    case "narration":
+      return "旁白";
   }
 }
 

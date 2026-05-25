@@ -14,6 +14,15 @@ npm run cli -- simulate packs/rain-tower packs/rain-tower/scripts/true-path.yaml
 npm run e2e:install
 npm run e2e
 npm run web:dev
+npm run web:start
+```
+
+`npm run web:start` is the Windows one-command launcher. It loads root `.env.local`, stops any process already listening on port 3000, then starts the web app at `http://127.0.0.1:3000`.
+
+To choose a different port directly:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-web.ps1 -Port 3001
 ```
 
 ## Cloud model

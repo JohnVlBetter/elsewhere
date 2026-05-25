@@ -1,6 +1,9 @@
 - id: greenhouse_key
-  name: Greenhouse Key
-  description: A brass key with damp soil in its teeth.
+  name: 温室钥匙
+  aliases: [greenhouse key, 铜钥匙, 钥匙, 温室钥匙]
+  description: 一枚黄铜钥匙，齿缝里还嵌着潮湿的泥土。
 - id: silver_watch
-  name: Silver Watch
-  description: Lord Halden's damaged pocket watch.
+  name: 银怀表
+  aliases: [silver watch, pocket watch, 怀表, 银表, 银怀表]
+  description: 哈尔登爵士的银质怀表，表盘碎裂，指针停在 8:47。
+  revealsClueId: broken_watch

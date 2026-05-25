@@ -18,6 +18,16 @@ export function validatePatch(patch: GamePatch, pack: WorldPack, state: SessionS
     }
   }
 
+  if (patch.type === "add_item") {
+    const item = pack.items.find((candidate) => candidate.id === patch.itemId);
+    if (!item) {
+      return { ok: false, reason: `Unknown item: ${patch.itemId}` };
+    }
+    if (!evaluateCondition(item.pickupCondition, state)) {
+      return { ok: false, reason: `Item pickup condition failed: ${patch.itemId}` };
+    }
+  }
+
   if (patch.type === "move_location") {
     const current = pack.locations.find((location) => location.id === state.currentLocationId);
     if (!current?.exits.includes(patch.locationId)) {

@@ -27,6 +27,7 @@ describe("GameShell", () => {
     vi.spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(new Response(JSON.stringify({
         sessionId: "session-1",
+        intro: "你是受邀调查哈尔登爵士死亡的侦探。先确认现场、人物和时间线。",
         state: {
           currentLocationId: "foyer",
           turn: 0,
@@ -50,6 +51,11 @@ describe("GameShell", () => {
         },
         acceptedPatches: [],
         rejectedPatches: [],
+        messages: [
+          { type: "narration", text: "管家谨慎地看了你一眼。" },
+          { type: "npc", npcId: "butler", label: "管家", text: "我在九点时一直在书房。" },
+          { type: "clue", clueId: "false_alibi", label: "虚假不在场证明", text: "管家的说法与怀表时间冲突。" }
+        ],
         trace: {
           precheck: { ok: true },
           contextIds: ["location:foyer", "npc:butler"],
@@ -61,11 +67,17 @@ describe("GameShell", () => {
 
     render(<GameShell />);
     await waitFor(() => expect(screen.getByRole("region", { name: "当前位置" }).textContent).toContain("门厅"));
+    expect(screen.getByText("你是受邀调查哈尔登爵士死亡的侦探。先确认现场、人物和时间线。")).toBeTruthy();
 
     fireEvent.change(screen.getByLabelText("行动指令"), { target: { value: "询问管家的不在场证明" } });
     fireEvent.click(screen.getByRole("button", { name: "发送" }));
 
     await waitFor(() => {
+      expect(screen.getByText("管家谨慎地看了你一眼。")).toBeTruthy();
+      expect(screen.getByText("我在九点时一直在书房。")).toBeTruthy();
+      expect(screen.getByText("管家的说法与怀表时间冲突。")).toBeTruthy();
+      expect(screen.getByText("管家")).toBeTruthy();
+      expect(screen.getByText("线索")).toBeTruthy();
       const status = screen.getByRole("region", { name: "运行状态" }).textContent;
       expect(status).toContain("处理=角色回应");
       expect(status).toContain("模型=deepseek-v4-pro");
@@ -84,6 +96,7 @@ describe("GameShell", () => {
     vi.spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(new Response(JSON.stringify({
         sessionId: "session-1",
+        intro: "你是受邀调查哈尔登爵士死亡的侦探。先确认现场、人物和时间线。",
         state: {
           currentLocationId: "foyer",
           turn: 0,
@@ -120,6 +133,7 @@ describe("GameShell", () => {
       },
       acceptedPatches: [],
       rejectedPatches: [],
+      messages: [{ type: "narration", text: "怀表停在八点四十七分。" }],
       trace: {
         precheck: { ok: true },
         contextIds: ["location:foyer"],

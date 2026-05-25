@@ -19,7 +19,7 @@ describe("pack archive builder", () => {
     expect(result.manifest.id).toBe("rain-tower");
     expect(result.validation).toEqual({ ok: true, errors: [] });
     expect(archive.format).toBe("aigame.pack.v1");
-    expect(archive.manifest.name).toBe("Rain Tower Murder");
+    expect(archive.manifest.name).toBe("雨塔谋杀案");
     expect(archive.validation.ok).toBe(true);
     expect(archive.files["manifest.yaml"]).toContain("id: rain-tower");
     expect(archive.files["prompts/language.md"]).toContain("默认使用简体中文");
