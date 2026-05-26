@@ -7,7 +7,25 @@ export const ManifestSchema = z.object({
   name: z.string().min(1),
   version: z.string().min(1),
   runtimeVersion: z.string().min(1),
-  entryLocationId: IdSchema
+  entryLocationId: IdSchema,
+  profileId: IdSchema
+});
+
+export const ProfileActionSchema = z.object({
+  aliases: z.array(z.string().min(1)).default([]),
+  mapsTo: z.string().min(1).optional(),
+  requiresTarget: z.enum(["character", "item", "location", "fact"]).optional(),
+  acceptsFacts: z.boolean().default(false)
+});
+
+export const ProfileSchema = z.object({
+  id: IdSchema,
+  labels: z.record(z.string(), z.string().min(1)).default({}),
+  quickActions: z.array(z.object({
+    label: z.string().min(1),
+    command: z.string().min(1)
+  })).default([]),
+  actions: z.record(z.string(), ProfileActionSchema).default({})
 });
 
 export type Condition =
@@ -17,9 +35,12 @@ export type Condition =
   | { location_is: string }
   | { flag_true: string }
   | { has_item: string }
-  | { knows_clue: string }
-  | { quest_stage_is: { quest: string; stage: string } }
-  | { npc_attitude_at_least: { npc: string; value: number } };
+  | { knows_fact: string }
+  | { objective_stage_is: { objective: string; stage: string } }
+  | { relationship_at_least: { character: string; value: number } }
+  | { relationship_at_most: { character: string; value: number } }
+  | { resource_at_least: { resource: string; value: number } }
+  | { resource_at_most: { resource: string; value: number } };
 
 export const ConditionSchema: z.ZodType<Condition> = z.lazy(() =>
   z.union([
@@ -29,9 +50,12 @@ export const ConditionSchema: z.ZodType<Condition> = z.lazy(() =>
     z.object({ location_is: IdSchema }),
     z.object({ flag_true: IdSchema }),
     z.object({ has_item: IdSchema }),
-    z.object({ knows_clue: IdSchema }),
-    z.object({ quest_stage_is: z.object({ quest: IdSchema, stage: z.string().min(1) }) }),
-    z.object({ npc_attitude_at_least: z.object({ npc: IdSchema, value: z.number().int() }) })
+    z.object({ knows_fact: IdSchema }),
+    z.object({ objective_stage_is: z.object({ objective: IdSchema, stage: z.string().min(1) }) }),
+    z.object({ relationship_at_least: z.object({ character: IdSchema, value: z.number().int() }) }),
+    z.object({ relationship_at_most: z.object({ character: IdSchema, value: z.number().int() }) }),
+    z.object({ resource_at_least: z.object({ resource: IdSchema, value: z.number().int() }) }),
+    z.object({ resource_at_most: z.object({ resource: IdSchema, value: z.number().int() }) })
   ])
 );
 
@@ -45,7 +69,7 @@ export const LocationSchema = z.object({
   visibleObjects: z.array(IdSchema).default([])
 });
 
-export const NpcSchema = z.object({
+export const CharacterSchema = z.object({
   id: IdSchema,
   name: z.string().min(1),
   aliases: z.array(z.string().min(1)).optional(),
@@ -60,19 +84,20 @@ export const NpcSchema = z.object({
         prompt: z.string().min(1),
         aliases: z.array(z.string().min(1)).optional(),
         unlockCondition: ConditionSchema.optional(),
-        revealsClueId: IdSchema.optional()
+        revealsFactId: IdSchema.optional()
       })
     )
     .default([])
 });
 
-export const ClueSchema = z.object({
+export const FactSchema = z.object({
   id: IdSchema,
+  kind: z.string().min(1).default("fact"),
   name: z.string().min(1),
   aliases: z.array(z.string().min(1)).optional(),
   description: z.string().min(1),
   discoverableWhen: ConditionSchema.optional(),
-  accusationWeight: z.number().int().min(0).default(0)
+  tags: z.array(z.string().min(1)).default([])
 });
 
 export const ItemSchema = z.object({
@@ -80,11 +105,27 @@ export const ItemSchema = z.object({
   name: z.string().min(1),
   aliases: z.array(z.string().min(1)).optional(),
   description: z.string().min(1),
-  revealsClueId: IdSchema.optional(),
+  revealsFactId: IdSchema.optional(),
   pickupCondition: ConditionSchema.optional()
 });
 
-export const QuestSchema = z.object({
+export const ResourceSchema = z.object({
+  id: IdSchema,
+  name: z.string().min(1),
+  initial: z.number().int(),
+  min: z.number().int(),
+  max: z.number().int()
+});
+
+export const RelationshipSchema = z.object({
+  characterId: IdSchema,
+  name: z.string().min(1),
+  initial: z.number().int(),
+  min: z.number().int(),
+  max: z.number().int()
+});
+
+export const ObjectiveSchema = z.object({
   id: IdSchema,
   name: z.string().min(1),
   stages: z.array(z.string().min(1)).min(1),
@@ -99,19 +140,53 @@ export const EndingSchema = z.object({
   text: z.string().min(1)
 });
 
+export const PatchSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("reveal_fact"), factId: IdSchema, reason: z.string().min(1) }),
+  z.object({ type: z.literal("add_item"), itemId: IdSchema, reason: z.string().min(1) }),
+  z.object({ type: z.literal("remove_item"), itemId: IdSchema, reason: z.string().min(1) }),
+  z.object({ type: z.literal("move_location"), locationId: IdSchema, reason: z.string().min(1) }),
+  z.object({ type: z.literal("set_flag"), flag: IdSchema, value: z.boolean(), reason: z.string().min(1) }),
+  z.object({ type: z.literal("adjust_relationship"), characterId: IdSchema, delta: z.number().int(), reason: z.string().min(1) }),
+  z.object({ type: z.literal("set_resource"), resourceId: IdSchema, value: z.number().int(), reason: z.string().min(1) }),
+  z.object({ type: z.literal("adjust_resource"), resourceId: IdSchema, delta: z.number().int(), reason: z.string().min(1) }),
+  z.object({ type: z.literal("set_objective_stage"), objectiveId: IdSchema, stage: z.string().min(1), reason: z.string().min(1) })
+]);
+
+export const TriggerActionSchema = z.object({
+  action: z.enum(["look", "move", "inspect", "talk", "take", "use", "act", "unknown"]),
+  intent: z.string().min(1).optional(),
+  targetId: IdSchema.optional(),
+  characterId: IdSchema.optional(),
+  itemId: IdSchema.optional(),
+  locationId: IdSchema.optional(),
+  factIds: z.array(IdSchema).optional()
+});
+
+export const RuleTriggerSchema = z.object({
+  id: IdSchema,
+  on: TriggerActionSchema,
+  when: ConditionSchema.optional(),
+  unless: ConditionSchema.optional(),
+  patches: z.array(PatchSchema).default([])
+});
+
 export const RulesSchema = z.object({
-  allowedPatchTypes: z.array(z.string()).min(1)
+  allowedPatchTypes: z.array(z.string()).min(1),
+  triggers: z.array(RuleTriggerSchema).default([])
 });
 
 export const WorldPackSchema = z.object({
   manifest: ManifestSchema,
   worldText: z.string(),
+  profile: ProfileSchema,
   rules: RulesSchema,
   locations: z.array(LocationSchema),
-  npcs: z.array(NpcSchema),
-  clues: z.array(ClueSchema),
+  characters: z.array(CharacterSchema),
+  facts: z.array(FactSchema),
   items: z.array(ItemSchema),
-  quests: z.array(QuestSchema),
+  resources: z.array(ResourceSchema),
+  relationships: z.array(RelationshipSchema),
+  objectives: z.array(ObjectiveSchema),
   endings: z.array(EndingSchema)
 });
 
@@ -119,51 +194,56 @@ export const SessionStateSchema = z.object({
   currentLocationId: IdSchema,
   turn: z.number().int().min(0),
   inventory: z.array(IdSchema),
-  knownClues: z.array(IdSchema),
+  knownFacts: z.array(IdSchema),
+  resources: z.record(z.string(), z.number().int()),
+  relationships: z.record(z.string(), z.number().int()),
   flags: z.record(z.string(), z.boolean()),
-  npcAttitudes: z.record(z.string(), z.number().int()),
-  questStages: z.record(z.string(), z.string())
+  objectiveStages: z.record(z.string(), z.string())
 });
 
 export const ActionSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("look"), rawText: z.string() }),
   z.object({ type: z.literal("inspect"), targetId: IdSchema, rawText: z.string() }),
   z.object({ type: z.literal("move"), locationId: IdSchema, rawText: z.string() }),
-  z.object({ type: z.literal("ask"), npcId: IdSchema, topic: z.string().min(1), rawText: z.string() }),
+  z.object({ type: z.literal("talk"), characterId: IdSchema, topic: z.string().min(1), rawText: z.string() }),
   z.object({ type: z.literal("take"), itemId: IdSchema, rawText: z.string() }),
   z.object({ type: z.literal("use"), itemId: IdSchema, targetId: IdSchema.optional(), rawText: z.string() }),
-  z.object({ type: z.literal("accuse"), npcId: IdSchema, clueIds: z.array(IdSchema), rawText: z.string() }),
+  z.object({
+    type: z.literal("act"),
+    intent: z.string().min(1),
+    targetId: IdSchema.optional(),
+    itemId: IdSchema.optional(),
+    locationId: IdSchema.optional(),
+    factIds: z.array(IdSchema).default([]),
+    rawText: z.string()
+  }),
   z.object({ type: z.literal("unknown"), rawText: z.string() })
 ]);
 
-export const PatchSchema = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("discover_clue"), clueId: IdSchema, reason: z.string().min(1) }),
-  z.object({ type: z.literal("add_item"), itemId: IdSchema, reason: z.string().min(1) }),
-  z.object({ type: z.literal("remove_item"), itemId: IdSchema, reason: z.string().min(1) }),
-  z.object({ type: z.literal("move_location"), locationId: IdSchema, reason: z.string().min(1) }),
-  z.object({ type: z.literal("set_flag"), flag: IdSchema, value: z.boolean(), reason: z.string().min(1) }),
-  z.object({ type: z.literal("adjust_npc_attitude"), npcId: IdSchema, delta: z.number().int(), reason: z.string().min(1) }),
-  z.object({ type: z.literal("set_quest_stage"), questId: IdSchema, stage: z.string().min(1), reason: z.string().min(1) })
-]);
-
 export const TurnMessageSchema = z.object({
-  type: z.enum(["environment", "narration", "npc", "system", "item", "clue"]),
+  type: z.enum(["environment", "narration", "character", "system", "item", "fact"]),
   text: z.string().min(1),
   label: z.string().min(1).optional(),
-  npcId: IdSchema.optional(),
+  characterId: IdSchema.optional(),
   itemId: IdSchema.optional(),
-  clueId: IdSchema.optional()
+  factId: IdSchema.optional()
 });
 
 export type Manifest = z.infer<typeof ManifestSchema>;
+export type Profile = z.infer<typeof ProfileSchema>;
 export type WorldPack = z.infer<typeof WorldPackSchema>;
 export type SessionState = z.infer<typeof SessionStateSchema>;
 export type GameAction = z.infer<typeof ActionSchema>;
 export type GamePatch = z.infer<typeof PatchSchema>;
+export type RuleTrigger = z.infer<typeof RuleTriggerSchema>;
 export type TurnMessage = z.infer<typeof TurnMessageSchema>;
 export type LocationDef = z.infer<typeof LocationSchema>;
-export type NpcDef = z.infer<typeof NpcSchema>;
-export type ClueDef = z.infer<typeof ClueSchema>;
+export type CharacterDef = z.infer<typeof CharacterSchema>;
+export type FactDef = z.infer<typeof FactSchema>;
+export type ItemDef = z.infer<typeof ItemSchema>;
+export type ResourceDef = z.infer<typeof ResourceSchema>;
+export type RelationshipDef = z.infer<typeof RelationshipSchema>;
+export type ObjectiveDef = z.infer<typeof ObjectiveSchema>;
 export type EndingDef = z.infer<typeof EndingSchema>;
 
 export function createInitialSessionState(pack: WorldPack): SessionState {
@@ -171,9 +251,10 @@ export function createInitialSessionState(pack: WorldPack): SessionState {
     currentLocationId: pack.manifest.entryLocationId,
     turn: 0,
     inventory: [],
-    knownClues: [],
+    knownFacts: [],
+    resources: Object.fromEntries(pack.resources.map((resource) => [resource.id, resource.initial])),
+    relationships: Object.fromEntries(pack.relationships.map((relationship) => [relationship.characterId, relationship.initial])),
     flags: {},
-    npcAttitudes: {},
-    questStages: Object.fromEntries(pack.quests.map((quest) => [quest.id, quest.initialStage]))
+    objectiveStages: Object.fromEntries(pack.objectives.map((objective) => [objective.id, objective.initialStage]))
   };
 }

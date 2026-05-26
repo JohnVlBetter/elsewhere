@@ -8,102 +8,125 @@ import {
   WorldPackSchema
 } from "./domain";
 
-describe("domain schemas", () => {
-  it("accepts a valid inspect action", () => {
-    const action = ActionSchema.parse({
-      type: "inspect",
-      targetId: "window",
-      rawText: "inspect window"
-    });
-
-    expect(action.type).toBe("inspect");
+describe("v0.2 domain schema", () => {
+  it("rejects detective-only v0.1 patch and action names", () => {
+    expect(() =>
+      PatchSchema.parse({ type: "discover_clue", clueId: "broken_watch", reason: "old" })
+    ).toThrow();
+    expect(() =>
+      ActionSchema.parse({ type: "accuse", npcId: "butler", clueIds: [], rawText: "old" })
+    ).toThrow();
   });
 
-  it("accepts nested all conditions", () => {
+  it("parses generic act actions and fact patches", () => {
+    expect(ActionSchema.parse({
+      type: "act",
+      intent: "confront",
+      targetId: "butler",
+      factIds: ["broken_watch"],
+      rawText: "confront butler with broken_watch"
+    })).toMatchObject({ type: "act", intent: "confront" });
+
+    expect(PatchSchema.parse({
+      type: "reveal_fact",
+      factId: "broken_watch",
+      reason: "Player inspected the watch."
+    })).toMatchObject({ type: "reveal_fact", factId: "broken_watch" });
+  });
+
+  it("accepts generic conditions", () => {
     const condition = ConditionSchema.parse({
-      all: [{ location_is: "greenhouse" }, { flag_true: "rain_started" }]
+      all: [
+        { knows_fact: "stone_omen" },
+        { resource_at_least: { resource: "spiritual_power", value: 4 } },
+        { relationship_at_least: { character: "lin", value: 2 } },
+        { objective_stage_is: { objective: "repair_lunch", stage: "honest" } }
+      ]
     });
 
     expect("all" in condition).toBe(true);
   });
 
-  it("rejects unknown patch types", () => {
-    expect(() =>
-      PatchSchema.parse({ type: "rewrite_truth", clueId: "broken_watch" })
-    ).toThrow();
-  });
-
-  it("accepts the minimum session state", () => {
+  it("accepts generic session state", () => {
     const state = SessionStateSchema.parse({
-      currentLocationId: "foyer",
+      currentLocationId: "classroom",
       turn: 0,
       inventory: [],
-      knownClues: [],
+      knownFacts: [],
+      resources: { courage: 1 },
+      relationships: { lin: 2 },
       flags: {},
-      npcAttitudes: {},
-      questStages: {}
+      objectiveStages: { repair_lunch: "awkward" }
     });
 
-    expect(state.currentLocationId).toBe("foyer");
+    expect(state.currentLocationId).toBe("classroom");
+    expect(state.knownFacts).toEqual([]);
   });
 
-  it("accepts a small pack object", () => {
+  it("creates initial state from resources, relationships, and objectives", () => {
     const pack = WorldPackSchema.parse({
       manifest: {
-        id: "rain-tower",
-        name: "Rain Tower Murder",
-        version: "0.1.0",
-        runtimeVersion: "0.1.0",
-        entryLocationId: "foyer"
+        id: "campus-lunch",
+        name: "Campus Lunch",
+        version: "0.2.0",
+        runtimeVersion: "0.2.0",
+        entryLocationId: "classroom",
+        profileId: "romance"
       },
-      worldText: "A locked-room mystery.",
-      rules: { allowedPatchTypes: ["discover_clue", "set_flag"] },
-      locations: [{ id: "foyer", name: "Foyer", description: "A cold entry hall.", exits: [] }],
-      npcs: [],
-      clues: [],
-      items: [],
-      quests: [],
-      endings: [],
-      prompts: { narrator: "pack override should be ignored" }
-    });
-
-    expect(pack.manifest.id).toBe("rain-tower");
-    expect("prompts" in pack).toBe(false);
-  });
-
-  it("builds initial session state from a world pack", () => {
-    const pack = WorldPackSchema.parse({
-      manifest: {
-        id: "rain-tower",
-        name: "Rain Tower Murder",
-        version: "0.1.0",
-        runtimeVersion: "0.1.0",
-        entryLocationId: "foyer"
+      worldText: "A lunch-break misunderstanding.",
+      profile: {
+        id: "romance",
+        labels: { facts: "回忆", inventory: "随身物", objectives: "关系进展" },
+        quickActions: [],
+        actions: { confess: { aliases: ["confess", "告白"], requiresTarget: "character", acceptsFacts: true } }
       },
-      worldText: "A locked-room mystery.",
-      rules: { allowedPatchTypes: ["discover_clue", "set_flag"] },
-      locations: [{ id: "foyer", name: "Foyer", description: "A cold entry hall.", exits: [] }],
-      npcs: [],
-      clues: [],
+      rules: { allowedPatchTypes: ["reveal_fact", "adjust_relationship", "set_objective_stage"], triggers: [] },
+      locations: [{ id: "classroom", name: "教室", description: "午休前的教室。", exits: [], visibleObjects: [] }],
+      characters: [{ id: "lin", name: "林同学", publicDescription: "她正在收拾便当。", topics: [] }],
+      facts: [],
       items: [],
-      quests: [
-        { id: "solve_murder", name: "Solve murder", stages: ["investigate", "accuse"], initialStage: "investigate" },
-        { id: "find_key", name: "Find key", stages: ["missing", "found"], initialStage: "missing" }
-      ],
+      resources: [{ id: "courage", name: "勇气", initial: 1, min: 0, max: 5 }],
+      relationships: [{ characterId: "lin", name: "林同学好感", initial: 2, min: -5, max: 10 }],
+      objectives: [{ id: "repair_lunch", name: "修复午休误会", stages: ["awkward", "honest"], initialStage: "awkward" }],
       endings: []
     });
 
     expect(createInitialSessionState(pack)).toEqual({
-      currentLocationId: "foyer",
+      currentLocationId: "classroom",
       turn: 0,
       inventory: [],
-      knownClues: [],
+      knownFacts: [],
+      resources: { courage: 1 },
+      relationships: { lin: 2 },
       flags: {},
-      npcAttitudes: {},
-      questStages: {
-        solve_murder: "investigate",
-        find_key: "missing"
-      }
+      objectiveStages: { repair_lunch: "awkward" }
     });
+  });
+
+  it("strips prompt overrides from pack data", () => {
+    const pack = WorldPackSchema.parse({
+      manifest: {
+        id: "campus-lunch",
+        name: "Campus Lunch",
+        version: "0.2.0",
+        runtimeVersion: "0.2.0",
+        entryLocationId: "classroom",
+        profileId: "romance"
+      },
+      worldText: "A lunch-break misunderstanding.",
+      profile: { id: "romance", labels: {}, quickActions: [], actions: {} },
+      rules: { allowedPatchTypes: ["reveal_fact"], triggers: [] },
+      locations: [{ id: "classroom", name: "教室", description: "午休前的教室。", exits: [], visibleObjects: [] }],
+      characters: [],
+      facts: [],
+      items: [],
+      resources: [],
+      relationships: [],
+      objectives: [],
+      endings: [],
+      prompts: { narrator: "pack override should be ignored" }
+    });
+
+    expect("prompts" in pack).toBe(false);
   });
 });
