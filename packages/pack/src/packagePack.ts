@@ -6,7 +6,7 @@ import { validateWorldPack } from "./validatePack";
 import type { ValidationResult } from "./validatePack";
 
 export interface PackArchive {
-  format: "aigame.pack.v1";
+  format: "aigame.pack.v2";
   manifest: Manifest;
   validation: ValidationResult;
   files: Record<string, string>;
@@ -28,7 +28,7 @@ export function buildPackArchive(packRoot: string, outputPath: string): PackArch
 
   const files = readPackFiles(packRoot);
   const archive: PackArchive = {
-    format: "aigame.pack.v1",
+    format: "aigame.pack.v2",
     manifest: pack.manifest,
     validation,
     files

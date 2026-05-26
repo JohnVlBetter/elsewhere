@@ -20,12 +20,15 @@ export function loadWorldPack(root: string): WorldPack {
   const pack = {
     manifest: readYamlFile(root, "manifest.yaml"),
     worldText: readRequiredFile(root, "world.md"),
+    profile: readYamlFile(root, "profile.yaml"),
     rules: readYamlFile(root, "rules.yaml"),
     locations: readYamlFile(root, "locations.yaml"),
-    npcs: readYamlFile(root, "npcs.yaml"),
-    clues: readYamlFile(root, "clues.yaml"),
+    characters: readYamlFile(root, "characters.yaml"),
+    facts: readYamlFile(root, "facts.yaml"),
     items: readYamlFile(root, "items.yaml"),
-    quests: readYamlFile(root, "quests.yaml"),
+    resources: readYamlFile(root, "resources.yaml"),
+    relationships: readYamlFile(root, "relationships.yaml"),
+    objectives: readYamlFile(root, "objectives.yaml"),
     endings: readYamlFile(root, "endings.yaml")
   };
 
