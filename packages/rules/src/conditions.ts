@@ -29,17 +29,32 @@ export function evaluateCondition(condition: Condition | undefined, state: Sessi
     return state.inventory.includes(condition.has_item);
   }
 
-  if ("knows_clue" in condition) {
-    return state.knownClues.includes(condition.knows_clue);
+  if ("knows_fact" in condition) {
+    return state.knownFacts.includes(condition.knows_fact);
   }
 
-  if ("quest_stage_is" in condition) {
-    return state.questStages[condition.quest_stage_is.quest] === condition.quest_stage_is.stage;
+  if ("objective_stage_is" in condition) {
+    return state.objectiveStages[condition.objective_stage_is.objective] === condition.objective_stage_is.stage;
   }
 
-  if ("npc_attitude_at_least" in condition) {
-    const actual = state.npcAttitudes[condition.npc_attitude_at_least.npc] ?? 0;
-    return actual >= condition.npc_attitude_at_least.value;
+  if ("relationship_at_least" in condition) {
+    const actual = state.relationships[condition.relationship_at_least.character] ?? 0;
+    return actual >= condition.relationship_at_least.value;
+  }
+
+  if ("relationship_at_most" in condition) {
+    const actual = state.relationships[condition.relationship_at_most.character] ?? 0;
+    return actual <= condition.relationship_at_most.value;
+  }
+
+  if ("resource_at_least" in condition) {
+    const actual = state.resources[condition.resource_at_least.resource] ?? 0;
+    return actual >= condition.resource_at_least.value;
+  }
+
+  if ("resource_at_most" in condition) {
+    const actual = state.resources[condition.resource_at_most.resource] ?? 0;
+    return actual <= condition.resource_at_most.value;
   }
 
   return false;
