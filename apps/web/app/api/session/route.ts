@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { loadWorldPack } from "@aigame/pack";
 import { createInitialSessionState } from "@aigame/shared";
+import type { WorldPack } from "@aigame/shared";
 import { sessionStore } from "../../../src/server/sessionStore";
 
 export async function POST() {
@@ -11,19 +12,28 @@ export async function POST() {
   return NextResponse.json({
     sessionId: session.id,
     packId: pack.manifest.id,
+    manifest: pack.manifest,
+    profile: pack.profile,
+    entities: {
+      locations: pack.locations.map(({ id, name }) => ({ id, name })),
+      characters: pack.characters.map(({ id, name }) => ({ id, name })),
+      items: pack.items.map(({ id, name }) => ({ id, name })),
+      facts: pack.facts.map(({ id, name }) => ({ id, name })),
+      objectives: pack.objectives.map(({ id, name, stages }) => ({ id, name, stages }))
+    },
     intro: buildSessionIntro(pack),
     state
   });
 }
 
-function buildSessionIntro(pack: ReturnType<typeof loadWorldPack>): string {
+function buildSessionIntro(pack: WorldPack): string {
   const entryLocation = pack.locations.find((location) => location.id === pack.manifest.entryLocationId);
   const worldText = pack.worldText
     .replace(/^# .+$/m, "")
     .replace(/\s+/g, " ")
     .trim();
-  const questNames = pack.quests.map((quest) => quest.name).join("、");
+  const objectiveNames = pack.objectives.map((objective) => objective.name).join("、");
   const locationText = entryLocation ? `当前地点是${entryLocation.name}。` : "";
-  const questText = questNames ? `目标：${questNames}。` : "";
-  return `你是进入《${pack.manifest.name}》的调查者。${worldText} ${locationText}${questText}先确认自己、现场、人物和时间线。`.trim();
+  const objectiveText = objectiveNames ? `目标：${objectiveNames}。` : "";
+  return `你进入《${pack.manifest.name}》。${worldText} ${locationText}${objectiveText}`.trim();
 }

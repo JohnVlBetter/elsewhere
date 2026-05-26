@@ -252,12 +252,12 @@ dd {
   color: #a8e3b4;
 }
 
-.story-entry--npc .story-marker {
+.story-entry--character .story-marker {
   background: rgba(119, 199, 185, 0.18);
   color: #9bd5ce;
 }
 
-.story-entry--npc p {
+.story-entry--character p {
   border-color: rgba(119, 199, 185, 0.24);
   background: rgba(119, 199, 185, 0.06);
 }
@@ -267,12 +267,12 @@ dd {
   color: #ffb8ab;
 }
 
-.story-entry--clue .story-marker {
+.story-entry--fact .story-marker {
   background: rgba(230, 184, 96, 0.22);
   color: #f5d890;
 }
 
-.story-entry--clue p {
+.story-entry--fact p {
   border-color: rgba(230, 184, 96, 0.28);
   background: rgba(230, 184, 96, 0.07);
 }

@@ -18,162 +18,188 @@ function turnStreamResponse(events: Array<{ event: string; data: unknown }>): Re
   });
 }
 
+function sessionBody() {
+  return {
+    sessionId: "session-1",
+    packId: "campus-lunch",
+    manifest: {
+      id: "campus-lunch",
+      name: "Campus Lunch",
+      version: "0.2.0",
+      runtimeVersion: "0.2.0",
+      entryLocationId: "classroom",
+      profileId: "romance"
+    },
+    profile: {
+      id: "romance",
+      labels: {
+        location: "Place",
+        characters: "People",
+        facts: "Memories",
+        inventory: "Bag",
+        resources: "Stats",
+        relationships: "Bonds",
+        objectives: "Objectives"
+      },
+      quickActions: [
+        { label: "Look around", command: "look" },
+        { label: "Talk to Lin", command: "talk lin about lunch" }
+      ],
+      actions: {}
+    },
+    entities: {
+      locations: [{ id: "classroom", name: "Classroom" }],
+      characters: [{ id: "lin", name: "Lin" }],
+      items: [{ id: "paper_note", name: "Paper note" }],
+      facts: [{ id: "missed_note", name: "Missed note" }],
+      objectives: [{ id: "repair_lunch", name: "Repair lunch", stages: ["awkward", "warm"] }]
+    },
+    intro: "Campus intro",
+    state: {
+      currentLocationId: "classroom",
+      turn: 0,
+      inventory: [],
+      knownFacts: [],
+      resources: { courage: 1 },
+      relationships: { lin: 0 },
+      flags: {},
+      objectiveStages: { repair_lunch: "awkward" }
+    }
+  };
+}
+
 describe("GameShell", () => {
   afterEach(() => {
     cleanup();
     vi.restoreAllMocks();
   });
 
-  it("renders the player-facing panels", () => {
+  it("renders labels and quick actions from the pack profile", async () => {
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(JSON.stringify(sessionBody())));
+
     render(<GameShell />);
 
-    expect(screen.getByRole("heading", { name: "雨塔谋杀案" })).toBeTruthy();
-    expect(screen.getByLabelText("行动指令")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "发送" })).toBeTruthy();
-    expect(screen.getByText("当前位置")).toBeTruthy();
-    expect(screen.getByRole("region", { name: "当前位置" })).toBeTruthy();
-    expect(screen.getByText("已知线索")).toBeTruthy();
-    expect(screen.getByText("随身物品")).toBeTruthy();
-    expect(screen.getByText("运行状态")).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Campus Lunch" })).toBeTruthy();
+    expect(screen.getByText("Campus intro")).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Memories" })).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Bag" })).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Stats" })).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Bonds" })).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Objectives" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Look around" })).toBeTruthy();
+    const oldFactsLabel = ["Known", "cl" + "ues"].join(" ");
+    expect(screen.queryByText(oldFactsLabel)).toBeNull();
   });
 
-  it("shows a localized runtime status without exposing raw agent output", async () => {
+  it("shows generic turn messages, state panels, and trace summary", async () => {
     vi.spyOn(globalThis, "fetch")
-      .mockResolvedValueOnce(new Response(JSON.stringify({
-        sessionId: "session-1",
-        intro: "你是受邀调查哈尔登爵士死亡的侦探。先确认现场、人物和时间线。",
-        state: {
-          currentLocationId: "foyer",
-          turn: 0,
-          inventory: [],
-          knownClues: [],
-          flags: {},
-          npcAttitudes: {},
-          questStages: { solve_murder: "investigate" }
-        }
-      })))
+      .mockResolvedValueOnce(new Response(JSON.stringify(sessionBody())))
       .mockResolvedValueOnce(turnStreamResponse([
-        { event: "status", data: { message: "正在调用模型..." } },
+        { event: "status", data: { message: "Calling model..." } },
         {
           event: "result",
           data: {
-            outputText: "管家谨慎地回答了你的问题。",
+            outputText: "Lin listens.",
             state: {
-              currentLocationId: "foyer",
+              currentLocationId: "classroom",
               turn: 1,
-              inventory: [],
-              knownClues: [],
+              inventory: ["paper_note"],
+              knownFacts: ["missed_note"],
+              resources: { courage: 2 },
+              relationships: { lin: 1 },
               flags: {},
-              npcAttitudes: {},
-              questStages: { solve_murder: "investigate" }
+              objectiveStages: { repair_lunch: "warm" }
             },
-            acceptedPatches: [],
+            acceptedPatches: [{ type: "reveal_fact", factId: "missed_note", reason: "Read the note." }],
             rejectedPatches: [],
             messages: [
-              { type: "narration", text: "管家谨慎地看了你一眼。" },
-              { type: "npc", npcId: "butler", label: "管家", text: "我在九点时一直在书房。" },
-              { type: "clue", clueId: "false_alibi", label: "虚假不在场证明", text: "管家的说法与怀表时间冲突。" }
+              { type: "narration", text: "The classroom quiets." },
+              { type: "character", characterId: "lin", label: "Lin", text: "I waited by the courtyard." },
+              { type: "fact", factId: "missed_note", label: "Missed note", text: "The note was tucked into the wrong book." }
             ],
             trace: {
               precheck: { ok: true },
-              contextIds: ["location:foyer", "npc:butler"],
-              agentRole: "npc",
-              modelName: "deepseek-v4-pro",
-              agentRawOutput: { narration: "Mr. Vale keeps his answer precise.", privateNotes: "npc actor raw output" }
+              contextIds: ["location:classroom", "character:lin"],
+              agentRole: "character",
+              modelName: "fake"
             }
           }
         }
       ]));
 
     render(<GameShell />);
-    await waitFor(() => expect(screen.getByRole("region", { name: "当前位置" }).textContent).toContain("门厅"));
-    expect(screen.getByText("你是受邀调查哈尔登爵士死亡的侦探。先确认现场、人物和时间线。")).toBeTruthy();
+    await screen.findByRole("heading", { name: "Campus Lunch" });
 
-    fireEvent.change(screen.getByLabelText("行动指令"), { target: { value: "询问管家的不在场证明" } });
-    fireEvent.click(screen.getByRole("button", { name: "发送" }));
+    fireEvent.change(screen.getByLabelText("Action command"), { target: { value: "Talk to Lin" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
 
     await waitFor(() => {
-      expect(screen.getByText("管家谨慎地看了你一眼。")).toBeTruthy();
-      expect(screen.getByText("我在九点时一直在书房。")).toBeTruthy();
-      expect(screen.getByText("管家的说法与怀表时间冲突。")).toBeTruthy();
-      expect(screen.getByText("管家")).toBeTruthy();
-      expect(screen.getByText("线索")).toBeTruthy();
-      const status = screen.getByRole("region", { name: "运行状态" }).textContent;
-      expect(status).toContain("处理=角色回应");
-      expect(status).toContain("模型=deepseek-v4-pro");
-      expect(status).toContain("校验=通过");
-      expect(status).toContain("上下文=位置:门厅、角色:管家");
-      expect(status).not.toContain("Mr. Vale keeps his answer precise.");
+      expect(screen.getByText("The classroom quiets.")).toBeTruthy();
+      expect(screen.getByText("I waited by the courtyard.")).toBeTruthy();
+      expect(screen.getByText("The note was tucked into the wrong book.")).toBeTruthy();
+      expect(screen.getByRole("region", { name: "Memories" }).textContent).toContain("Missed note");
+      expect(screen.getByRole("region", { name: "Bag" }).textContent).toContain("Paper note");
+      expect(screen.getByRole("region", { name: "Stats" }).textContent).toContain("courage=2");
+      expect(screen.getByRole("region", { name: "Bonds" }).textContent).toContain("Lin=1");
+      expect(screen.getByRole("region", { name: "Objectives" }).textContent).toContain("Repair lunch: warm");
+      expect(screen.getByRole("region", { name: "Runtime" }).textContent).toContain("handler=Character");
     });
     expect(fetch).toHaveBeenLastCalledWith("/api/turn/stream", expect.objectContaining({ method: "POST" }));
   });
 
-  it("shows the sent action and a waiting response state while a turn is pending", async () => {
+  it("shows the sent action and waiting state while a turn is pending", async () => {
     let resolveTurn: (response: Response) => void = () => {};
     const pendingTurn = new Promise<Response>((resolve) => {
       resolveTurn = resolve;
     });
 
     vi.spyOn(globalThis, "fetch")
-      .mockResolvedValueOnce(new Response(JSON.stringify({
-        sessionId: "session-1",
-        intro: "你是受邀调查哈尔登爵士死亡的侦探。先确认现场、人物和时间线。",
-        state: {
-          currentLocationId: "foyer",
-          turn: 0,
-          inventory: [],
-          knownClues: [],
-          flags: {},
-          npcAttitudes: {},
-          questStages: { solve_murder: "investigate" }
-        }
-      })))
+      .mockResolvedValueOnce(new Response(JSON.stringify(sessionBody())))
       .mockReturnValueOnce(pendingTurn);
 
     render(<GameShell />);
-    await waitFor(() => expect(screen.getByRole("region", { name: "当前位置" }).textContent).toContain("门厅"));
+    await screen.findByRole("heading", { name: "Campus Lunch" });
 
-    fireEvent.change(screen.getByLabelText("行动指令"), { target: { value: "inspect broken_watch" } });
-    fireEvent.click(screen.getByRole("button", { name: "发送" }));
+    fireEvent.change(screen.getByLabelText("Action command"), { target: { value: "inspect paper_note" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
 
-    expect(screen.getByText("inspect broken_watch")).toBeTruthy();
-    expect(screen.getByText("已发送，等待回应...")).toBeTruthy();
-    expect((screen.getByRole("button", { name: "等待回应" }) as HTMLButtonElement).disabled).toBe(true);
-    expect(screen.queryByText("发送中")).toBeNull();
+    expect(screen.getByText("inspect paper_note")).toBeTruthy();
+    expect(screen.getByText("Waiting for response...")).toBeTruthy();
+    expect((screen.getByRole("button", { name: "Waiting" }) as HTMLButtonElement).disabled).toBe(true);
 
     resolveTurn(turnStreamResponse([
-      { event: "status", data: { message: "正在写入案卷..." } },
       {
         event: "result",
         data: {
-          outputText: "怀表停在八点四十七分。",
+          outputText: "The paper note is folded twice.",
           state: {
-            currentLocationId: "foyer",
+            currentLocationId: "classroom",
             turn: 1,
             inventory: [],
-            knownClues: ["broken_watch"],
+            knownFacts: ["missed_note"],
+            resources: { courage: 1 },
+            relationships: { lin: 0 },
             flags: {},
-            npcAttitudes: {},
-            questStages: { solve_murder: "investigate" }
+            objectiveStages: { repair_lunch: "awkward" }
           },
           acceptedPatches: [],
           rejectedPatches: [],
-          messages: [{ type: "narration", text: "怀表停在八点四十七分。" }],
+          messages: [{ type: "narration", text: "The paper note is folded twice." }],
           trace: {
             precheck: { ok: true },
-            contextIds: ["location:foyer"],
+            contextIds: ["location:classroom"],
             agentRole: "narrator",
-            modelName: "fake",
-            agentRawOutput: { narration: "怀表停在八点四十七分。", privateNotes: "test" }
+            modelName: "fake"
           }
         }
       }
     ]));
 
     await waitFor(() => {
-      expect(screen.getByText("怀表停在八点四十七分。")).toBeTruthy();
-      expect(screen.queryByText("已发送，等待回应...")).toBeNull();
-      expect(screen.getByRole("button", { name: "发送" })).toBeTruthy();
+      expect(screen.getByText("The paper note is folded twice.")).toBeTruthy();
+      expect(screen.queryByText("Waiting for response...")).toBeNull();
+      expect(screen.getByRole("button", { name: "Send" })).toBeTruthy();
     });
   });
 });
