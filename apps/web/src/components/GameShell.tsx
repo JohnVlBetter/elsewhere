@@ -2,6 +2,7 @@
 
 import { FormEvent, RefObject, useEffect, useMemo, useRef, useState } from "react";
 import type { SessionState } from "@aigame/shared";
+import { readTurnEventStream } from "./turnStream";
 
 type StoryTone = "scene" | "player" | "narrator" | "environment" | "npc" | "system" | "pending" | "item" | "clue";
 
@@ -147,15 +148,19 @@ export function GameShell() {
     const timeoutId = window.setTimeout(() => controller.abort(), TURN_TIMEOUT_MS);
 
     try {
-      const response = await fetch("/api/turn", {
+      const response = await fetch("/api/turn/stream", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ sessionId, inputText: actionInput.command }),
         signal: controller.signal
       });
-      if (!response.ok) throw new Error("Turn API failed");
 
-      const body = await response.json() as TurnResponse;
+      const body = await readTurnEventStream<TurnResponse>(response, {
+        onStatus: (message) => {
+          setTrace(message);
+          updateStoryEntry(pendingEntry.id, message);
+        }
+      });
       setState(body.state);
       setTrace(formatTraceSummary(body));
       replaceStoryEntry(pendingEntry.id, storyEntriesFromTurnResponse(body));
@@ -163,7 +168,7 @@ export function GameShell() {
       const isTimeout = isAbortError(error);
       const message = isTimeout
         ? "回应等待超时。刚才的行动没有生效，输入已保留，可稍后重试。"
-        : "行动提交失败。刚才的行动没有生效，输入已保留，可稍后重试。";
+        : formatSubmitFailure(error);
       setTrace(message);
       setInput(actionInput.displayText);
       replaceStoryEntry(pendingEntry.id, [{ tone: "system", text: message }]);
@@ -177,6 +182,12 @@ export function GameShell() {
     const entries = replacements.map((replacement) => createStoryEntry(replacement.tone, replacement.text, replacement.label));
     setTurns((current) =>
       current.flatMap((entry) => entry.id === entryId ? entries : [entry])
+    );
+  }
+
+  function updateStoryEntry(entryId: number, text: string) {
+    setTurns((current) =>
+      current.map((entry) => entry.id === entryId ? { ...entry, text } : entry)
     );
   }
 
@@ -493,6 +504,13 @@ function resolveActionInput(value: string): { command: string; displayText: stri
 
 function isAbortError(error: unknown): boolean {
   return error instanceof Error && error.name === "AbortError";
+}
+
+function formatSubmitFailure(error: unknown): string {
+  const detail = error instanceof Error ? error.message : "";
+  return detail
+    ? `行动提交失败：${detail} 输入已保留，可稍后重试。`
+    : "行动提交失败。刚才的行动没有生效，输入已保留，可稍后重试。";
 }
 
 function labelAgentRole(role: string | undefined): string {

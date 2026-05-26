@@ -18,14 +18,28 @@ export class OpenAICompatibleProvider implements ModelProvider {
     maxTokens?: number;
   }): Promise<T> {
     let lastBody: unknown;
+    let lastParseError: unknown;
+    let lastContent: string | undefined;
 
     for (let attempt = 0; attempt < 2; attempt += 1) {
       const body = await this.requestChatCompletion(request);
       lastBody = body;
       const content = body.choices?.[0]?.message?.content;
       if (content) {
-        return JSON.parse(content) as T;
+        lastContent = content;
+        try {
+          return JSON.parse(content) as T;
+        } catch (error) {
+          lastParseError = error;
+        }
       }
+    }
+
+    if (lastParseError) {
+      throw new Error(
+        `Model response content was not valid JSON: ${formatParseError(lastParseError)}; content=${summarizeContent(lastContent)}`,
+        { cause: lastParseError }
+      );
     }
 
     throw new Error(`Model response did not include message content: ${JSON.stringify(lastBody)}`);
@@ -77,4 +91,13 @@ export class OpenAICompatibleProvider implements ModelProvider {
       }
     };
   }
+}
+
+function formatParseError(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function summarizeContent(content: string | undefined): string {
+  if (!content) return "<empty>";
+  return JSON.stringify(content.length > 180 ? `${content.slice(0, 180)}...` : content);
 }

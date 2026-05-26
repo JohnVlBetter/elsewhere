@@ -4,6 +4,20 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { GameShell } from "./GameShell";
 
+function turnStreamResponse(events: Array<{ event: string; data: unknown }>): Response {
+  const encoder = new TextEncoder();
+  return new Response(new ReadableStream({
+    start(controller) {
+      for (const event of events) {
+        controller.enqueue(encoder.encode(`event: ${event.event}\ndata: ${JSON.stringify(event.data)}\n\n`));
+      }
+      controller.close();
+    }
+  }), {
+    headers: { "content-type": "text/event-stream" }
+  });
+}
+
 describe("GameShell", () => {
   afterEach(() => {
     cleanup();
@@ -38,32 +52,38 @@ describe("GameShell", () => {
           questStages: { solve_murder: "investigate" }
         }
       })))
-      .mockResolvedValueOnce(new Response(JSON.stringify({
-        outputText: "管家谨慎地回答了你的问题。",
-        state: {
-          currentLocationId: "foyer",
-          turn: 1,
-          inventory: [],
-          knownClues: [],
-          flags: {},
-          npcAttitudes: {},
-          questStages: { solve_murder: "investigate" }
-        },
-        acceptedPatches: [],
-        rejectedPatches: [],
-        messages: [
-          { type: "narration", text: "管家谨慎地看了你一眼。" },
-          { type: "npc", npcId: "butler", label: "管家", text: "我在九点时一直在书房。" },
-          { type: "clue", clueId: "false_alibi", label: "虚假不在场证明", text: "管家的说法与怀表时间冲突。" }
-        ],
-        trace: {
-          precheck: { ok: true },
-          contextIds: ["location:foyer", "npc:butler"],
-          agentRole: "npc",
-          modelName: "deepseek-v4-pro",
-          agentRawOutput: { narration: "Mr. Vale keeps his answer precise.", privateNotes: "npc actor raw output" }
+      .mockResolvedValueOnce(turnStreamResponse([
+        { event: "status", data: { message: "正在调用模型..." } },
+        {
+          event: "result",
+          data: {
+            outputText: "管家谨慎地回答了你的问题。",
+            state: {
+              currentLocationId: "foyer",
+              turn: 1,
+              inventory: [],
+              knownClues: [],
+              flags: {},
+              npcAttitudes: {},
+              questStages: { solve_murder: "investigate" }
+            },
+            acceptedPatches: [],
+            rejectedPatches: [],
+            messages: [
+              { type: "narration", text: "管家谨慎地看了你一眼。" },
+              { type: "npc", npcId: "butler", label: "管家", text: "我在九点时一直在书房。" },
+              { type: "clue", clueId: "false_alibi", label: "虚假不在场证明", text: "管家的说法与怀表时间冲突。" }
+            ],
+            trace: {
+              precheck: { ok: true },
+              contextIds: ["location:foyer", "npc:butler"],
+              agentRole: "npc",
+              modelName: "deepseek-v4-pro",
+              agentRawOutput: { narration: "Mr. Vale keeps his answer precise.", privateNotes: "npc actor raw output" }
+            }
+          }
         }
-      })));
+      ]));
 
     render(<GameShell />);
     await waitFor(() => expect(screen.getByRole("region", { name: "当前位置" }).textContent).toContain("门厅"));
@@ -85,6 +105,7 @@ describe("GameShell", () => {
       expect(status).toContain("上下文=位置:门厅、角色:管家");
       expect(status).not.toContain("Mr. Vale keeps his answer precise.");
     });
+    expect(fetch).toHaveBeenLastCalledWith("/api/turn/stream", expect.objectContaining({ method: "POST" }));
   });
 
   it("shows the sent action and a waiting response state while a turn is pending", async () => {
@@ -120,28 +141,34 @@ describe("GameShell", () => {
     expect((screen.getByRole("button", { name: "等待回应" }) as HTMLButtonElement).disabled).toBe(true);
     expect(screen.queryByText("发送中")).toBeNull();
 
-    resolveTurn(new Response(JSON.stringify({
-      outputText: "怀表停在八点四十七分。",
-      state: {
-        currentLocationId: "foyer",
-        turn: 1,
-        inventory: [],
-        knownClues: ["broken_watch"],
-        flags: {},
-        npcAttitudes: {},
-        questStages: { solve_murder: "investigate" }
-      },
-      acceptedPatches: [],
-      rejectedPatches: [],
-      messages: [{ type: "narration", text: "怀表停在八点四十七分。" }],
-      trace: {
-        precheck: { ok: true },
-        contextIds: ["location:foyer"],
-        agentRole: "narrator",
-        modelName: "fake",
-        agentRawOutput: { narration: "怀表停在八点四十七分。", privateNotes: "test" }
+    resolveTurn(turnStreamResponse([
+      { event: "status", data: { message: "正在写入案卷..." } },
+      {
+        event: "result",
+        data: {
+          outputText: "怀表停在八点四十七分。",
+          state: {
+            currentLocationId: "foyer",
+            turn: 1,
+            inventory: [],
+            knownClues: ["broken_watch"],
+            flags: {},
+            npcAttitudes: {},
+            questStages: { solve_murder: "investigate" }
+          },
+          acceptedPatches: [],
+          rejectedPatches: [],
+          messages: [{ type: "narration", text: "怀表停在八点四十七分。" }],
+          trace: {
+            precheck: { ok: true },
+            contextIds: ["location:foyer"],
+            agentRole: "narrator",
+            modelName: "fake",
+            agentRawOutput: { narration: "怀表停在八点四十七分。", privateNotes: "test" }
+          }
+        }
       }
-    })));
+    ]));
 
     await waitFor(() => {
       expect(screen.getByText("怀表停在八点四十七分。")).toBeTruthy();

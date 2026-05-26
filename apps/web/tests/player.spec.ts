@@ -1,10 +1,10 @@
 import { expect, test } from "@playwright/test";
 
 test("player can see the case interface", async ({ page }) => {
-  await page.route("**/api/turn", async (route) => {
+  await page.route("**/api/turn/stream", async (route) => {
     await route.fulfill({
-      contentType: "application/json",
-      body: JSON.stringify({
+      contentType: "text/event-stream",
+      body: `event: status\ndata: ${JSON.stringify({ message: "正在调用模型..." })}\n\nevent: result\ndata: ${JSON.stringify({
         outputText: "怀表外壳裂开，指针停在八点四十七分。",
         messages: [
           {
@@ -31,7 +31,7 @@ test("player can see the case interface", async ({ page }) => {
           agentRole: "narrator",
           modelName: "fake"
         }
-      })
+      })}\n\n`
     });
   });
 

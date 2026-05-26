@@ -91,4 +91,83 @@ describe("OpenAICompatibleProvider", () => {
     expect(calls).toBe(2);
     expect(result.narration).toBe("The second response is usable.");
   });
+
+  it("retries once when the provider returns malformed JSON content", async () => {
+    let calls = 0;
+    vi.stubGlobal("fetch", async () => {
+      calls += 1;
+      if (calls === 1) {
+        return new Response(JSON.stringify({
+          choices: [
+            {
+              message: {
+                content: "{\"narration\":\"The first response is cut off"
+              }
+            }
+          ]
+        }));
+      }
+
+      return new Response(JSON.stringify({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                narration: "The second response is usable.",
+                spokenBy: [],
+                proposedPatches: [],
+                privateNotes: "retried after bad json"
+              })
+            }
+          }
+        ]
+      }));
+    });
+
+    const provider = new OpenAICompatibleProvider({
+      apiKey: "test-key",
+      baseUrl: "https://api.deepseek.com",
+      responseFormat: "json_object"
+    });
+
+    const result = await provider.generateStructured<{
+      narration: string;
+      spokenBy: unknown[];
+      proposedPatches: unknown[];
+      privateNotes: string;
+    }>({
+      model: "deepseek-v4-pro",
+      system: "Return JSON.",
+      messages: [{ role: "user", content: "ask butler alibi" }],
+      schema: { type: "object" }
+    });
+
+    expect(calls).toBe(2);
+    expect(result.narration).toBe("The second response is usable.");
+  });
+
+  it("throws a stable model-json error after malformed JSON is retried", async () => {
+    vi.stubGlobal("fetch", async () => new Response(JSON.stringify({
+      choices: [
+        {
+          message: {
+            content: "{\"narration\":\"still cut off"
+          }
+        }
+      ]
+    })));
+
+    const provider = new OpenAICompatibleProvider({
+      apiKey: "test-key",
+      baseUrl: "https://api.deepseek.com",
+      responseFormat: "json_object"
+    });
+
+    await expect(provider.generateStructured({
+      model: "deepseek-v4-pro",
+      system: "Return JSON.",
+      messages: [{ role: "user", content: "ask butler alibi" }],
+      schema: { type: "object" }
+    })).rejects.toThrow("Model response content was not valid JSON");
+  });
 });
