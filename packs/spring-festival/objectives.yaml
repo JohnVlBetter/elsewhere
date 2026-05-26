@@ -1,0 +1,3 @@
+- { id: choose_route, name: 选择共度学园祭的人, stages: [open, chosen], initialStage: open }
+- { id: help_festival, name: 帮完学园祭收尾, stages: [messy, steady], initialStage: messy }
+- { id: confess_feeling, name: 说出心意, stages: [silent, spoken], initialStage: silent }

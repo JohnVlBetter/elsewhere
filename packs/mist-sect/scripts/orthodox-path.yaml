@@ -1,0 +1,23 @@
+steps:
+  - move sword_yard
+  - move scripture_hall
+  - inspect breath_manual
+  - cultivate
+  - move sword_yard
+  - move mountain_gate
+  - move herb_garden
+  - inspect withered_lotus
+  - help herb_keeper
+  - trial
+expectedKnownFacts:
+  - breath_manual
+  - withered_lotus
+expectedResources:
+  spiritual_power: 6
+  heart_demon: 1
+  sect_merit: 3
+expectedObjectiveStages:
+  enter_sect: passed
+  calm_mind: balanced
+  aid_garden: helped
+expectedEnding: orthodox_entry

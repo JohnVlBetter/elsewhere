@@ -1,0 +1,12 @@
+- id: outer_cave
+  name: 洞府外室
+  aliases: [外室, 洞口, outer_cave]
+  description: 石门半开，潮气里有浅浅灵光。
+  exits: [stone_chamber]
+  visibleObjects: [stone_omen]
+- id: stone_chamber
+  name: 石室
+  aliases: [石室, stone_chamber]
+  description: 蒲团前刻着残缺的吐纳法。
+  exits: [outer_cave]
+  visibleObjects: [quiet_breath]

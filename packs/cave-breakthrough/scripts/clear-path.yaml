@@ -1,0 +1,14 @@
+steps:
+  - inspect stone_omen
+  - cultivate
+  - breakthrough
+expectedKnownFacts:
+  - stone_omen
+expectedResources:
+  spiritual_power: 4
+  heart_demon: 1
+expectedRelationships:
+  mentor_echo: 1
+expectedObjectiveStages:
+  breakthrough: clear
+expectedEnding: clear_breakthrough

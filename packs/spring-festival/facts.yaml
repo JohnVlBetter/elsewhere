@@ -1,0 +1,10 @@
+- { id: program_note, kind: memory, name: 手写节目单, description: 林同学在节目单边角写了“天台风景最好”。, discoverableWhen: { location_is: classroom } }
+- { id: shared_umbrella, kind: memory, name: 共用雨伞, description: 你们上个月共用一把伞回家。, discoverableWhen: { location_is: courtyard } }
+- { id: unfinished_poster, kind: concern, name: 未完成海报, description: 绫一直没休息，是因为缺最后一张主视觉。, discoverableWhen: { location_is: art_room } }
+- { id: rooftop_view, kind: memory, name: 天台风景, description: 这里能看到樱花和舞台灯一起亮起。, discoverableWhen: { location_is: rooftop } }
+- { id: takoyaki_coupon, kind: preference, name: 章鱼烧兑换券, description: 林同学把最喜欢的小吃券留到了最后。, discoverableWhen: { location_is: food_stall } }
+- { id: last_song, kind: memory, name: 最后一首歌, description: 凑准备把最后一首歌献给帮过乐队的人。, discoverableWhen: { location_is: music_stage } }
+- { id: childhood_ticket, kind: memory, name: 童年票根, description: 空还留着小时候一起逛祭典的票根。 }
+- { id: teacher_hint, kind: advice, name: 森老师的提醒, description: 老师说别把温柔误当成拖延。 }
+- { id: paint_smudge, kind: memory, name: 袖口颜料, description: 你帮绫扶海报时袖口蹭上了蓝色颜料。 }
+- { id: stage_promise, kind: promise, name: 舞台约定, description: 凑说演出结束后想听你第一句评价。 }

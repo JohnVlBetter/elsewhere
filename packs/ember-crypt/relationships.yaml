@@ -1,0 +1,5 @@
+- characterId: gate_spirit
+  name: 守门灵信任
+  initial: 0
+  min: -5
+  max: 5

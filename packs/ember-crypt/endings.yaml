@@ -1,0 +1,24 @@
+- id: crown_returned
+  name: 王冠归位
+  priority: 10
+  condition:
+    objective_stage_is:
+      objective: handle_crown
+      stage: return
+  text: 王冠回到石座，余烬地穴重新安静。
+- id: vault_looted
+  name: 秘库被劫
+  priority: 5
+  condition:
+    objective_stage_is:
+      objective: handle_crown
+      stage: loot
+  text: 你们带走王冠，也带走了随之醒来的诅咒。
+- id: party_falls
+  name: 小队倒下
+  priority: 1
+  condition:
+    resource_at_most:
+      resource: hp
+      value: 0
+  text: 灰烬盖住脚印，地穴吞没了小队。

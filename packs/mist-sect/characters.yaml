@@ -1,0 +1,26 @@
+- id: elder_qin
+  name: 秦长老
+  publicDescription: 她看人的时候像在看一柄未开锋的剑。
+  topics:
+    - id: trial
+      prompt: 询问试炼评判
+      revealsFactId: trial_rule
+- id: senior_luo
+  name: 洛师兄
+  publicDescription: 他在剑坪旁擦拭竹剑。
+  topics:
+    - id: sword
+      prompt: 请教剑坪步法
+      revealsFactId: sword_mark
+- id: herb_keeper
+  name: 药圃执事
+  publicDescription: 他正为枯萎的灵莲发愁。
+  topics: []
+- id: fox_spirit
+  name: 雾狐
+  publicDescription: 白狐只在雾最浓时露出尾尖。
+  topics: []
+- id: rival_shen
+  name: 沈师弟
+  publicDescription: 他急于夺魁，眼神一直盯着你的动向。
+  topics: []

@@ -1,0 +1,2 @@
+- { id: festival_program, name: 学园祭节目单, description: 写满摊位和演出时间。 }
+- { id: takoyaki_coupon, name: 章鱼烧兑换券, description: 可以换一份热腾腾的小吃。, revealsFactId: takoyaki_coupon }

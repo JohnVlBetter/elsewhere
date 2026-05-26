@@ -1,0 +1,6 @@
+- { id: classroom, name: 教室, description: 彩带还没挂完，课桌上堆着节目单。, exits: [courtyard, art_room], visibleObjects: [program_note] }
+- { id: courtyard, name: 中庭, description: 樱花落在临时舞台边。, exits: [classroom, rooftop, food_stall], visibleObjects: [shared_umbrella] }
+- { id: art_room, name: 美术室, description: 画布靠在墙边，社长正独自补海报。, exits: [classroom], visibleObjects: [unfinished_poster] }
+- { id: rooftop, name: 天台, description: 风很轻，能看见整个学园祭。, exits: [courtyard], visibleObjects: [rooftop_view] }
+- { id: food_stall, name: 小吃摊, description: 香气和笑声挤在走廊尽头。, exits: [courtyard, music_stage], visibleObjects: [takoyaki_coupon] }
+- { id: music_stage, name: 音乐舞台, description: 麦克风还没调好，乐队在试最后一段旋律。, exits: [food_stall], visibleObjects: [last_song] }

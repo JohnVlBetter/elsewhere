@@ -1,0 +1,12 @@
+- id: classroom
+  name: 教室
+  aliases: [教室, classroom]
+  description: 午休前的教室，窗边放着一只浅蓝便当盒。
+  exits: [courtyard]
+  visibleObjects: [lunch_box, missed_note]
+- id: courtyard
+  name: 中庭
+  aliases: [中庭, courtyard]
+  description: 桂花树下安静得多，适合把话说清楚。
+  exits: [classroom]
+  visibleObjects: []

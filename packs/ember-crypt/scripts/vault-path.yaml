@@ -1,0 +1,16 @@
+steps:
+  - inspect old_map
+  - move crypt_gate
+  - negotiate gate_spirit
+  - move ember_hall
+  - attack ash_wight
+  - move sealed_vault
+  - skill_check sealed_vault with ember_map
+expectedKnownFacts:
+  - ember_map
+expectedResources:
+  hp: 6
+expectedObjectiveStages:
+  open_vault: vault_open
+  handle_crown: return
+expectedEnding: crown_returned

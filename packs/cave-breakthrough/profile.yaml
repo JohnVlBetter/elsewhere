@@ -1,0 +1,26 @@
+id: cultivation
+labels:
+  location: 洞府
+  characters: 道友
+  facts: 玄机
+  inventory: 法器丹药
+  resources: 修行状态
+  relationships: 因缘
+  objectives: 修行进境
+  ending: 道途结局
+quickActions:
+  - label: 观察洞口
+    command: look
+  - label: 检查灵纹
+    command: inspect stone_omen
+  - label: 打坐调息
+    command: cultivate
+  - label: 尝试破境
+    command: breakthrough
+actions:
+  cultivate:
+    aliases: [cultivate, 修炼, 打坐, 调息]
+    acceptsFacts: true
+  breakthrough:
+    aliases: [breakthrough, 破境, 突破]
+    acceptsFacts: true

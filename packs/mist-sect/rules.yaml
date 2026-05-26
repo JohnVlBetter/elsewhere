@@ -1,0 +1,44 @@
+allowedPatchTypes:
+  - reveal_fact
+  - add_item
+  - remove_item
+  - move_location
+  - set_flag
+  - adjust_relationship
+  - set_resource
+  - adjust_resource
+  - set_objective_stage
+triggers:
+  - id: cultivate_with_manual
+    on: { action: act, intent: cultivate }
+    when:
+      knows_fact: breath_manual
+    patches:
+      - { type: adjust_resource, resourceId: spiritual_power, delta: 3, reason: 依吐纳诀运行灵力。 }
+      - { type: adjust_resource, resourceId: heart_demon, delta: -1, reason: 气息渐稳。 }
+      - { type: set_objective_stage, objectiveId: calm_mind, stage: balanced, reason: 心神平衡。 }
+  - id: help_garden
+    on: { action: act, intent: help, targetId: herb_keeper }
+    when:
+      knows_fact: withered_lotus
+    patches:
+      - { type: adjust_relationship, characterId: herb_keeper, delta: 2, reason: 帮忙救回灵莲。 }
+      - { type: adjust_resource, resourceId: sect_merit, delta: 2, reason: 护住药圃。 }
+      - { type: set_objective_stage, objectiveId: aid_garden, stage: helped, reason: 灵莲得救。 }
+  - id: sword_practice
+    on: { action: act, intent: help, targetId: senior_luo }
+    when:
+      knows_fact: sword_mark
+    patches:
+      - { type: adjust_relationship, characterId: senior_luo, delta: 1, reason: 请教剑坪步法。 }
+      - { type: set_objective_stage, objectiveId: sword_trial, stage: steady, reason: 步法稳住。 }
+  - id: final_trial_pass
+    on: { action: act, intent: trial }
+    when:
+      all:
+        - objective_stage_is: { objective: calm_mind, stage: balanced }
+        - objective_stage_is: { objective: aid_garden, stage: helped }
+    patches:
+      - { type: adjust_resource, resourceId: sect_merit, delta: 1, reason: 终试表现稳健。 }
+      - { type: adjust_relationship, characterId: elder_qin, delta: 2, reason: 秦长老认可你的取舍。 }
+      - { type: set_objective_stage, objectiveId: enter_sect, stage: passed, reason: 通过入门试炼。 }

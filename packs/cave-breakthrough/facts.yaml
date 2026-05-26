@@ -1,0 +1,19 @@
+- id: stone_omen
+  kind: omen
+  name: 石壁灵纹
+  aliases: [灵纹, stone_omen]
+  description: 灵纹指向石室深处，说明地脉仍可借力。
+  discoverableWhen:
+    location_is: outer_cave
+- id: quiet_breath
+  kind: technique
+  name: 静息法
+  aliases: [静息法, 吐纳法, quiet_breath]
+  description: 放慢吐纳能压住心魔，让灵力更稳。
+  discoverableWhen:
+    location_is: stone_chamber
+- id: fractured_meridian
+  kind: secret
+  name: 经脉旧伤
+  aliases: [旧伤, 经脉, fractured_meridian]
+  description: 你的经脉旧伤不能硬冲，需要先让心魔降下去。

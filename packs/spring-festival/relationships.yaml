@@ -1,0 +1,5 @@
+- { characterId: lin, name: 林同学好感, initial: 1, min: -5, max: 10 }
+- { characterId: aya, name: 绫的信任, initial: 0, min: -5, max: 10 }
+- { characterId: minato, name: 凑的默契, initial: 0, min: -5, max: 10 }
+- { characterId: sora, name: 空的亲近, initial: 0, min: -5, max: 10 }
+- { characterId: teacher_mori, name: 森老师认可, initial: 0, min: -5, max: 10 }

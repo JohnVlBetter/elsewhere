@@ -1,0 +1,10 @@
+- id: bamboo_sword
+  name: 竹剑
+  description: 剑坪领取的试炼竹剑。
+- id: calm_pill
+  name: 清心丹
+  description: 一枚能压住心魔的丹药。
+  revealsFactId: calm_pill
+- id: fox_dew
+  name: 雾狐露
+  description: 雾狐留下的露水，能救灵莲。

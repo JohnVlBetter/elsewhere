@@ -1,0 +1,8 @@
+- id: open_vault
+  name: 打开封印秘库
+  stages: [start, gate_open, vault_open]
+  initialStage: start
+- id: handle_crown
+  name: 处理火焰王冠
+  stages: [unknown, return, loot]
+  initialStage: unknown

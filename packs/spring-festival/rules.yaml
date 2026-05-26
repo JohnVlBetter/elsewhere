@@ -1,0 +1,36 @@
+allowedPatchTypes:
+  - reveal_fact
+  - set_flag
+  - adjust_relationship
+  - set_resource
+  - adjust_resource
+  - set_objective_stage
+triggers:
+  - id: invite_lin
+    on: { action: act, intent: invite, targetId: lin }
+    when:
+      knows_fact: shared_umbrella
+    patches:
+      - { type: adjust_relationship, characterId: lin, delta: 2, reason: 邀请林同学一起逛中庭。 }
+      - { type: adjust_resource, resourceId: courage, delta: 2, reason: 说出口后更有勇气。 }
+      - { type: set_objective_stage, objectiveId: choose_route, stage: chosen, reason: 选择了林同学路线。 }
+  - id: comfort_aya
+    on: { action: act, intent: comfort, targetId: aya }
+    when:
+      knows_fact: unfinished_poster
+    patches:
+      - { type: adjust_relationship, characterId: aya, delta: 4, reason: 留下来帮绫完成海报。 }
+      - { type: set_objective_stage, objectiveId: help_festival, stage: steady, reason: 收尾工作稳定下来。 }
+  - id: confess_lin
+    on: { action: act, intent: confess, targetId: lin }
+    when:
+      all:
+        - knows_fact: shared_umbrella
+        - relationship_at_least: { character: lin, value: 3 }
+    patches:
+      - { type: adjust_relationship, characterId: lin, delta: 2, reason: 在天台说出心意。 }
+      - { type: set_objective_stage, objectiveId: confess_feeling, stage: spoken, reason: 心意已说出口。 }
+  - id: spend_time
+    on: { action: act, intent: invite }
+    patches:
+      - { type: adjust_resource, resourceId: time_left, delta: -1, reason: 学园祭时间继续流逝。 }

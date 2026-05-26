@@ -1,8 +1,42 @@
 allowedPatchTypes:
-  - discover_clue
+  - reveal_fact
   - add_item
   - remove_item
   - move_location
   - set_flag
-  - adjust_npc_attitude
-  - set_quest_stage
+  - set_objective_stage
+triggers:
+  - id: confront_true_culprit
+    on:
+      action: act
+      intent: confront
+      targetId: butler
+    when:
+      all:
+        - knows_fact: broken_watch
+        - knows_fact: muddy_bootprint
+        - knows_fact: tower_bell_record
+    patches:
+      - type: set_flag
+        flag: accused_butler
+        value: true
+        reason: Player confronted the butler with required facts.
+      - type: set_objective_stage
+        objectiveId: solve_murder
+        stage: resolved
+        reason: The correct confrontation resolved the case.
+  - id: wrong_confrontation
+    on:
+      action: act
+      intent: confront
+    when:
+      not:
+        all:
+          - knows_fact: broken_watch
+          - knows_fact: muddy_bootprint
+          - knows_fact: tower_bell_record
+    patches:
+      - type: set_flag
+        flag: wrong_accusation
+        value: true
+        reason: Player confronted without enough support.

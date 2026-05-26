@@ -1,0 +1,2 @@
+- { id: courage, name: 勇气, initial: 1, min: 0, max: 10 }
+- { id: time_left, name: 剩余时间, initial: 3, min: 0, max: 3 }

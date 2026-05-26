@@ -1,0 +1,19 @@
+- id: sellsword
+  name: 雇佣剑士
+  aliases: [剑士, sellsword]
+  publicDescription: 他只关心报酬是否足够。
+  topics: []
+- id: gate_spirit
+  name: 守门灵
+  aliases: [守门灵, gate_spirit]
+  publicDescription: 透明的火光守在石门上。
+  topics:
+    - id: oath
+      prompt: 询问守门誓约
+      aliases: [誓约, oath]
+      revealsFactId: gate_oath
+- id: ash_wight
+  name: 灰烬亡魂
+  aliases: [亡魂, ash_wight]
+  publicDescription: 盔甲里只剩暗红余火。
+  topics: []

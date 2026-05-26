@@ -1,0 +1,31 @@
+id: cultivation
+labels:
+  location: 宗门区域
+  characters: 门人
+  facts: 玄机
+  inventory: 法器丹药
+  resources: 修行状态
+  relationships: 因缘
+  objectives: 试炼进境
+quickActions:
+  - label: 查看山门
+    command: look
+  - label: 参悟雾碑
+    command: inspect mist_tablet
+  - label: 调息修炼
+    command: cultivate
+  - label: 参加终试
+    command: trial
+actions:
+  cultivate:
+    aliases: [cultivate, 修炼, 调息]
+    acceptsFacts: true
+  help:
+    aliases: [help, 相助, 帮助]
+    requiresTarget: character
+  trial:
+    aliases: [trial, 终试, 试炼]
+    acceptsFacts: true
+  bargain:
+    aliases: [bargain, 交易, 求药]
+    requiresTarget: character

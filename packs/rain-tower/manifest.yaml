@@ -1,5 +1,6 @@
 id: rain-tower
 name: 雨塔谋杀案
-version: 0.1.0
-runtimeVersion: 0.1.0
+version: 0.2.0
+runtimeVersion: 0.2.0
 entryLocationId: foyer
+profileId: detective

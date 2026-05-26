@@ -1,0 +1,17 @@
+steps:
+  - move courtyard
+  - inspect shared_umbrella
+  - invite lin
+  - move rooftop
+  - confess lin with shared_umbrella
+expectedKnownFacts:
+  - shared_umbrella
+expectedResources:
+  courage: 3
+  time_left: 2
+expectedRelationships:
+  lin: 5
+expectedObjectiveStages:
+  choose_route: chosen
+  confess_feeling: spoken
+expectedEnding: rooftop_confession

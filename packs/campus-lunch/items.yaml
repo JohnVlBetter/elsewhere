@@ -1,0 +1,5 @@
+- id: lunch_box
+  name: 浅蓝便当盒
+  aliases: [便当, 便当盒, lunch_box]
+  description: 盒盖上贴着两张便利贴，其中一张写着“中庭见”。
+  revealsFactId: missed_note

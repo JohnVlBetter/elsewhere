@@ -1,0 +1,5 @@
+- characterId: mentor_echo
+  name: 师徒因缘
+  initial: 0
+  min: -5
+  max: 5

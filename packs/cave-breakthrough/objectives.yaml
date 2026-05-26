@@ -1,0 +1,4 @@
+- id: breakthrough
+  name: 完成破境
+  stages: [prepare, ready, clear]
+  initialStage: prepare

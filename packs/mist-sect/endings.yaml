@@ -1,0 +1,29 @@
+- id: orthodox_entry
+  name: 正道入门
+  priority: 10
+  condition:
+    all:
+      - objective_stage_is: { objective: enter_sect, stage: passed }
+      - resource_at_most: { resource: heart_demon, value: 2 }
+      - resource_at_least: { resource: sect_merit, value: 3 }
+  text: 秦长老点头收下你，你以稳心护人的名次入门。
+- id: reckless_win
+  name: 冒进夺魁
+  priority: 5
+  condition:
+    all:
+      - flag_true: reckless_win
+      - resource_at_least: { resource: heart_demon, value: 5 }
+  text: 你夺得头名，却把心魔也带进了宗门。
+- id: garden_friend
+  name: 药圃因缘
+  priority: 4
+  condition:
+    objective_stage_is: { objective: aid_garden, stage: helped }
+  text: 药圃执事记住了你，日后常给你留一盏温药。
+- id: trial_failed
+  name: 试炼落选
+  priority: 1
+  condition:
+    flag_true: trial_failed
+  text: 雾散时你仍未找到自己的路。

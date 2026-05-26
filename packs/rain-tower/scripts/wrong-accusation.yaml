@@ -1,13 +1,9 @@
 steps:
-  - look
-  - go study
-  - inspect torn_letter
-  - accuse heiress with torn_letter
-expectedEnding: wrong_accusation
-expectedKnownClues:
-  - torn_letter
+  - inspect silver_watch
+  - confront heiress with broken_watch
+expectedKnownFacts:
+  - broken_watch
 expectedFlags:
   wrong_accusation: true
   accused_butler: false
-forbiddenOutputPhrases:
-  - He reset the tower clock
+expectedEnding: wrong_accusation

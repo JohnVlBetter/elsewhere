@@ -1,0 +1,32 @@
+id: romance
+labels:
+  location: 场景
+  characters: 同学
+  facts: 回忆
+  inventory: 随身物
+  resources: 心情
+  relationships: 关系
+  objectives: 关系进展
+  ending: 结局
+quickActions:
+  - label: 环顾教室
+    command: look
+  - label: 查看便当
+    command: inspect lunch_box
+  - label: 安慰林同学
+    command: comfort lin
+  - label: 邀请去庭院
+    command: invite lin
+actions:
+  comfort:
+    aliases: [comfort, 安慰]
+    requiresTarget: character
+    acceptsFacts: true
+  invite:
+    aliases: [invite, 邀请]
+    requiresTarget: character
+    acceptsFacts: true
+  confess:
+    aliases: [confess, 告白, 说清楚]
+    requiresTarget: character
+    acceptsFacts: true

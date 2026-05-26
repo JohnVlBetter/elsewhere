@@ -4,9 +4,9 @@
   condition:
     all:
       - flag_true: accused_butler
-      - knows_clue: broken_watch
-      - knows_clue: muddy_bootprint
-      - knows_clue: tower_bell_record
+      - knows_fact: broken_watch
+      - knows_fact: muddy_bootprint
+      - knows_fact: tower_bell_record
   text: The butler's alibi collapses, and he confesses to resetting the bell.
 - id: wrong_accusation
   name: Wrong Accusation

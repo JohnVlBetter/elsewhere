@@ -1,0 +1,19 @@
+- id: honest_lunch
+  name: 坦诚午饭
+  priority: 10
+  condition:
+    all:
+      - knows_fact: missed_note
+      - relationship_at_least:
+          character: lin
+          value: 3
+      - objective_stage_is:
+          objective: repair_lunch
+          stage: warm
+  text: 你们在中庭分开筷子，误会变成了只有两个人知道的小笑话。
+- id: awkward_bell
+  name: 铃声打断
+  priority: 1
+  condition:
+    flag_true: bell_rang
+  text: 上课铃打断了沉默，便当还是安静地放在窗边。

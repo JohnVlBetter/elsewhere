@@ -1,0 +1,10 @@
+- id: spiritual_power
+  name: 灵力
+  initial: 2
+  min: 0
+  max: 10
+- id: heart_demon
+  name: 心魔
+  initial: 2
+  min: 0
+  max: 5

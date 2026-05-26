@@ -1,0 +1,29 @@
+id: tabletop_fantasy
+labels:
+  location: 区域
+  characters: 角色与敌人
+  facts: 情报
+  inventory: 装备
+  resources: 队伍资源
+  relationships: 阵营态度
+  objectives: 冒险目标
+quickActions:
+  - label: 查看营地
+    command: look
+  - label: 研究旧地图
+    command: inspect old_map
+  - label: 和守门灵交涉
+    command: negotiate gate_spirit
+  - label: 撬开秘库
+    command: skill_check sealed_vault with ember_map
+actions:
+  skill_check:
+    aliases: [skill_check, 检定, 撬锁]
+    acceptsFacts: true
+  attack:
+    aliases: [attack, 攻击, 战斗]
+    requiresTarget: character
+  negotiate:
+    aliases: [negotiate, 交涉, 谈判]
+    requiresTarget: character
+    acceptsFacts: true

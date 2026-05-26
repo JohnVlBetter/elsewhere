@@ -1,0 +1,31 @@
+- id: ember_map
+  kind: quest_info
+  name: 余烬地图
+  aliases: [地图, old_map, ember_map]
+  description: 旧地图标出秘库侧门和三道锁孔。
+  discoverableWhen:
+    location_is: camp
+- id: gate_oath
+  kind: lore
+  name: 守门誓约
+  aliases: [誓约, gate_oath]
+  description: 守门灵只放行愿意归还王冠的人。
+- id: sealed_runes
+  kind: tactical_info
+  name: 封印符文
+  aliases: [符文, sealed_runes]
+  description: 符文需要钥匙或熟练工具才能避开灼伤。
+  discoverableWhen:
+    location_is: crypt_gate
+- id: wight_weakness
+  kind: tactical_info
+  name: 亡魂弱点
+  aliases: [弱点, wight_weakness]
+  description: 灰烬亡魂畏惧重新点燃的蓝火。
+- id: crown_lore
+  kind: lore
+  name: 王冠传说
+  aliases: [王冠, crown_lore]
+  description: 王冠不是财宝，而是封住地穴余火的楔子。
+  discoverableWhen:
+    location_is: sealed_vault

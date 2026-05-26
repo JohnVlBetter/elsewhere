@@ -1,0 +1,35 @@
+- id: mist_tablet
+  name: 雾碑纹路
+  description: 雾碑提示试炼重在心性而非速度。
+  discoverableWhen: { location_is: mountain_gate }
+- id: fox_trace
+  name: 雾狐足迹
+  description: 足迹通向隐泉，说明林中有捷径。
+  discoverableWhen: { location_is: mist_forest }
+- id: fog_vein
+  name: 雾中灵脉
+  description: 灵脉能补充灵力，但会牵动心魔。
+  discoverableWhen: { location_is: mist_forest }
+- id: spring_reflection
+  name: 隐泉倒影
+  description: 倒影能照出心魔最重的一念。
+  discoverableWhen: { location_is: hidden_spring }
+- id: sword_mark
+  name: 剑坪步痕
+  description: 步痕说明剑阵考的是稳，不是快。
+  discoverableWhen: { location_is: sword_yard }
+- id: withered_lotus
+  name: 枯萎灵莲
+  description: 灵莲不是病了，而是被雾狐偷走露水。
+  discoverableWhen: { location_is: herb_garden }
+- id: calm_pill
+  name: 清心丹方
+  description: 清心丹能压住心魔，但会消耗药缘。
+  discoverableWhen: { location_is: alchemy_room }
+- id: breath_manual
+  name: 入门吐纳诀
+  description: 吐纳诀能让灵力运行更稳。
+  discoverableWhen: { location_is: scripture_hall }
+- id: trial_rule
+  name: 试炼评判
+  description: 长老看重是否护人、守心、识取舍。

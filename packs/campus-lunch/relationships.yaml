@@ -1,0 +1,5 @@
+- characterId: lin
+  name: 林同学好感
+  initial: 0
+  min: -5
+  max: 10

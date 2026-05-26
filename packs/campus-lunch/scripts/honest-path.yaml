@@ -1,0 +1,11 @@
+steps:
+  - inspect lunch_box
+  - comfort lin
+  - invite lin
+expectedKnownFacts:
+  - missed_note
+expectedRelationships:
+  lin: 3
+expectedObjectiveStages:
+  repair_lunch: warm
+expectedEnding: honest_lunch

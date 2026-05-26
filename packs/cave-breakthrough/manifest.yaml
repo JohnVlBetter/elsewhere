@@ -1,0 +1,6 @@
+id: cave-breakthrough
+name: 洞府破境
+version: 0.2.0
+runtimeVersion: 0.2.0
+entryLocationId: outer_cave
+profileId: cultivation

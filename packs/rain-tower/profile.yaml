@@ -1,0 +1,24 @@
+id: detective
+labels:
+  location: 现场
+  characters: 相关人物
+  facts: 线索
+  inventory: 物证
+  resources: 状态
+  relationships: 关系
+  objectives: 案件进展
+  ending: 结局
+quickActions:
+  - label: 环顾门厅
+    command: look
+  - label: 检查银怀表
+    command: inspect silver_watch
+  - label: 询问管家
+    command: talk butler about alibi
+  - label: 指认管家
+    command: confront butler with broken_watch muddy_bootprint tower_bell_record
+actions:
+  confront:
+    aliases: [confront, accuse, 指认, 质询]
+    requiresTarget: character
+    acceptsFacts: true

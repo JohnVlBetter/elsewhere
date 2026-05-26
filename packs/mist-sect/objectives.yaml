@@ -1,0 +1,16 @@
+- id: enter_sect
+  name: 通过入门试炼
+  stages: [start, prepared, passed]
+  initialStage: start
+- id: calm_mind
+  name: 压住心魔
+  stages: [unsteady, balanced]
+  initialStage: unsteady
+- id: aid_garden
+  name: 救回灵莲
+  stages: [unknown, helped]
+  initialStage: unknown
+- id: sword_trial
+  name: 剑坪试步
+  stages: [untried, steady]
+  initialStage: untried

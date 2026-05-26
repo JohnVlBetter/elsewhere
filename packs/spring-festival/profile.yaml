@@ -1,0 +1,31 @@
+id: romance
+labels:
+  location: 场景
+  characters: 朋友
+  facts: 回忆
+  inventory: 随身物
+  resources: 心情
+  relationships: 关系线
+  objectives: 节日进展
+quickActions:
+  - label: 查看教室
+    command: look
+  - label: 邀请林同学
+    command: invite lin
+  - label: 安慰美术社长
+    command: comfort aya
+  - label: 告白
+    command: confess lin with shared_umbrella
+actions:
+  invite:
+    aliases: [invite, 邀请]
+    requiresTarget: character
+    acceptsFacts: true
+  comfort:
+    aliases: [comfort, 安慰]
+    requiresTarget: character
+    acceptsFacts: true
+  confess:
+    aliases: [confess, 告白]
+    requiresTarget: character
+    acceptsFacts: true

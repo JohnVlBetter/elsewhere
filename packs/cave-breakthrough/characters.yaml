@@ -1,0 +1,12 @@
+- id: mentor_echo
+  name: 师父残念
+  aliases: [师父, 残念, mentor_echo]
+  publicDescription: 一缕声音附在石壁灵纹里。
+  privateFacts: [残念知道你的经脉有旧伤。]
+  knows: [fractured_meridian]
+  forbiddenDisclosures: []
+  topics:
+    - id: meridian
+      prompt: 询问经脉旧伤
+      aliases: [经脉, 旧伤, meridian]
+      revealsFactId: fractured_meridian

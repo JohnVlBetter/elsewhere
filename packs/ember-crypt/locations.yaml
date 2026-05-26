@@ -1,0 +1,24 @@
+- id: camp
+  name: 林边营地
+  aliases: [camp, 营地]
+  description: 篝火快灭了，旧地图摊在补给箱上。
+  exits: [crypt_gate]
+  visibleObjects: [old_map]
+- id: crypt_gate
+  name: 地穴石门
+  aliases: [gate, 石门, crypt_gate]
+  description: 石门浮着守门灵的残影。
+  exits: [camp, ember_hall]
+  visibleObjects: [sealed_runes]
+- id: ember_hall
+  name: 余烬大厅
+  aliases: [大厅, ember_hall]
+  description: 灰烬在脚下发热，亡魂守着断裂的钥匙。
+  exits: [crypt_gate, sealed_vault]
+  visibleObjects: [ember_key]
+- id: sealed_vault
+  name: 封印秘库
+  aliases: [秘库, sealed_vault]
+  description: 石柜上有三道锁孔和灼痕。
+  exits: [ember_hall]
+  visibleObjects: [crown_lore]

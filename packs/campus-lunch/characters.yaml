@@ -1,0 +1,24 @@
+- id: lin
+  name: 林同学
+  aliases: [林同学, 小林, lin]
+  publicDescription: 她看起来有些受伤，但还在等你开口。
+  privateFacts: [她以为你忘了昨天约好一起吃午饭。]
+  knows: [shared_lunch_memory, missed_note]
+  forbiddenDisclosures: []
+  topics:
+    - id: lunch
+      prompt: 询问午休便当的事
+      aliases: [便当, 午饭, lunch]
+      revealsFactId: shared_lunch_memory
+- id: hao
+  name: 郝同学
+  aliases: [郝同学, hao]
+  publicDescription: 他在门边笑得很心虚。
+  privateFacts: [他把纸条夹进了错的课本。]
+  knows: [hao_teasing]
+  forbiddenDisclosures: []
+  topics:
+    - id: teasing
+      prompt: 询问他刚才为什么笑
+      aliases: [偷笑, 起哄, teasing]
+      revealsFactId: hao_teasing

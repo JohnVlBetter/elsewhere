@@ -1,0 +1,17 @@
+- id: shared_lunch_memory
+  kind: memory
+  name: 昨天的午饭约定
+  aliases: [午饭约定, 约定, shared_lunch_memory]
+  description: 你和林同学昨天说好今天午休一起吃便当。
+- id: missed_note
+  kind: misunderstanding
+  name: 错过的纸条
+  aliases: [纸条, missed_note]
+  description: 纸条被夹进错的课本，所以你没有看到她改地点的留言。
+  discoverableWhen:
+    location_is: classroom
+- id: hao_teasing
+  kind: rumor
+  name: 郝同学的起哄
+  aliases: [起哄, 偷笑, hao_teasing]
+  description: 郝同学只是看见纸条夹错，起哄让误会变得更尴尬。

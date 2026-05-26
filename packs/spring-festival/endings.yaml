@@ -1,0 +1,26 @@
+- id: rooftop_confession
+  name: 天台告白
+  priority: 10
+  condition:
+    all:
+      - objective_stage_is: { objective: confess_feeling, stage: spoken }
+      - relationship_at_least: { character: lin, value: 5 }
+  text: 烟花升起时，林同学笑着说她也一直记得那把雨伞。
+- id: art_room_bond
+  name: 美术室灯光
+  priority: 7
+  condition:
+    relationship_at_least: { character: aya, value: 4 }
+  text: 绫把你的名字写进海报角落，说这是今天最好的颜色。
+- id: stage_encore
+  name: 舞台返场
+  priority: 6
+  condition:
+    relationship_at_least: { character: minato, value: 4 }
+  text: 凑在返场前看向你，把最后一句歌词唱得很轻。
+- id: festival_drift
+  name: 春风未定
+  priority: 1
+  condition:
+    resource_at_most: { resource: time_left, value: 0 }
+  text: 学园祭结束了，有些话留给了下一阵春风。

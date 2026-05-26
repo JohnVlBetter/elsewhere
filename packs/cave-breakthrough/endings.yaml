@@ -1,0 +1,12 @@
+- id: clear_breakthrough
+  name: 清明破境
+  priority: 10
+  condition:
+    flag_true: clear_breakthrough
+  text: 灵力顺着旧伤绕行，你在雨声里稳稳破境。
+- id: failed_breakthrough
+  name: 心魔反噬
+  priority: 1
+  condition:
+    flag_true: failed_breakthrough
+  text: 你强行冲关，心魔趁虚而入。

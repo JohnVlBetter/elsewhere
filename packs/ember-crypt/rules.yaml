@@ -1,0 +1,54 @@
+allowedPatchTypes:
+  - reveal_fact
+  - add_item
+  - remove_item
+  - move_location
+  - set_flag
+  - adjust_relationship
+  - set_resource
+  - adjust_resource
+  - set_objective_stage
+triggers:
+  - id: negotiate_gate
+    on:
+      action: act
+      intent: negotiate
+      targetId: gate_spirit
+    patches:
+      - type: adjust_relationship
+        characterId: gate_spirit
+        delta: 2
+        reason: 小队承诺归还王冠。
+      - type: set_objective_stage
+        objectiveId: open_vault
+        stage: gate_open
+        reason: 守门灵打开了地穴门。
+  - id: fight_wight
+    on:
+      action: act
+      intent: attack
+      targetId: ash_wight
+    patches:
+      - type: adjust_resource
+        resourceId: hp
+        delta: -2
+        reason: 与灰烬亡魂交战受伤。
+      - type: add_item
+        itemId: ember_key
+        reason: 战后取得余烬钥匙。
+  - id: open_vault
+    on:
+      action: act
+      intent: skill_check
+      targetId: sealed_vault
+    when:
+      knows_fact: ember_map
+    patches:
+      - type: set_objective_stage
+        objectiveId: open_vault
+        stage: vault_open
+        reason: 按地图避开了封印机关。
+      - type: set_objective_stage
+        objectiveId: handle_crown
+        stage: return
+        reason: 小队决定把王冠归位。

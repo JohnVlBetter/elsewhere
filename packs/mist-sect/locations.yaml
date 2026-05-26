@@ -1,0 +1,35 @@
+- id: mountain_gate
+  name: 山门
+  description: 雾气压在青石阶上，入门弟子排成一列。
+  exits: [mist_forest, sword_yard, herb_garden]
+  visibleObjects: [mist_tablet]
+- id: mist_forest
+  name: 迷雾林
+  description: 林中每一步都像踩进不同的回声。
+  exits: [mountain_gate, hidden_spring]
+  visibleObjects: [fox_trace, fog_vein]
+- id: hidden_spring
+  name: 隐泉
+  description: 泉眼有微弱灵光，能洗去杂念。
+  exits: [mist_forest]
+  visibleObjects: [spring_reflection]
+- id: sword_yard
+  name: 剑坪
+  description: 竹剑列成阵，剑师正在看每个人的步法。
+  exits: [mountain_gate, scripture_hall]
+  visibleObjects: [sword_mark]
+- id: herb_garden
+  name: 药圃
+  description: 药圃潮湿，外门弟子忙着护住灵草。
+  exits: [mountain_gate, alchemy_room]
+  visibleObjects: [withered_lotus]
+- id: alchemy_room
+  name: 丹房
+  description: 丹炉微红，药香里混着焦味。
+  exits: [herb_garden]
+  visibleObjects: [calm_pill]
+- id: scripture_hall
+  name: 藏经阁
+  description: 旧木架上压着入门心法。
+  exits: [sword_yard]
+  visibleObjects: [breath_manual]

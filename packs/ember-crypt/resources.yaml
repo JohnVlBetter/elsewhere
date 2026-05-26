@@ -1,0 +1,15 @@
+- id: hp
+  name: 生命
+  initial: 8
+  min: 0
+  max: 12
+- id: gold
+  name: 金币
+  initial: 3
+  min: 0
+  max: 99
+- id: spell_slot
+  name: 法术位
+  initial: 1
+  min: 0
+  max: 3

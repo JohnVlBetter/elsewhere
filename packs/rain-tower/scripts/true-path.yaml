@@ -1,18 +1,17 @@
 steps:
-  - look
-  - inspect broken_watch
-  - go greenhouse
+  - inspect silver_watch
+  - move greenhouse
   - inspect muddy_bootprint
-  - go foyer
-  - go study
+  - move foyer
+  - move study
   - inspect tower_bell_record
-  - accuse butler with broken_watch muddy_bootprint tower_bell_record
-expectedEnding: true_resolution
-expectedKnownClues:
+  - confront butler with broken_watch muddy_bootprint tower_bell_record
+expectedKnownFacts:
   - broken_watch
   - muddy_bootprint
   - tower_bell_record
 expectedFlags:
   accused_butler: true
-forbiddenOutputPhrases:
-  - She hid the greenhouse key
+expectedObjectiveStages:
+  solve_murder: resolved
+expectedEnding: true_resolution

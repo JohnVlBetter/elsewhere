@@ -1,0 +1,4 @@
+- id: repair_lunch
+  name: 修复午休误会
+  stages: [awkward, honest, warm]
+  initialStage: awkward

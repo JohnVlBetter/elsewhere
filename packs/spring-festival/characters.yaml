@@ -1,0 +1,5 @@
+- { id: lin, name: 林同学, publicDescription: 她把节目单折得很整齐。, topics: [] }
+- { id: aya, name: 美术社长绫, publicDescription: 她手上沾着颜料，看起来很累。, topics: [] }
+- { id: minato, name: 乐队主唱凑, publicDescription: 他总把紧张藏在玩笑里。, topics: [] }
+- { id: sora, name: 青梅空, publicDescription: 她熟门熟路地替你递胶带。, topics: [] }
+- { id: teacher_mori, name: 森老师, publicDescription: 他在巡场，却没有催你做决定。, topics: [] }

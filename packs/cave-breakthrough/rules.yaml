@@ -1,0 +1,63 @@
+allowedPatchTypes:
+  - reveal_fact
+  - set_flag
+  - adjust_relationship
+  - set_resource
+  - adjust_resource
+  - set_objective_stage
+triggers:
+  - id: cultivate_once
+    on:
+      action: act
+      intent: cultivate
+    patches:
+      - type: adjust_resource
+        resourceId: spiritual_power
+        delta: 2
+        reason: 打坐汲取地脉灵力。
+      - type: adjust_resource
+        resourceId: heart_demon
+        delta: -1
+        reason: 静息压住心魔。
+      - type: adjust_relationship
+        characterId: mentor_echo
+        delta: 1
+        reason: 你听从了师父残念。
+      - type: set_objective_stage
+        objectiveId: breakthrough
+        stage: ready
+        reason: 破境准备完成。
+  - id: clear_breakthrough
+    on:
+      action: act
+      intent: breakthrough
+    when:
+      all:
+        - resource_at_least:
+            resource: spiritual_power
+            value: 4
+        - resource_at_most:
+            resource: heart_demon
+            value: 1
+    patches:
+      - type: set_flag
+        flag: clear_breakthrough
+        value: true
+        reason: 灵力和心魔都达到了破境条件。
+      - type: set_objective_stage
+        objectiveId: breakthrough
+        stage: clear
+        reason: 成功破境。
+  - id: failed_breakthrough
+    on:
+      action: act
+      intent: breakthrough
+    when:
+      resource_at_least:
+        resource: heart_demon
+        value: 2
+    patches:
+      - type: set_flag
+        flag: failed_breakthrough
+        value: true
+        reason: 心魔仍然太高。

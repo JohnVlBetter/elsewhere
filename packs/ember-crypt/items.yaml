@@ -1,0 +1,17 @@
+- id: old_map
+  name: 旧地图
+  aliases: [old_map, 地图]
+  description: 标着地穴秘库侧门的羊皮纸。
+  revealsFactId: ember_map
+- id: thieves_tools
+  name: 盗贼工具
+  aliases: [tools, thieves_tools, 工具]
+  description: 一套细小撬针。
+- id: ember_key
+  name: 余烬钥匙
+  aliases: [key, ember_key, 钥匙]
+  description: 灰烬亡魂守着的断裂钥匙。
+- id: healing_draught
+  name: 治疗药水
+  aliases: [potion, 药水]
+  description: 苦味药水，可以让队伍撑过一轮战斗。

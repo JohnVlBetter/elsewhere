@@ -1,0 +1,50 @@
+allowedPatchTypes:
+  - reveal_fact
+  - set_flag
+  - adjust_relationship
+  - set_objective_stage
+triggers:
+  - id: comfort_lin
+    on:
+      action: act
+      intent: comfort
+      targetId: lin
+    patches:
+      - type: adjust_relationship
+        characterId: lin
+        delta: 1
+        reason: 认真安慰了林同学。
+      - type: set_objective_stage
+        objectiveId: repair_lunch
+        stage: honest
+        reason: 误会开始被说开。
+  - id: invite_lin
+    on:
+      action: act
+      intent: invite
+      targetId: lin
+    when:
+      knows_fact: missed_note
+    patches:
+      - type: adjust_relationship
+        characterId: lin
+        delta: 2
+        reason: 邀请她去中庭重新吃午饭。
+      - type: set_objective_stage
+        objectiveId: repair_lunch
+        stage: warm
+        reason: 关系重新变得轻松。
+  - id: confess_lin
+    on:
+      action: act
+      intent: confess
+      targetId: lin
+    when:
+      relationship_at_least:
+        character: lin
+        value: 3
+    patches:
+      - type: set_flag
+        flag: honest_confession
+        value: true
+        reason: 你把心意说清楚了。
