@@ -1,15 +1,16 @@
-import type { GameAction } from "@aigame/shared";
+import type { GameAction, Profile } from "@aigame/shared";
 
 export interface ActionLexicon {
+  profile?: Profile;
   locations?: Array<{ id: string; name?: string; aliases?: string[] }>;
-  npcs?: Array<{
+  characters?: Array<{
     id: string;
     name?: string;
     aliases?: string[];
     topics?: Array<{ id: string; prompt?: string; aliases?: string[] }>;
   }>;
   items?: Array<{ id: string; name?: string; aliases?: string[] }>;
-  clues?: Array<{ id: string; name?: string; aliases?: string[] }>;
+  facts?: Array<{ id: string; name?: string; aliases?: string[] }>;
 }
 
 export function parseAction(inputText: string, lexicon: ActionLexicon = {}): GameAction {
@@ -19,13 +20,14 @@ export function parseAction(inputText: string, lexicon: ActionLexicon = {}): Gam
   if (!verb || verb === "look") return { type: "look", rawText };
   if ((verb === "go" || verb === "move") && first) return { type: "move", locationId: first, rawText };
   if ((verb === "inspect" || verb === "examine") && first) return { type: "inspect", targetId: first, rawText };
-  if (verb === "ask" && first) return { type: "ask", npcId: first, topic: rest.join(" "), rawText };
+  if ((verb === "talk" || verb === "ask") && first) return parseTalkCommand(first, rest, rawText);
   if ((verb === "take" || verb === "pickup" || verb === "get") && first) return { type: "take", itemId: first, rawText };
   if (verb === "use" && first) return { type: "use", itemId: first, targetId: rest[1], rawText };
-  if (verb === "accuse" && first) {
-    const withIndex = rest.indexOf("with");
-    const clueIds = withIndex >= 0 ? rest.slice(withIndex + 1) : [];
-    return { type: "accuse", npcId: first, clueIds, rawText };
+  if (verb === "act" && first) return parseActCommand(first, rest, rawText);
+
+  const profileAction = findProfileActionByVerb(verb, lexicon.profile);
+  if (profileAction) {
+    return parseActCommand(profileAction.intent, [first, ...rest].filter(Boolean), rawText);
   }
 
   const naturalAction = parseNaturalAction(rawText, lexicon);
@@ -34,17 +36,34 @@ export function parseAction(inputText: string, lexicon: ActionLexicon = {}): Gam
   return { type: "unknown", rawText };
 }
 
+function parseTalkCommand(characterId: string, rest: string[], rawText: string): GameAction {
+  const aboutIndex = rest.indexOf("about");
+  const topicParts = aboutIndex >= 0 ? rest.slice(aboutIndex + 1) : rest;
+  return { type: "talk", characterId, topic: topicParts.join(" ") || "general", rawText };
+}
+
+function parseActCommand(intent: string, rest: string[], rawText: string): GameAction {
+  const withIndex = rest.indexOf("with");
+  const targetParts = withIndex >= 0 ? rest.slice(0, withIndex) : rest;
+  const factIds = withIndex >= 0 ? rest.slice(withIndex + 1).filter(Boolean) : [];
+  const targetId = targetParts[0];
+
+  return targetId
+    ? { type: "act", intent, targetId, factIds, rawText }
+    : { type: "act", intent, factIds, rawText };
+}
+
 function parseNaturalAction(rawText: string, lexicon: ActionLexicon): GameAction | undefined {
-  const npc = findMention(rawText, lexicon.npcs ?? []);
+  const character = findMention(rawText, lexicon.characters ?? []);
   const item = findMention(rawText, lexicon.items ?? []);
-  const clue = findMention(rawText, lexicon.clues ?? []);
+  const fact = findMention(rawText, lexicon.facts ?? []);
   const location = findMention(rawText, lexicon.locations ?? []);
 
-  if (hasAny(rawText, ["询问", "问", "追问", "盘问", "问问"]) && npc) {
+  if (hasAny(rawText, ["询问", "问", "追问", "盘问", "请教"]) && character) {
     return {
-      type: "ask",
-      npcId: npc.entity.id,
-      topic: matchTopic(rawText, npc.entity.topics ?? []) ?? inferTopic(rawText, npc.matchedText),
+      type: "talk",
+      characterId: character.entity.id,
+      topic: matchTopic(rawText, character.entity.topics ?? []) ?? inferTopic(rawText, character.matchedText),
       rawText
     };
   }
@@ -53,29 +72,73 @@ function parseNaturalAction(rawText: string, lexicon: ActionLexicon): GameAction
     return { type: "take", itemId: item.entity.id, rawText };
   }
 
-  if (hasAny(rawText, ["检查", "查看", "观察", "调查", "检视", "看看", "看"]) && (item || clue)) {
-    return { type: "inspect", targetId: (item ?? clue)?.entity.id ?? "", rawText };
+  if (hasAny(rawText, ["检查", "查看", "观察", "调查", "检视", "看看", "看"]) && (item || fact)) {
+    return { type: "inspect", targetId: (item ?? fact)?.entity.id ?? "", rawText };
   }
 
   if (hasAny(rawText, ["前往", "去", "移动到", "进入", "走到"]) && location) {
     return { type: "move", locationId: location.entity.id, rawText };
   }
 
+  const profileAction = findProfileActionInText(rawText, lexicon.profile);
+  if (profileAction) {
+    return buildNaturalActAction(rawText, profileAction, lexicon, { character, item, fact, location });
+  }
+
   return undefined;
 }
+
+function buildNaturalActAction(
+  rawText: string,
+  profileAction: { intent: string; acceptsFacts: boolean; requiresTarget?: string },
+  lexicon: ActionLexicon,
+  mentions: {
+    character?: Mention<{ id: string; name?: string; aliases?: string[] }>;
+    item?: Mention<{ id: string; name?: string; aliases?: string[] }>;
+    fact?: Mention<{ id: string; name?: string; aliases?: string[] }>;
+    location?: Mention<{ id: string; name?: string; aliases?: string[] }>;
+  }
+): GameAction {
+  const targetId = pickTargetId(profileAction.requiresTarget, mentions);
+  const factIds = profileAction.acceptsFacts
+    ? findAllMentions(rawText, lexicon.facts ?? []).map((match) => match.entity.id)
+    : [];
+
+  return targetId
+    ? { type: "act", intent: profileAction.intent, targetId, factIds, rawText }
+    : { type: "act", intent: profileAction.intent, factIds, rawText };
+}
+
+type Mention<T extends { id: string; name?: string; aliases?: string[] }> = { entity: T; matchedText: string };
 
 function findMention<T extends { id: string; name?: string; aliases?: string[] }>(
   rawText: string,
   entities: T[]
-): { entity: T; matchedText: string } | undefined {
+): Mention<T> | undefined {
+  return findAllMentions(rawText, entities)[0];
+}
+
+function findAllMentions<T extends { id: string; name?: string; aliases?: string[] }>(
+  rawText: string,
+  entities: T[]
+): Array<Mention<T>> {
   const normalizedText = normalizeText(rawText);
   const candidates = entities
     .flatMap((entity) => mentionTexts(entity).map((text) => ({ entity, text })))
     .filter((candidate) => candidate.text.length > 0)
     .sort((left, right) => right.text.length - left.text.length);
+  const seen = new Set<string>();
+  const matches: Array<Mention<T>> = [];
 
-  const match = candidates.find((candidate) => normalizedText.includes(normalizeText(candidate.text)));
-  return match ? { entity: match.entity, matchedText: match.text } : undefined;
+  for (const candidate of candidates) {
+    if (seen.has(candidate.entity.id)) continue;
+    if (normalizedText.includes(normalizeText(candidate.text))) {
+      matches.push({ entity: candidate.entity, matchedText: candidate.text });
+      seen.add(candidate.entity.id);
+    }
+  }
+
+  return matches;
 }
 
 function mentionTexts(entity: { id: string; name?: string; aliases?: string[] }): string[] {
@@ -95,11 +158,58 @@ function matchTopic(rawText: string, topics: Array<{ id: string; prompt?: string
 function inferTopic(rawText: string, matchedEntity: string): string {
   const stripped = rawText
     .replace(matchedEntity, "")
-    .replace(/[，。、“”"']/g, " ")
-    .replace(/询问|追问|盘问|问问|问/g, " ")
+    .replace(/[，。、"'“”]/g, " ")
+    .replace(/询问|追问|盘问|请教|问/g, " ")
     .replace(/\s+/g, " ")
     .trim();
   return stripped || "general";
+}
+
+function findProfileActionByVerb(verb: string, profile: Profile | undefined): { intent: string } | undefined {
+  if (!profile) return undefined;
+  const normalizedVerb = normalizeText(verb);
+  for (const [intent, action] of Object.entries(profile.actions)) {
+    const terms = [intent, ...action.aliases];
+    if (terms.some((term) => normalizeText(term) === normalizedVerb)) {
+      return { intent: action.mapsTo ?? intent };
+    }
+  }
+  return undefined;
+}
+
+function findProfileActionInText(
+  rawText: string,
+  profile: Profile | undefined
+): { intent: string; acceptsFacts: boolean; requiresTarget?: string } | undefined {
+  if (!profile) return undefined;
+  const normalizedText = normalizeText(rawText);
+  for (const [intent, action] of Object.entries(profile.actions)) {
+    const terms = [intent, ...action.aliases];
+    if (terms.some((term) => normalizedText.includes(normalizeText(term)))) {
+      return {
+        intent: action.mapsTo ?? intent,
+        acceptsFacts: action.acceptsFacts,
+        requiresTarget: action.requiresTarget
+      };
+    }
+  }
+  return undefined;
+}
+
+function pickTargetId(
+  requiresTarget: string | undefined,
+  mentions: {
+    character?: Mention<{ id: string; name?: string; aliases?: string[] }>;
+    item?: Mention<{ id: string; name?: string; aliases?: string[] }>;
+    fact?: Mention<{ id: string; name?: string; aliases?: string[] }>;
+    location?: Mention<{ id: string; name?: string; aliases?: string[] }>;
+  }
+): string | undefined {
+  if (requiresTarget === "character") return mentions.character?.entity.id;
+  if (requiresTarget === "item") return mentions.item?.entity.id;
+  if (requiresTarget === "fact") return mentions.fact?.entity.id;
+  if (requiresTarget === "location") return mentions.location?.entity.id;
+  return mentions.character?.entity.id ?? mentions.item?.entity.id ?? mentions.location?.entity.id ?? mentions.fact?.entity.id;
 }
 
 function hasAny(rawText: string, terms: string[]): boolean {
