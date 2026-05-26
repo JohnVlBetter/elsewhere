@@ -5,8 +5,11 @@ import { runTurn } from "./orchestrator";
 import type { TurnResult } from "./orchestrator";
 
 export interface SimulationAssertions {
-  expectedKnownClues?: string[];
+  expectedKnownFacts?: string[];
   expectedFlags?: Record<string, boolean>;
+  expectedResources?: Record<string, number>;
+  expectedRelationships?: Record<string, number>;
+  expectedObjectiveStages?: Record<string, string>;
   forbiddenOutputPhrases?: string[];
 }
 
@@ -47,16 +50,37 @@ function collectAssertionFailures(
 ): string[] {
   const failures: string[] = [];
 
-  for (const clueId of assertions.expectedKnownClues ?? []) {
-    if (!state.knownClues.includes(clueId)) {
-      failures.push(`Expected known clue: ${clueId}`);
+  for (const factId of assertions.expectedKnownFacts ?? []) {
+    if (!state.knownFacts.includes(factId)) {
+      failures.push(`Expected known fact: ${factId}`);
     }
   }
 
   for (const [flag, expectedValue] of Object.entries(assertions.expectedFlags ?? {})) {
     const actualValue = state.flags[flag];
     if (actualValue !== expectedValue && !(expectedValue === false && actualValue === undefined)) {
-      failures.push(`Expected flag ${flag}=${expectedValue} but got ${formatFlagValue(actualValue)}`);
+      failures.push(`Expected flag ${flag}=${expectedValue} but got ${formatStateValue(actualValue)}`);
+    }
+  }
+
+  for (const [resourceId, expectedValue] of Object.entries(assertions.expectedResources ?? {})) {
+    const actualValue = state.resources[resourceId];
+    if (actualValue !== expectedValue) {
+      failures.push(`Expected resource ${resourceId}=${expectedValue} but got ${formatStateValue(actualValue)}`);
+    }
+  }
+
+  for (const [characterId, expectedValue] of Object.entries(assertions.expectedRelationships ?? {})) {
+    const actualValue = state.relationships[characterId];
+    if (actualValue !== expectedValue) {
+      failures.push(`Expected relationship ${characterId}=${expectedValue} but got ${formatStateValue(actualValue)}`);
+    }
+  }
+
+  for (const [objectiveId, expectedStage] of Object.entries(assertions.expectedObjectiveStages ?? {})) {
+    const actualStage = state.objectiveStages[objectiveId];
+    if (actualStage !== expectedStage) {
+      failures.push(`Expected objective stage ${objectiveId}=${expectedStage} but got ${formatStateValue(actualStage)}`);
     }
   }
 
@@ -70,6 +94,6 @@ function collectAssertionFailures(
   return failures;
 }
 
-function formatFlagValue(value: boolean | undefined): string {
+function formatStateValue(value: string | number | boolean | undefined): string {
   return value === undefined ? "undefined" : String(value);
 }

@@ -1,8 +1,8 @@
-import { auditOutput, buildNarratorContext, buildNpcContext, buildSystemPrompt, FakeModelProvider } from "@aigame/agents";
+import { auditOutput, buildCharacterContext, buildNarratorContext, buildSystemPrompt, FakeModelProvider } from "@aigame/agents";
 import type { ModelProvider } from "@aigame/agents";
 import { PatchSchema } from "@aigame/shared";
 import type { GameAction, GamePatch, SessionState, TurnMessage, WorldPack } from "@aigame/shared";
-import { applyAcceptedPatch, evaluateCondition, judgeEnding, validatePatch } from "@aigame/rules";
+import { applyAcceptedPatch, deriveTriggerPatches, evaluateCondition, judgeEnding, validatePatch } from "@aigame/rules";
 import { parseAction } from "./actionParser";
 
 export interface TurnResult {
@@ -29,7 +29,7 @@ export async function runTurn(input: {
   if (!precheck.ok) {
     const messages: TurnMessage[] = [{ type: "system", text: formatBlockedAction(precheck.reason) }];
     return {
-      outputText: messagesToText(messages),
+      outputText: messagesToText(input.pack, messages),
       messages,
       state: { ...input.state, turn: input.state.turn + 1 },
       acceptedPatches: [],
@@ -42,8 +42,8 @@ export async function runTurn(input: {
       }
     };
   }
-  const agentRequest = buildAgentRequest(input.pack, input.state, input.inputText, action);
 
+  const agentRequest = buildAgentRequest(input.pack, input.state, input.inputText, action);
   const rawResponse = await model.generateStructured<unknown>({
     model: modelName,
     system: agentRequest.system,
@@ -55,7 +55,6 @@ export async function runTurn(input: {
   const acceptedPatches: GamePatch[] = [];
   const rejectedPatches: Array<{ patch: GamePatch; reason: string }> = [];
   let nextState: SessionState = { ...input.state, turn: input.state.turn + 1 };
-
   const rulePatches = deriveRulePatches(action, input.pack, input.state);
 
   for (const patch of [...rulePatches, ...response.proposedPatches]) {
@@ -70,14 +69,14 @@ export async function runTurn(input: {
 
   const ending = judgeEnding(input.pack, nextState);
   const messages = buildTurnMessages(input.pack, action, response, acceptedPatches, ending?.text);
-  const outputText = messagesToText(messages);
+  const outputText = messagesToText(input.pack, messages);
   const audit = auditOutput(outputText, { forbiddenPhrases: collectForbiddenPhrases(input.pack), requireInWorld: true });
   const auditedMessages = audit.ok
     ? messages
     : [{ type: "system" as const, text: "这一刻的反馈不够清晰，请换一种行动说法。" }];
 
   return {
-    outputText: messagesToText(auditedMessages),
+    outputText: messagesToText(input.pack, auditedMessages),
     messages: auditedMessages,
     state: nextState,
     acceptedPatches,
@@ -98,7 +97,7 @@ export async function runTurn(input: {
 
 interface NormalizedAgentResponse {
   narration: string;
-  spokenBy: Array<{ npcId: string; text: string }>;
+  spokenBy: Array<{ characterId: string; text: string }>;
   proposedPatches: GamePatch[];
   privateNotes: string;
 }
@@ -107,10 +106,13 @@ function normalizeAgentResponse(rawResponse: unknown): NormalizedAgentResponse {
   const record = isRecord(rawResponse) ? rawResponse : {};
   const spokenBy = Array.isArray(record.spokenBy)
     ? record.spokenBy.flatMap((entry) => {
-      if (isRecord(entry) && typeof entry.npcId === "string" && typeof entry.text === "string") {
-        return [{ npcId: entry.npcId, text: entry.text }];
-      }
-      return [];
+      if (!isRecord(entry) || typeof entry.text !== "string") return [];
+      const characterId = typeof entry.characterId === "string"
+        ? entry.characterId
+        : typeof entry.npcId === "string"
+          ? entry.npcId
+          : undefined;
+      return characterId ? [{ characterId, text: entry.text }] : [];
     })
     : [];
 
@@ -147,8 +149,8 @@ function buildTurnMessages(
   endingText?: string
 ): TurnMessage[] {
   const messages: TurnMessage[] = [];
-  const hasCanonicalInspectClue = action.type === "inspect" && acceptedPatches.some((patch) => patch.type === "discover_clue");
-  const narration = hasCanonicalInspectClue ? "" : response.narration;
+  const hasCanonicalInspectFact = action.type === "inspect" && acceptedPatches.some((patch) => patch.type === "reveal_fact");
+  const narration = hasCanonicalInspectFact ? "" : response.narration;
   if (narration) {
     messages.push({
       type: action.type === "look" ? "environment" : "narration",
@@ -157,11 +159,11 @@ function buildTurnMessages(
   }
 
   for (const speech of response.spokenBy) {
-    const npc = pack.npcs.find((candidate) => candidate.id === speech.npcId);
+    const character = pack.characters.find((candidate) => candidate.id === speech.characterId);
     messages.push({
-      type: "npc",
-      npcId: speech.npcId,
-      label: npc?.name ?? speech.npcId,
+      type: "character",
+      characterId: speech.characterId,
+      label: character?.name ?? speech.characterId,
       text: speech.text
     });
   }
@@ -179,13 +181,13 @@ function buildTurnMessages(
 }
 
 function patchToMessage(pack: WorldPack, patch: GamePatch): TurnMessage | undefined {
-  if (patch.type === "discover_clue") {
-    const clue = pack.clues.find((candidate) => candidate.id === patch.clueId);
+  if (patch.type === "reveal_fact") {
+    const fact = pack.facts.find((candidate) => candidate.id === patch.factId);
     return {
-      type: "clue",
-      clueId: patch.clueId,
-      label: clue?.name ?? patch.clueId,
-      text: clue?.description ?? patch.reason
+      type: "fact",
+      factId: patch.factId,
+      label: fact?.name ?? patch.factId,
+      text: fact?.description ?? patch.reason
     };
   }
 
@@ -202,10 +204,11 @@ function patchToMessage(pack: WorldPack, patch: GamePatch): TurnMessage | undefi
   return undefined;
 }
 
-function messagesToText(messages: TurnMessage[]): string {
+function messagesToText(pack: WorldPack, messages: TurnMessage[]): string {
+  const factLabel = pack.profile.labels.facts ?? "事实";
   return messages.map((message) => {
-    if (message.type === "npc") return `${message.label ?? message.npcId}：${message.text}`;
-    if (message.type === "clue") return `线索：${message.label ?? message.clueId} - ${message.text}`;
+    if (message.type === "character") return `${message.label ?? message.characterId}：${message.text}`;
+    if (message.type === "fact") return `${factLabel}：${message.label ?? message.factId} - ${message.text}`;
     if (message.type === "item") return `获得道具：${message.label ?? message.itemId} - ${message.text}`;
     return message.text;
   }).join("\n");
@@ -221,14 +224,14 @@ function precheckAction(action: GameAction, pack: WorldPack, state: SessionState
     return validation.ok ? { ok: true } : validation;
   }
 
-  if (action.type === "ask") {
-    const npc = pack.npcs.find((candidate) => candidate.id === action.npcId);
-    if (!npc) {
-      return { ok: false, reason: `Unknown NPC: ${action.npcId}` };
+  if (action.type === "talk") {
+    const character = pack.characters.find((candidate) => candidate.id === action.characterId);
+    if (!character) {
+      return { ok: false, reason: `Unknown character: ${action.characterId}` };
     }
-    const topic = npc.topics.find((candidate) => candidate.id === action.topic);
+    const topic = character.topics.find((candidate) => candidate.id === action.topic);
     if (topic && !evaluateCondition(topic.unlockCondition, state)) {
-      return { ok: false, reason: `Topic unlock condition failed: ${action.npcId}.${topic.id}` };
+      return { ok: false, reason: `Topic unlock condition failed: ${action.characterId}.${topic.id}` };
     }
   }
 
@@ -248,11 +251,11 @@ function precheckAction(action: GameAction, pack: WorldPack, state: SessionState
 }
 
 function buildAgentRequest(pack: WorldPack, state: SessionState, inputText: string, action: GameAction) {
-  if (action.type === "ask") {
+  if (action.type === "talk") {
     return {
-      agentRole: "npc",
-      context: buildNpcContext(pack, state, { npcId: action.npcId, topic: action.topic }),
-      contextIds: [`location:${state.currentLocationId}`, `npc:${action.npcId}`],
+      agentRole: "character",
+      context: buildCharacterContext(pack, state, { characterId: action.characterId, topic: action.topic }),
+      contextIds: [`location:${state.currentLocationId}`, `character:${action.characterId}`],
       system: buildSystemPrompt("npc")
     };
   }
@@ -275,10 +278,10 @@ function agentResponseSchema() {
         items: {
           type: "object",
           properties: {
-            npcId: { type: "string" },
+            characterId: { type: "string" },
             text: { type: "string" }
           },
-          required: ["npcId", "text"]
+          required: ["characterId", "text"]
         }
       },
       proposedPatches: {
@@ -294,7 +297,7 @@ function agentResponseSchema() {
 }
 
 function collectForbiddenPhrases(pack: WorldPack): string[] {
-  return pack.npcs.flatMap((npc) => npc.forbiddenDisclosures);
+  return pack.characters.flatMap((character) => character.forbiddenDisclosures ?? []);
 }
 
 function formatBlockedAction(reason: string): string {
@@ -311,20 +314,20 @@ function localizeRuleReason(reason: string): string {
   const unknownLocation = reason.match(/^Unknown location: (.+)$/);
   if (unknownLocation) return `没有找到地点 ${unknownLocation[1]}。`;
 
-  const unknownNpc = reason.match(/^Unknown NPC: (.+)$/);
-  if (unknownNpc) return `没有找到角色 ${unknownNpc[1]}。`;
+  const unknownCharacter = reason.match(/^Unknown character: (.+)$/);
+  if (unknownCharacter) return `没有找到角色 ${unknownCharacter[1]}。`;
 
   const lockedTopic = reason.match(/^Topic unlock condition failed: ([^.]+)\.(.+)$/);
   if (lockedTopic) return `当前还不能询问 ${lockedTopic[1]} 的 ${lockedTopic[2]}。`;
 
-  const unknownClue = reason.match(/^Unknown clue: (.+)$/);
-  if (unknownClue) return `没有找到线索 ${unknownClue[1]}。`;
+  const unknownFact = reason.match(/^Unknown fact: (.+)$/);
+  if (unknownFact) return `没有找到事实 ${unknownFact[1]}。`;
 
   const unknownItem = reason.match(/^Unknown item: (.+)$/);
   if (unknownItem) return `没有找到道具 ${unknownItem[1]}。`;
 
-  const failedClue = reason.match(/^Clue discovery condition failed: (.+)$/);
-  if (failedClue) return `现在还不能发现线索 ${failedClue[1]}。`;
+  const failedFact = reason.match(/^Fact reveal condition failed: (.+)$/);
+  if (failedFact) return `现在还不能确认事实 ${failedFact[1]}。`;
 
   const failedItem = reason.match(/^Item pickup condition failed: (.+)$/);
   if (failedItem) return `现在还不能取得道具 ${failedItem[1]}。`;
@@ -339,63 +342,40 @@ function localizeRuleReason(reason: string): string {
 }
 
 function deriveRulePatches(action: GameAction, pack: WorldPack, state: SessionState): GamePatch[] {
-  if (action.type === "inspect") {
-    const clue = findInspectableClue(action.targetId, pack, state);
-    if (clue) {
-      return [{ type: "discover_clue", clueId: clue.id, reason: `Inspected ${action.targetId}.` }];
-    }
-  }
+  return [
+    ...deriveInspectionPatches(action, pack, state),
+    ...deriveTakeMovePatches(action, state),
+    ...deriveTriggerPatches(pack, state, action)
+  ];
+}
 
-  if (action.type === "ask") {
-    const topic = findNpcTopic(action.npcId, action.topic, pack);
-    if (topic && !evaluateCondition(topic.unlockCondition, state)) {
-      return [];
-    }
-    const clue = topic?.revealsClueId ? pack.clues.find((candidate) => candidate.id === topic.revealsClueId) : undefined;
-    if (clue && !state.knownClues.includes(clue.id) && evaluateCondition(clue.discoverableWhen, state)) {
-      return [{ type: "discover_clue", clueId: clue.id, reason: `Asked ${action.npcId} about ${action.topic}.` }];
-    }
-  }
+function deriveInspectionPatches(action: GameAction, pack: WorldPack, state: SessionState): GamePatch[] {
+  if (action.type !== "inspect") return [];
 
-  if (action.type === "take") {
-    if (!state.inventory.includes(action.itemId)) {
-      return [{ type: "add_item", itemId: action.itemId, reason: `Took ${action.itemId}.` }];
-    }
+  const fact = findInspectableFact(action.targetId, pack, state);
+  return fact ? [{ type: "reveal_fact", factId: fact.id, reason: `Inspected ${action.targetId}.` }] : [];
+}
+
+function deriveTakeMovePatches(action: GameAction, state: SessionState): GamePatch[] {
+  if (action.type === "take" && !state.inventory.includes(action.itemId)) {
+    return [{ type: "add_item", itemId: action.itemId, reason: `Took ${action.itemId}.` }];
   }
 
   if (action.type === "move") {
     return [{ type: "move_location", locationId: action.locationId, reason: `Moved to ${action.locationId}.` }];
   }
 
-  if (action.type === "accuse") {
-    const evidence = new Set([...state.knownClues, ...action.clueIds]);
-    const hasTrueEvidence =
-      action.npcId === "butler" &&
-      evidence.has("broken_watch") &&
-      evidence.has("muddy_bootprint") &&
-      evidence.has("tower_bell_record");
-
-    return hasTrueEvidence
-      ? [{ type: "set_flag", flag: "accused_butler", value: true, reason: "Player accused the butler with required evidence." }]
-      : [{ type: "set_flag", flag: "wrong_accusation", value: true, reason: "Player accused without the required evidence." }];
-  }
-
   return [];
 }
 
-function findInspectableClue(targetId: string, pack: WorldPack, state: SessionState) {
+function findInspectableFact(targetId: string, pack: WorldPack, state: SessionState) {
   const current = pack.locations.find((location) => location.id === state.currentLocationId);
   const targetIsVisible = current?.visibleObjects.includes(targetId) || state.inventory.includes(targetId);
-  const directClue = pack.clues.find((candidate) => candidate.id === targetId);
+  const directFact = pack.facts.find((candidate) => candidate.id === targetId);
   const item = pack.items.find((candidate) => candidate.id === targetId);
-  const clue = directClue ?? (item?.revealsClueId ? pack.clues.find((candidate) => candidate.id === item.revealsClueId) : undefined);
+  const fact = directFact ?? (item?.revealsFactId ? pack.facts.find((candidate) => candidate.id === item.revealsFactId) : undefined);
 
-  if (!clue || state.knownClues.includes(clue.id)) return undefined;
-  if (!directClue && !targetIsVisible) return undefined;
-  return evaluateCondition(clue.discoverableWhen, state) ? clue : undefined;
-}
-
-function findNpcTopic(npcId: string, topicId: string, pack: WorldPack) {
-  const npc = pack.npcs.find((candidate) => candidate.id === npcId);
-  return npc?.topics.find((topic) => topic.id === topicId);
+  if (!fact || state.knownFacts.includes(fact.id)) return undefined;
+  if (!directFact && !targetIsVisible) return undefined;
+  return evaluateCondition(fact.discoverableWhen, state) ? fact : undefined;
 }
