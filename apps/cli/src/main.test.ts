@@ -6,6 +6,14 @@ import { describe, expect, it } from "vitest";
 import { isMainModule, resolveCliDbPath, runCli } from "./main";
 
 describe("CLI", () => {
+  it("shows generic command usage", async () => {
+    const result = await runCli([]);
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("facts <sessionId>");
+    expect(result.stderr).not.toContain("clues <sessionId>");
+  });
+
   it("validates the sample pack", async () => {
     const result = await runCli(["validate", "packs/rain-tower"]);
 
@@ -18,25 +26,35 @@ describe("CLI", () => {
 
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain("Simulation completed");
+    expect(result.stdout).toContain("Known facts:");
   });
 
-  it("fails simulation when script assertions fail", async () => {
+  it("passes generic simulation assertions through to the simulator", async () => {
     const scriptPath = join(mkdtempSync(join(tmpdir(), "aigame-cli-sim-")), "script.yaml");
     writeFileSync(scriptPath, [
       "steps:",
       "  - look",
-      "expectedKnownClues:",
-      "  - broken_watch",
+      "expectedKnownFacts:",
+      "  - stone_omen",
+      "expectedResources:",
+      "  spiritual_power: 9",
+      "expectedRelationships:",
+      "  mentor_echo: 4",
+      "expectedObjectiveStages:",
+      "  breakthrough: clear",
       "expectedFlags:",
-      "  accused_butler: true",
+      "  incense_lit: true",
       ""
     ].join("\n"));
 
-    const result = await runCli(["simulate", "packs/rain-tower", scriptPath]);
+    const result = await runCli(["simulate", "packs/cave-breakthrough", scriptPath]);
 
     expect(result.exitCode).toBe(1);
-    expect(result.stderr).toContain("Expected known clue: broken_watch");
-    expect(result.stderr).toContain("Expected flag accused_butler=true but got undefined");
+    expect(result.stderr).toContain("Expected known fact: stone_omen");
+    expect(result.stderr).toContain("Expected resource spiritual_power=9 but got 2");
+    expect(result.stderr).toContain("Expected relationship mentor_echo=4 but got 0");
+    expect(result.stderr).toContain("Expected objective stage breakthrough=clear but got prepare");
+    expect(result.stderr).toContain("Expected flag incense_lit=true but got undefined");
   });
 
   it("packages the sample pack into an aipack artifact", async () => {
@@ -51,13 +69,13 @@ describe("CLI", () => {
     expect(archive.validation.ok).toBe(true);
   });
 
-  it("plays a turn and exposes state, clues, and last trace", async () => {
+  it("plays a turn and exposes state, facts, and last trace", async () => {
     const dbPath = join(mkdtempSync(join(tmpdir(), "aigame-cli-")), "cli.db");
-    const play = await runCli(["play", "packs/rain-tower", "inspect", "broken_watch"], { dbPath });
+    const play = await runCli(["play", "packs/rain-tower", "inspect", "silver_watch"], { dbPath });
 
     expect(play.exitCode).toBe(0);
     expect(play.stdout).toContain("Turn: 1");
-    expect(play.stdout).toContain("Accepted patches: discover_clue broken_watch");
+    expect(play.stdout).toContain("Accepted patches: reveal_fact broken_watch");
     const sessionId = play.stdout.match(/Session: ([a-f0-9-]+)/)?.[1];
     expect(sessionId).toBeDefined();
 
@@ -65,10 +83,14 @@ describe("CLI", () => {
     expect(state.exitCode).toBe(0);
     expect(state.stdout).toContain("Location: foyer");
     expect(state.stdout).toContain("Turn: 1");
+    expect(state.stdout).toContain("Known facts: broken_watch");
+    expect(state.stdout).toContain("Resources: none");
+    expect(state.stdout).toContain("Relationships: none");
+    expect(state.stdout).toContain("Objective stages: solve_murder=investigate");
 
-    const clues = await runCli(["clues", sessionId!], { dbPath });
-    expect(clues.exitCode).toBe(0);
-    expect(clues.stdout).toContain("- broken_watch");
+    const facts = await runCli(["facts", sessionId!], { dbPath });
+    expect(facts.exitCode).toBe(0);
+    expect(facts.stdout).toContain("- broken_watch");
 
     const trace = await runCli(["trace", "last", sessionId!], { dbPath });
     expect(trace.exitCode).toBe(0);

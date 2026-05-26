@@ -43,8 +43,11 @@ export async function runCli(args: string[], options: RunCliOptions = {}): Promi
       pack,
       steps: script.steps,
       assertions: {
-        expectedKnownClues: script.expectedKnownClues,
+        expectedKnownFacts: script.expectedKnownFacts,
         expectedFlags: script.expectedFlags,
+        expectedResources: script.expectedResources,
+        expectedRelationships: script.expectedRelationships,
+        expectedObjectiveStages: script.expectedObjectiveStages,
         forbiddenOutputPhrases: script.forbiddenOutputPhrases
       }
     });
@@ -57,7 +60,7 @@ export async function runCli(args: string[], options: RunCliOptions = {}): Promi
     }
     return {
       exitCode: 0,
-      stdout: `Simulation completed: ${result.turns.length} turns\nEnding: ${result.finalEndingId ?? "none"}\nKnown clues: ${result.finalState.knownClues.join(",")}\n`,
+      stdout: `Simulation completed: ${result.turns.length} turns\nEnding: ${result.finalEndingId ?? "none"}\nKnown facts: ${result.finalState.knownFacts.join(",")}\n`,
       stderr: ""
     };
   }
@@ -146,16 +149,16 @@ export async function runCli(args: string[], options: RunCliOptions = {}): Promi
     };
   }
 
-  if (command === "clues" && packPath) {
+  if (command === "facts" && packPath) {
     const store = createSqliteStore(resolveCliDbPath(options));
     const session = store.getSession(packPath);
     if (!session) {
       return { exitCode: 1, stdout: "", stderr: `Session not found: ${packPath}\n` };
     }
-    const clues = session.state.knownClues.length > 0
-      ? session.state.knownClues.map((clueId) => `- ${clueId}`).join("\n")
-      : "No known clues.";
-    return { exitCode: 0, stdout: `${clues}\n`, stderr: "" };
+    const facts = session.state.knownFacts.length > 0
+      ? session.state.knownFacts.map((factId) => `- ${factId}`).join("\n")
+      : "No known facts.";
+    return { exitCode: 0, stdout: `${facts}\n`, stderr: "" };
   }
 
   if (command === "trace" && packPath === "last" && scriptPath) {
@@ -178,7 +181,7 @@ export async function runCli(args: string[], options: RunCliOptions = {}): Promi
       "  pack <packPath> <output.aipack>",
       "  play <packPath> [--session <sessionId>] <action...>",
       "  state <sessionId>",
-      "  clues <sessionId>",
+      "  facts <sessionId>",
       "  trace last <sessionId>"
     ].join("\n") + "\n"
   };
@@ -208,7 +211,13 @@ function formatState(state: SessionState): string {
   const flags = Object.entries(state.flags)
     .map(([key, value]) => `${key}=${value}`)
     .join(", ");
-  const quests = Object.entries(state.questStages)
+  const resources = Object.entries(state.resources)
+    .map(([key, value]) => `${key}=${value}`)
+    .join(", ");
+  const relationships = Object.entries(state.relationships)
+    .map(([key, value]) => `${key}=${value}`)
+    .join(", ");
+  const objectiveStages = Object.entries(state.objectiveStages)
     .map(([key, value]) => `${key}=${value}`)
     .join(", ");
 
@@ -216,9 +225,11 @@ function formatState(state: SessionState): string {
     `Location: ${state.currentLocationId}`,
     `Turn: ${state.turn}`,
     `Inventory: ${state.inventory.length > 0 ? state.inventory.join(", ") : "empty"}`,
-    `Known clues: ${state.knownClues.length > 0 ? state.knownClues.join(", ") : "none"}`,
+    `Known facts: ${state.knownFacts.length > 0 ? state.knownFacts.join(", ") : "none"}`,
+    `Resources: ${resources || "none"}`,
+    `Relationships: ${relationships || "none"}`,
     `Flags: ${flags || "none"}`,
-    `Quest stages: ${quests || "none"}`
+    `Objective stages: ${objectiveStages || "none"}`
   ].join("\n") + "\n";
 }
 
@@ -228,12 +239,27 @@ function formatPatchList(patches: GamePatch[]): string {
 }
 
 function formatPatch(patch: GamePatch): string {
-  if (patch.type === "discover_clue") return `${patch.type} ${patch.clueId}`;
-  if (patch.type === "move_location") return `${patch.type} ${patch.locationId}`;
-  if (patch.type === "add_item" || patch.type === "remove_item") return `${patch.type} ${patch.itemId}`;
-  if (patch.type === "set_flag") return `${patch.type} ${patch.flag}=${patch.value}`;
-  if (patch.type === "adjust_npc_attitude") return `${patch.type} ${patch.npcId} ${patch.delta}`;
-  return `${patch.type} ${patch.questId}=${patch.stage}`;
+  switch (patch.type) {
+    case "reveal_fact":
+      return `${patch.type} ${patch.factId}`;
+    case "move_location":
+      return `${patch.type} ${patch.locationId}`;
+    case "add_item":
+    case "remove_item":
+      return `${patch.type} ${patch.itemId}`;
+    case "set_flag":
+      return `${patch.type} ${patch.flag}=${patch.value}`;
+    case "adjust_relationship":
+      return `${patch.type} ${patch.characterId} ${patch.delta}`;
+    case "set_resource":
+      return `${patch.type} ${patch.resourceId}=${patch.value}`;
+    case "adjust_resource":
+      return `${patch.type} ${patch.resourceId} ${patch.delta}`;
+    case "set_objective_stage":
+      return `${patch.type} ${patch.objectiveId}=${patch.stage}`;
+  }
+  const exhaustive: never = patch;
+  return exhaustive;
 }
 
 function formatTrace(event: {
