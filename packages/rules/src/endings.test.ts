@@ -6,24 +6,28 @@ const state: SessionState = {
   currentLocationId: "foyer",
   turn: 8,
   inventory: [],
-  knownClues: ["broken_watch", "muddy_bootprint"],
+  knownFacts: ["broken_watch", "muddy_bootprint"],
+  resources: {},
+  relationships: {},
   flags: { accused_butler: true },
-  npcAttitudes: {},
-  questStages: { solve_murder: "accuse" }
+  objectiveStages: { solve_murder: "confront" }
 };
 
 const pack: WorldPack = {
-  manifest: { id: "rain-tower", name: "Rain Tower Murder", version: "0.1.0", runtimeVersion: "0.1.0", entryLocationId: "foyer" },
+  manifest: { id: "rain-tower", name: "Rain Tower Mystery", version: "0.2.0", runtimeVersion: "0.2.0", entryLocationId: "foyer", profileId: "detective" },
   worldText: "",
-  rules: { allowedPatchTypes: ["set_flag"] },
+  profile: { id: "detective", labels: {}, quickActions: [], actions: {} },
+  rules: { allowedPatchTypes: ["set_flag"], triggers: [] },
   locations: [],
-  npcs: [],
-  clues: [],
+  characters: [],
+  facts: [],
   items: [],
-  quests: [],
+  resources: [],
+  relationships: [],
+  objectives: [{ id: "solve_murder", name: "Solve mystery", stages: ["investigate", "confront"], initialStage: "investigate" }],
   endings: [
     { id: "wrong_accusation", name: "Wrong", priority: 1, condition: { flag_true: "wrong_accusation" }, text: "The truth slips away." },
-    { id: "true_resolution", name: "True", priority: 10, condition: { all: [{ flag_true: "accused_butler" }, { knows_clue: "broken_watch" }, { knows_clue: "muddy_bootprint" }] }, text: "The butler confesses." }
+    { id: "true_resolution", name: "True", priority: 10, condition: { all: [{ flag_true: "accused_butler" }, { knows_fact: "broken_watch" }, { knows_fact: "muddy_bootprint" }] }, text: "The butler confesses." }
   ]
 };
 

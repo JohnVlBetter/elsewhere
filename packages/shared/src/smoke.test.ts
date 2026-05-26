@@ -5,10 +5,11 @@ describe("workspace", () => {
   it("loads TypeScript workspace modules", () => {
     const manifest = ManifestSchema.parse({
       id: "rain-tower",
-      name: "Rain Tower Murder",
-      version: "0.1.0",
-      runtimeVersion: "0.1.0",
-      entryLocationId: "foyer"
+      name: "Rain Tower Mystery",
+      version: "0.2.0",
+      runtimeVersion: "0.2.0",
+      entryLocationId: "foyer",
+      profileId: "detective"
     });
 
     expect(manifest.id).toBe("rain-tower");

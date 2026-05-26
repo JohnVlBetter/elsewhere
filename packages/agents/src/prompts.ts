@@ -17,11 +17,10 @@ function readPrompt(name: string): string {
 }
 
 export function buildSystemPrompt(role: AgentPromptRole): string {
-  const rolePrompt = role === "character" ? "npc" : "narrator";
   return [
     readPrompt("language"),
     readPrompt("core"),
-    readPrompt(rolePrompt),
+    readPrompt(role),
     readPrompt("response")
   ].join("\n\n");
 }

@@ -10,9 +10,9 @@ const pack: WorldPack = {
   locations: [{ id: "outer_cave", name: "Outer Cave", description: "Cold stone.", exits: [], visibleObjects: ["stone_omen"] }],
   characters: [
     { id: "mentor_echo", name: "Mentor Echo", publicDescription: "A faint voice.", privateFacts: ["private mentor secret"], knows: ["stone_omen"], forbiddenDisclosures: ["private mentor secret"], topics: [] },
-    { id: "rival", name: "Rival", publicDescription: "Watching from afar.", privateFacts: ["rival secret"], topics: [] }
+    { id: "rival", name: "Rival", publicDescription: "Watching from afar.", privateFacts: ["rival secret"], knows: [], forbiddenDisclosures: [], topics: [] }
   ],
-  facts: [{ id: "stone_omen", name: "石壁灵纹", description: "The wall hums.", discoverableWhen: { location_is: "outer_cave" } }],
+  facts: [{ id: "stone_omen", kind: "fact", name: "石壁灵纹", description: "The wall hums.", discoverableWhen: { location_is: "outer_cave" }, tags: [] }],
   items: [],
   resources: [{ id: "spiritual_power", name: "Spiritual power", initial: 5, min: 0, max: 10 }],
   relationships: [{ characterId: "mentor_echo", name: "Mentor trust", initial: 3, min: -5, max: 5 }],

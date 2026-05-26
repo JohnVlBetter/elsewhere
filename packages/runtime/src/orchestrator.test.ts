@@ -50,12 +50,12 @@ const pack: WorldPack = {
   ],
   characters: [
     { id: "butler", name: "Butler", publicDescription: "Precise.", privateFacts: ["He reset the bell."], knows: [], forbiddenDisclosures: ["He reset the bell."], topics: [] },
-    { id: "heiress", name: "Heiress", publicDescription: "Tense.", topics: [] }
+    { id: "heiress", name: "Heiress", publicDescription: "Tense.", privateFacts: [], knows: [], forbiddenDisclosures: [], topics: [] }
   ],
   facts: [
-    { id: "broken_watch", name: "Broken Watch", description: "The silver pocket watch is cracked and stopped at 8:47.", discoverableWhen: { location_is: "foyer" } },
-    { id: "muddy_bootprint", name: "Muddy Bootprint", description: "A narrow print.", discoverableWhen: { location_is: "foyer" } },
-    { id: "tower_bell_record", name: "Bell Record", description: "The bell was reset.", discoverableWhen: { location_is: "study" } }
+    { id: "broken_watch", kind: "fact", name: "Broken Watch", description: "The silver pocket watch is cracked and stopped at 8:47.", discoverableWhen: { location_is: "foyer" }, tags: [] },
+    { id: "muddy_bootprint", kind: "fact", name: "Muddy Bootprint", description: "A narrow print.", discoverableWhen: { location_is: "foyer" }, tags: [] },
+    { id: "tower_bell_record", kind: "fact", name: "Bell Record", description: "The bell was reset.", discoverableWhen: { location_is: "study" }, tags: [] }
   ],
   items: [{ id: "silver_watch", name: "Silver Watch", description: "Stopped at 8:47.", revealsFactId: "broken_watch" }],
   resources: [],

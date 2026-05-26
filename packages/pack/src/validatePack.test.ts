@@ -42,7 +42,7 @@ function basePack(): WorldPack {
         topics: [{ id: "alibi", prompt: "Ask alibi.", revealsFactId: "broken_watch" }]
       }
     ],
-    facts: [{ id: "broken_watch", name: "Broken watch", description: "Stopped at nine." }],
+    facts: [{ id: "broken_watch", kind: "fact", name: "Broken watch", description: "Stopped at nine.", tags: [] }],
     items: [{ id: "greenhouse_key", name: "Greenhouse key", description: "A brass key." }],
     resources: [{ id: "pressure", name: "Pressure", initial: 0, min: 0, max: 5 }],
     relationships: [{ characterId: "butler", name: "Butler trust", initial: 0, min: -5, max: 5 }],

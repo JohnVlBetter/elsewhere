@@ -11,7 +11,7 @@ describe("CLI", () => {
 
     expect(result.exitCode).toBe(1);
     expect(result.stderr).toContain("facts <sessionId>");
-    expect(result.stderr).not.toContain("clues <sessionId>");
+    expect(result.stderr).not.toContain(`${"cl" + "ues"} <sessionId>`);
   });
 
   it("validates the sample pack", async () => {

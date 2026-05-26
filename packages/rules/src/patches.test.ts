@@ -24,8 +24,8 @@ const pack: WorldPack = {
     { id: "outer_cave", name: "Outer Cave", description: "Cold stone.", exits: ["stone_chamber"], visibleObjects: [] },
     { id: "stone_chamber", name: "Stone Chamber", description: "A sealed seat.", exits: [], visibleObjects: [] }
   ],
-  characters: [{ id: "mentor_echo", name: "Mentor Echo", publicDescription: "A faint voice.", topics: [] }],
-  facts: [{ id: "stone_omen", name: "Stone omen", description: "The wall hums.", discoverableWhen: { location_is: "outer_cave" } }],
+  characters: [{ id: "mentor_echo", name: "Mentor Echo", publicDescription: "A faint voice.", privateFacts: [], knows: [], forbiddenDisclosures: [], topics: [] }],
+  facts: [{ id: "stone_omen", kind: "fact", name: "Stone omen", description: "The wall hums.", discoverableWhen: { location_is: "outer_cave" }, tags: [] }],
   items: [
     { id: "jade_token", name: "Jade token", description: "A smooth token.", pickupCondition: { flag_true: "incense_lit" } }
   ],

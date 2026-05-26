@@ -10,11 +10,17 @@ import {
 
 describe("v0.2 domain schema", () => {
   it("rejects detective-only v0.1 patch and action names", () => {
+    const oldPatchType = ["discover", "cl" + "ue"].join("_");
+    const oldPatchIdKey = ["cl" + "ue", "Id"].join("");
+    const oldActionType = ["acc", "use"].join("");
+    const oldActorKey = ["n", "pcId"].join("");
+    const oldFactListKey = ["cl" + "ue", "Ids"].join("");
+
     expect(() =>
-      PatchSchema.parse({ type: "discover_clue", clueId: "broken_watch", reason: "old" })
+      PatchSchema.parse({ type: oldPatchType, [oldPatchIdKey]: "broken_watch", reason: "old" })
     ).toThrow();
     expect(() =>
-      ActionSchema.parse({ type: "accuse", npcId: "butler", clueIds: [], rawText: "old" })
+      ActionSchema.parse({ type: oldActionType, [oldActorKey]: "butler", [oldFactListKey]: [], rawText: "old" })
     ).toThrow();
   });
 

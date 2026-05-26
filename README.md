@@ -1,6 +1,6 @@
-# AI Interactive Game MVP
+# AI Interactive World Runtime
 
-This repository contains a TypeScript MVP for an importable AI interactive detective game runtime.
+This repository contains a TypeScript MVP for importable AI interactive world packs. The v0.2 runtime uses generic facts, resources, relationships, objectives, and data-driven genre profiles so packs can cover detective mystery, cultivation, romance, tabletop fantasy, and other story genres.
 
 ## Commands
 
@@ -8,9 +8,10 @@ This repository contains a TypeScript MVP for an importable AI interactive detec
 npm install
 npm test
 npm run typecheck
-npm run cli -- validate packs/rain-tower
+npm run cli -- validate packs/campus-lunch
 npm run cli -- pack packs/rain-tower dist/rain-tower.aipack
-npm run cli -- simulate packs/rain-tower packs/rain-tower/scripts/true-path.yaml
+npm run cli -- simulate packs/campus-lunch packs/campus-lunch/scripts/honest-path.yaml
+npm run cli -- facts <sessionId>
 npm run e2e:install
 npm run e2e
 npm run web:dev
@@ -42,4 +43,4 @@ DEEPSEEK_MODEL=deepseek-v4-pro
 
 ## Architecture
 
-The runtime uses a programmatic Director Orchestrator, scoped Narrator and NPC Actor model calls, rule-checked patches, and event traces. AI proposes narrative and patches; rules decide state.
+The runtime uses a programmatic Director Orchestrator, scoped narrator and character model calls, rule-checked patches, trigger-derived state changes, and event traces. AI proposes narrative and patches; rules decide state.

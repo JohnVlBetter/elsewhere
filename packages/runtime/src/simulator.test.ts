@@ -6,7 +6,7 @@ import { runSimulation } from "./simulator";
 const pack: WorldPack = {
   manifest: { id: "cave-breakthrough", name: "Cave Breakthrough", version: "0.2.0", runtimeVersion: "0.2.0", entryLocationId: "outer_cave", profileId: "cultivation" },
   worldText: "A quiet cave before a breakthrough.",
-  profile: { id: "cultivation", labels: { facts: "玄机" }, quickActions: [], actions: { cultivate: { aliases: ["cultivate"] } } },
+  profile: { id: "cultivation", labels: { facts: "玄机" }, quickActions: [], actions: { cultivate: { aliases: ["cultivate"], acceptsFacts: false } } },
   rules: {
     allowedPatchTypes: ["reveal_fact", "set_flag", "adjust_resource", "adjust_relationship", "set_objective_stage"],
     triggers: [
@@ -22,8 +22,8 @@ const pack: WorldPack = {
     ]
   },
   locations: [{ id: "outer_cave", name: "Outer Cave", description: "Cold stone.", exits: [], visibleObjects: ["stone_omen"] }],
-  characters: [{ id: "mentor_echo", name: "Mentor Echo", publicDescription: "A faint voice.", topics: [] }],
-  facts: [{ id: "stone_omen", name: "Stone Omen", description: "The wall hums.", discoverableWhen: { location_is: "outer_cave" } }],
+  characters: [{ id: "mentor_echo", name: "Mentor Echo", publicDescription: "A faint voice.", privateFacts: [], knows: [], forbiddenDisclosures: [], topics: [] }],
+  facts: [{ id: "stone_omen", kind: "fact", name: "Stone Omen", description: "The wall hums.", discoverableWhen: { location_is: "outer_cave" }, tags: [] }],
   items: [],
   resources: [{ id: "spiritual_power", name: "Spiritual power", initial: 2, min: 0, max: 10 }],
   relationships: [{ characterId: "mentor_echo", name: "Mentor trust", initial: 0, min: -5, max: 5 }],

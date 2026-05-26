@@ -38,11 +38,11 @@ const pack: WorldPack = {
     ]
   },
   locations: [{ id: "foyer", name: "Foyer", description: "Entry.", exits: [], visibleObjects: [] }],
-  characters: [{ id: "butler", name: "Butler", publicDescription: "Still.", topics: [] }],
+  characters: [{ id: "butler", name: "Butler", publicDescription: "Still.", privateFacts: [], knows: [], forbiddenDisclosures: [], topics: [] }],
   facts: [
-    { id: "broken_watch", name: "Broken Watch", description: "Stopped." },
-    { id: "muddy_bootprint", name: "Muddy Bootprint", description: "Narrow." },
-    { id: "tower_bell_record", name: "Bell Record", description: "Reset." }
+    { id: "broken_watch", kind: "fact", name: "Broken Watch", description: "Stopped.", tags: [] },
+    { id: "muddy_bootprint", kind: "fact", name: "Muddy Bootprint", description: "Narrow.", tags: [] },
+    { id: "tower_bell_record", kind: "fact", name: "Bell Record", description: "Reset.", tags: [] }
   ],
   items: [],
   resources: [],

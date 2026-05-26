@@ -3,22 +3,26 @@ import { existsSync, mkdtempSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, expect, it } from "vitest";
+import type { SessionState } from "@aigame/shared";
 import { createSqliteStore } from "./sqliteStore";
+
+const initialState: SessionState = {
+  currentLocationId: "foyer",
+  turn: 0,
+  inventory: [],
+  knownFacts: [],
+  resources: {},
+  relationships: {},
+  flags: {},
+  objectiveStages: { solve_murder: "investigate" }
+};
 
 describe("sqlite store", () => {
   it("creates sessions and appends events", () => {
     const store = createSqliteStore(":memory:");
     const session = store.createSession({
       packId: "rain-tower",
-      initialState: {
-        currentLocationId: "foyer",
-        turn: 0,
-        inventory: [],
-        knownClues: [],
-        flags: {},
-        npcAttitudes: {},
-        questStages: { solve_murder: "investigate" }
-      }
+      initialState
     });
 
     store.appendEvent({
@@ -40,15 +44,7 @@ describe("sqlite store", () => {
     const store = createSqliteStore(join(".tmp", `sqlite-store-workspace-${randomUUID()}.db`));
     const session = store.createSession({
       packId: "rain-tower",
-      initialState: {
-        currentLocationId: "foyer",
-        turn: 0,
-        inventory: [],
-        knownClues: [],
-        flags: {},
-        npcAttitudes: {},
-        questStages: { solve_murder: "investigate" }
-      }
+      initialState
     });
 
     expect(store.getSession(session.id)?.packId).toBe("rain-tower");
@@ -60,15 +56,7 @@ describe("sqlite store", () => {
     const store = createSqliteStore(dbPath);
     const session = store.createSession({
       packId: "rain-tower",
-      initialState: {
-        currentLocationId: "foyer",
-        turn: 0,
-        inventory: [],
-        knownClues: [],
-        flags: {},
-        npcAttitudes: {},
-        questStages: { solve_murder: "investigate" }
-      }
+      initialState
     });
 
     expect(store.getSession(session.id)?.packId).toBe("rain-tower");

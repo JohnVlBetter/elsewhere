@@ -109,9 +109,7 @@ function normalizeAgentResponse(rawResponse: unknown): NormalizedAgentResponse {
       if (!isRecord(entry) || typeof entry.text !== "string") return [];
       const characterId = typeof entry.characterId === "string"
         ? entry.characterId
-        : typeof entry.npcId === "string"
-          ? entry.npcId
-          : undefined;
+        : undefined;
       return characterId ? [{ characterId, text: entry.text }] : [];
     })
     : [];

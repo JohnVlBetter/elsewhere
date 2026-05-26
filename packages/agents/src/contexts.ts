@@ -46,5 +46,3 @@ export function buildCharacterContext(pack: WorldPack, state: SessionState, inpu
     relationship: state.relationships[input.characterId] ?? 0
   };
 }
-
-export const buildNpcContext = buildCharacterContext;

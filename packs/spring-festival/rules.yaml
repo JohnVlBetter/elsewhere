@@ -1,6 +1,7 @@
 allowedPatchTypes:
   - reveal_fact
   - set_flag
+  - move_location
   - adjust_relationship
   - set_resource
   - adjust_resource
