@@ -1,4 +1,5 @@
 import type { ModelProvider } from "@aigame/agents";
+import { createInitialSessionState } from "@aigame/shared";
 import type { SessionState, WorldPack } from "@aigame/shared";
 import { runTurn } from "./orchestrator";
 import type { TurnResult } from "./orchestrator";
@@ -22,15 +23,7 @@ export async function runSimulation(input: {
   model?: ModelProvider;
   assertions?: SimulationAssertions;
 }): Promise<SimulationResult> {
-  let state: SessionState = {
-    currentLocationId: input.pack.manifest.entryLocationId,
-    turn: 0,
-    inventory: [],
-    knownClues: [],
-    flags: {},
-    npcAttitudes: {},
-    questStages: Object.fromEntries(input.pack.quests.map((quest) => [quest.id, quest.initialStage]))
-  };
+  let state: SessionState = createInitialSessionState(input.pack);
   const turns: TurnResult[] = [];
 
   for (const step of input.steps) {

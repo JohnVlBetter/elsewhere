@@ -245,4 +245,77 @@ describe("runTurn", () => {
     expect(result.trace.precheck).toEqual({ ok: false, reason: "Location is not reachable: greenhouse" });
     expect(result.trace.agentRawOutput).toBeUndefined();
   });
+
+  it("runs location entry conditions before model calls", async () => {
+    const model: ModelProvider = {
+      async generateStructured<T>(): Promise<T> {
+        throw new Error("model should not be called when entry condition fails");
+      }
+    };
+
+    const result = await runTurn({
+      pack: {
+        ...pack,
+        locations: [
+          { id: "foyer", name: "Foyer", description: "Entry.", exits: ["study"], visibleObjects: [] },
+          {
+            id: "study",
+            name: "Study",
+            description: "Books.",
+            exits: [],
+            visibleObjects: [],
+            entryCondition: { has_item: "greenhouse_key" }
+          }
+        ]
+      },
+      state: initialState,
+      inputText: "move study",
+      model
+    });
+
+    expect(result.outputText).toBe("行动暂时无法完成：当前条件还不能进入 study。");
+    expect(result.state).toEqual({ ...initialState, turn: 1 });
+    expect(result.trace.precheck).toEqual({ ok: false, reason: "Location entry condition failed: study" });
+    expect(result.trace.agentRawOutput).toBeUndefined();
+  });
+
+  it("runs NPC topic unlock conditions before model calls", async () => {
+    const model: ModelProvider = {
+      async generateStructured<T>(): Promise<T> {
+        throw new Error("model should not be called when topic is locked");
+      }
+    };
+
+    const result = await runTurn({
+      pack: {
+        ...pack,
+        npcs: [
+          {
+            id: "butler",
+            name: "Mr. Vale",
+            publicDescription: "Precise.",
+            privateFacts: [],
+            knows: [],
+            forbiddenDisclosures: [],
+            topics: [
+              {
+                id: "secret",
+                prompt: "Ask about the hidden bell record.",
+                unlockCondition: { knows_clue: "broken_watch" },
+                revealsClueId: "broken_watch"
+              }
+            ]
+          }
+        ]
+      },
+      state: initialState,
+      inputText: "ask butler secret",
+      model
+    });
+
+    expect(result.outputText).toBe("行动暂时无法完成：当前还不能询问 butler 的 secret。");
+    expect(result.state).toEqual({ ...initialState, turn: 1 });
+    expect(result.trace.precheck).toEqual({ ok: false, reason: "Topic unlock condition failed: butler.secret" });
+    expect(result.trace.agentRawOutput).toBeUndefined();
+  });
 });

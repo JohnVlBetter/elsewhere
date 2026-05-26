@@ -28,10 +28,35 @@ export function validatePatch(patch: GamePatch, pack: WorldPack, state: SessionS
     }
   }
 
+  if (patch.type === "remove_item" && !pack.items.some((item) => item.id === patch.itemId)) {
+    return { ok: false, reason: `Unknown item: ${patch.itemId}` };
+  }
+
   if (patch.type === "move_location") {
     const current = pack.locations.find((location) => location.id === state.currentLocationId);
     if (!current?.exits.includes(patch.locationId)) {
       return { ok: false, reason: `Location is not reachable: ${patch.locationId}` };
+    }
+    const destination = pack.locations.find((location) => location.id === patch.locationId);
+    if (!destination) {
+      return { ok: false, reason: `Unknown location: ${patch.locationId}` };
+    }
+    if (!evaluateCondition(destination.entryCondition, state)) {
+      return { ok: false, reason: `Location entry condition failed: ${patch.locationId}` };
+    }
+  }
+
+  if (patch.type === "adjust_npc_attitude" && !pack.npcs.some((npc) => npc.id === patch.npcId)) {
+    return { ok: false, reason: `Unknown NPC: ${patch.npcId}` };
+  }
+
+  if (patch.type === "set_quest_stage") {
+    const quest = pack.quests.find((candidate) => candidate.id === patch.questId);
+    if (!quest) {
+      return { ok: false, reason: `Unknown quest: ${patch.questId}` };
+    }
+    if (!quest.stages.includes(patch.stage)) {
+      return { ok: false, reason: `Unknown quest stage: ${patch.questId}.${patch.stage}` };
     }
   }
 

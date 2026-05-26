@@ -5,8 +5,8 @@ import YAML from "yaml";
 import { buildPackArchive, loadWorldPack, validateWorldPack } from "@aigame/pack";
 import { createSqliteStore } from "@aigame/persistence";
 import { runSimulation, runTurn, type SimulationAssertions } from "@aigame/runtime";
-import { ActionSchema } from "@aigame/shared";
-import type { GamePatch, SessionState, WorldPack } from "@aigame/shared";
+import { ActionSchema, createInitialSessionState } from "@aigame/shared";
+import type { GamePatch, SessionState } from "@aigame/shared";
 
 export interface CliResult {
   exitCode: number;
@@ -89,7 +89,7 @@ export async function runCli(args: string[], options: RunCliOptions = {}): Promi
     const inputText = parsed.positionals.slice(2).join(" ");
     const session = parsed.sessionId
       ? store.getSession(parsed.sessionId)
-      : store.createSession({ packId: pack.manifest.id, initialState: createInitialState(pack) });
+      : store.createSession({ packId: pack.manifest.id, initialState: createInitialSessionState(pack) });
 
     if (!session) {
       return { exitCode: 1, stdout: "", stderr: `Session not found: ${parsed.sessionId}\n` };
@@ -184,8 +184,8 @@ export async function runCli(args: string[], options: RunCliOptions = {}): Promi
   };
 }
 
-function resolveCliDbPath(options: RunCliOptions): string {
-  return options.dbPath ?? process.env.AIGAME_CLI_DB_PATH ?? "aigame-cli.db";
+export function resolveCliDbPath(options: RunCliOptions): string {
+  return options.dbPath ?? process.env.AIGAME_CLI_DB_PATH ?? ".tmp/aigame-cli.db";
 }
 
 function parseOptions(args: string[]): { positionals: string[]; sessionId?: string } {
@@ -202,18 +202,6 @@ function parseOptions(args: string[]): { positionals: string[]; sessionId?: stri
   }
 
   return { positionals, sessionId };
-}
-
-function createInitialState(pack: WorldPack): SessionState {
-  return {
-    currentLocationId: pack.manifest.entryLocationId,
-    turn: 0,
-    inventory: [],
-    knownClues: [],
-    flags: {},
-    npcAttitudes: {},
-    questStages: Object.fromEntries(pack.quests.map((quest) => [quest.id, quest.initialStage]))
-  };
 }
 
 function formatState(state: SessionState): string {

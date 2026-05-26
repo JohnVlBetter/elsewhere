@@ -221,8 +221,15 @@ function precheckAction(action: GameAction, pack: WorldPack, state: SessionState
     return validation.ok ? { ok: true } : validation;
   }
 
-  if (action.type === "ask" && !pack.npcs.some((npc) => npc.id === action.npcId)) {
-    return { ok: false, reason: `Unknown NPC: ${action.npcId}` };
+  if (action.type === "ask") {
+    const npc = pack.npcs.find((candidate) => candidate.id === action.npcId);
+    if (!npc) {
+      return { ok: false, reason: `Unknown NPC: ${action.npcId}` };
+    }
+    const topic = npc.topics.find((candidate) => candidate.id === action.topic);
+    if (topic && !evaluateCondition(topic.unlockCondition, state)) {
+      return { ok: false, reason: `Topic unlock condition failed: ${action.npcId}.${topic.id}` };
+    }
   }
 
   if (action.type === "take") {
@@ -298,8 +305,17 @@ function localizeRuleReason(reason: string): string {
   const unreachable = reason.match(/^Location is not reachable: (.+)$/);
   if (unreachable) return `当前位置无法前往 ${unreachable[1]}。`;
 
+  const blockedEntry = reason.match(/^Location entry condition failed: (.+)$/);
+  if (blockedEntry) return `当前条件还不能进入 ${blockedEntry[1]}。`;
+
+  const unknownLocation = reason.match(/^Unknown location: (.+)$/);
+  if (unknownLocation) return `没有找到地点 ${unknownLocation[1]}。`;
+
   const unknownNpc = reason.match(/^Unknown NPC: (.+)$/);
   if (unknownNpc) return `没有找到角色 ${unknownNpc[1]}。`;
+
+  const lockedTopic = reason.match(/^Topic unlock condition failed: ([^.]+)\.(.+)$/);
+  if (lockedTopic) return `当前还不能询问 ${lockedTopic[1]} 的 ${lockedTopic[2]}。`;
 
   const unknownClue = reason.match(/^Unknown clue: (.+)$/);
   if (unknownClue) return `没有找到线索 ${unknownClue[1]}。`;
@@ -332,6 +348,9 @@ function deriveRulePatches(action: GameAction, pack: WorldPack, state: SessionSt
 
   if (action.type === "ask") {
     const topic = findNpcTopic(action.npcId, action.topic, pack);
+    if (topic && !evaluateCondition(topic.unlockCondition, state)) {
+      return [];
+    }
     const clue = topic?.revealsClueId ? pack.clues.find((candidate) => candidate.id === topic.revealsClueId) : undefined;
     if (clue && !state.knownClues.includes(clue.id) && evaluateCondition(clue.discoverableWhen, state)) {
       return [{ type: "discover_clue", clueId: clue.id, reason: `Asked ${action.npcId} about ${action.topic}.` }];

@@ -1,5 +1,7 @@
 import Database from "better-sqlite3";
 import { randomUUID } from "node:crypto";
+import { mkdirSync } from "node:fs";
+import { dirname } from "node:path";
 import { SessionStateSchema } from "@aigame/shared";
 import type { GameAction, GamePatch, SessionState } from "@aigame/shared";
 
@@ -22,6 +24,7 @@ export interface StoredEvent {
 }
 
 export function createSqliteStore(path: string) {
+  ensureDatabaseDirectory(path);
   const db = new Database(path);
   if (path !== ":memory:") {
     db.pragma("journal_mode = PERSIST");
@@ -98,4 +101,12 @@ export function createSqliteStore(path: string) {
       }));
     }
   };
+}
+
+function ensureDatabaseDirectory(path: string): void {
+  if (path === ":memory:") return;
+  const directory = dirname(path);
+  if (directory && directory !== ".") {
+    mkdirSync(directory, { recursive: true });
+  }
 }

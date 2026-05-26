@@ -59,4 +59,30 @@ describe("validateWorldPack", () => {
 
     expect(result.errors).toContain("NPC butler topic alibi reveals missing clue: missing_clue");
   });
+
+  it("reports invalid condition references across pack entities", () => {
+    const pack = basePack();
+    pack.locations[0]!.entryCondition = { has_item: "missing_key" };
+    pack.npcs[0]!.topics = [
+      { id: "secret", prompt: "Ask secret.", unlockCondition: { knows_clue: "missing_clue" } }
+    ];
+    pack.clues[0]!.discoverableWhen = { location_is: "missing_location" };
+    pack.items = [
+      {
+        id: "greenhouse_key",
+        name: "Greenhouse key",
+        description: "A brass key.",
+        pickupCondition: { npc_attitude_at_least: { npc: "missing_npc", value: 1 } }
+      }
+    ];
+    pack.endings[0]!.condition = { quest_stage_is: { quest: "solve_murder", stage: "missing_stage" } };
+
+    const result = validateWorldPack(pack);
+
+    expect(result.errors).toContain("Location foyer entryCondition references missing item: missing_key");
+    expect(result.errors).toContain("NPC butler topic secret unlockCondition references missing clue: missing_clue");
+    expect(result.errors).toContain("Clue broken_watch discoverableWhen references missing location: missing_location");
+    expect(result.errors).toContain("Item greenhouse_key pickupCondition references missing NPC: missing_npc");
+    expect(result.errors).toContain("Ending unresolved_failure condition references missing quest stage: solve_murder.missing_stage");
+  });
 });

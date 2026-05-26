@@ -165,3 +165,15 @@ export type LocationDef = z.infer<typeof LocationSchema>;
 export type NpcDef = z.infer<typeof NpcSchema>;
 export type ClueDef = z.infer<typeof ClueSchema>;
 export type EndingDef = z.infer<typeof EndingSchema>;
+
+export function createInitialSessionState(pack: WorldPack): SessionState {
+  return {
+    currentLocationId: pack.manifest.entryLocationId,
+    turn: 0,
+    inventory: [],
+    knownClues: [],
+    flags: {},
+    npcAttitudes: {},
+    questStages: Object.fromEntries(pack.quests.map((quest) => [quest.id, quest.initialStage]))
+  };
+}

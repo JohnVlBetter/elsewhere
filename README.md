@@ -19,6 +19,8 @@ npm run web:start
 
 `npm run web:start` is the Windows one-command launcher. It loads root `.env.local`, stops any process already listening on port 3000, then starts the web app at `http://127.0.0.1:3000`.
 
+Runtime SQLite files default to `.tmp/aigame.db` for the web app and `.tmp/aigame-cli.db` for the CLI. Override them with `AIGAME_DB_PATH` and `AIGAME_CLI_DB_PATH` when needed.
+
 To choose a different port directly:
 
 ```powershell

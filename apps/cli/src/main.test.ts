@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { isMainModule, runCli } from "./main";
+import { isMainModule, resolveCliDbPath, runCli } from "./main";
 
 describe("CLI", () => {
   it("validates the sample pack", async () => {
@@ -96,6 +96,21 @@ describe("CLI", () => {
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain("Session:");
     expect(result.stdout).toContain("Turn: 1");
+  });
+
+  it("keeps the default CLI database under the ignored temp directory", () => {
+    const original = process.env.AIGAME_CLI_DB_PATH;
+    delete process.env.AIGAME_CLI_DB_PATH;
+
+    try {
+      expect(resolveCliDbPath({})).toBe(".tmp/aigame-cli.db");
+    } finally {
+      if (original === undefined) {
+        delete process.env.AIGAME_CLI_DB_PATH;
+      } else {
+        process.env.AIGAME_CLI_DB_PATH = original;
+      }
+    }
   });
 
   it("continues a CLI play session by id", async () => {

@@ -540,8 +540,17 @@ function localizeRuleReason(reason: string): string {
   const unreachable = reason.match(/^Location is not reachable: (.+)$/);
   if (unreachable) return `当前位置无法前往 ${labelLocation(unreachable[1] ?? "")}。`;
 
+  const blockedEntry = reason.match(/^Location entry condition failed: (.+)$/);
+  if (blockedEntry) return `当前条件还不能进入 ${labelLocation(blockedEntry[1] ?? "")}。`;
+
+  const unknownLocation = reason.match(/^Unknown location: (.+)$/);
+  if (unknownLocation) return `没有找到地点 ${labelLocation(unknownLocation[1] ?? "")}。`;
+
   const unknownNpc = reason.match(/^Unknown NPC: (.+)$/);
   if (unknownNpc) return `没有找到角色 ${labelNpc(unknownNpc[1] ?? "")}。`;
+
+  const lockedTopic = reason.match(/^Topic unlock condition failed: ([^.]+)\.(.+)$/);
+  if (lockedTopic) return `当前还不能询问 ${labelNpc(lockedTopic[1] ?? "")} 的 ${formatId(lockedTopic[2] ?? "")}。`;
 
   return reason;
 }

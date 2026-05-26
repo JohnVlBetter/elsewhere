@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   ActionSchema,
   ConditionSchema,
+  createInitialSessionState,
   PatchSchema,
   SessionStateSchema,
   WorldPackSchema
@@ -68,5 +69,41 @@ describe("domain schemas", () => {
 
     expect(pack.manifest.id).toBe("rain-tower");
     expect("prompts" in pack).toBe(false);
+  });
+
+  it("builds initial session state from a world pack", () => {
+    const pack = WorldPackSchema.parse({
+      manifest: {
+        id: "rain-tower",
+        name: "Rain Tower Murder",
+        version: "0.1.0",
+        runtimeVersion: "0.1.0",
+        entryLocationId: "foyer"
+      },
+      worldText: "A locked-room mystery.",
+      rules: { allowedPatchTypes: ["discover_clue", "set_flag"] },
+      locations: [{ id: "foyer", name: "Foyer", description: "A cold entry hall.", exits: [] }],
+      npcs: [],
+      clues: [],
+      items: [],
+      quests: [
+        { id: "solve_murder", name: "Solve murder", stages: ["investigate", "accuse"], initialStage: "investigate" },
+        { id: "find_key", name: "Find key", stages: ["missing", "found"], initialStage: "missing" }
+      ],
+      endings: []
+    });
+
+    expect(createInitialSessionState(pack)).toEqual({
+      currentLocationId: "foyer",
+      turn: 0,
+      inventory: [],
+      knownClues: [],
+      flags: {},
+      npcAttitudes: {},
+      questStages: {
+        solve_murder: "investigate",
+        find_key: "missing"
+      }
+    });
   });
 });
