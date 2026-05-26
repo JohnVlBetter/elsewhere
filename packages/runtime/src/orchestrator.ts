@@ -256,7 +256,7 @@ function buildAgentRequest(pack: WorldPack, state: SessionState, inputText: stri
       agentRole: "character",
       context: buildCharacterContext(pack, state, { characterId: action.characterId, topic: action.topic }),
       contextIds: [`location:${state.currentLocationId}`, `character:${action.characterId}`],
-      system: buildSystemPrompt("npc")
+      system: buildSystemPrompt("character")
     };
   }
 

@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-export type AgentPromptRole = "narrator" | "npc";
+export type AgentPromptRole = "narrator" | "character";
 
 const promptDirectory = join(dirname(fileURLToPath(import.meta.url)), "prompts");
 const promptCache = new Map<string, string>();
@@ -17,7 +17,7 @@ function readPrompt(name: string): string {
 }
 
 export function buildSystemPrompt(role: AgentPromptRole): string {
-  const rolePrompt = role === "npc" ? "npc" : "narrator";
+  const rolePrompt = role === "character" ? "npc" : "narrator";
   return [
     readPrompt("language"),
     readPrompt("core"),

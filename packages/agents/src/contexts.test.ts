@@ -1,38 +1,60 @@
 import { describe, expect, it } from "vitest";
-import { SessionState, WorldPack } from "@aigame/shared";
-import { buildNpcContext, buildNarratorContext } from "./contexts";
+import type { SessionState, WorldPack } from "@aigame/shared";
+import { buildCharacterContext, buildNarratorContext } from "./contexts";
 
 const pack: WorldPack = {
-  manifest: { id: "rain-tower", name: "Rain Tower Murder", version: "0.1.0", runtimeVersion: "0.1.0", entryLocationId: "foyer" },
-  worldText: "Stormy estate.",
-  rules: { allowedPatchTypes: ["discover_clue"] },
-  locations: [{ id: "foyer", name: "Foyer", description: "Entry.", exits: [], visibleObjects: [] }],
-  npcs: [{ id: "butler", name: "Mr. Vale", publicDescription: "Precise.", privateFacts: ["He reset the bell."], knows: ["The watch stopped early."], forbiddenDisclosures: ["He reset the bell."], topics: [] }],
-  clues: [{ id: "broken_watch", name: "Broken Watch", description: "Stopped.", accusationWeight: 2 }],
+  manifest: { id: "cave-breakthrough", name: "Cave Breakthrough", version: "0.2.0", runtimeVersion: "0.2.0", entryLocationId: "outer_cave", profileId: "cultivation" },
+  worldText: "A quiet cave before a breakthrough.",
+  profile: { id: "cultivation", labels: { facts: "玄机" }, quickActions: [], actions: {} },
+  rules: { allowedPatchTypes: ["reveal_fact"], triggers: [] },
+  locations: [{ id: "outer_cave", name: "Outer Cave", description: "Cold stone.", exits: [], visibleObjects: ["stone_omen"] }],
+  characters: [
+    { id: "mentor_echo", name: "Mentor Echo", publicDescription: "A faint voice.", privateFacts: ["private mentor secret"], knows: ["stone_omen"], forbiddenDisclosures: ["private mentor secret"], topics: [] },
+    { id: "rival", name: "Rival", publicDescription: "Watching from afar.", privateFacts: ["rival secret"], topics: [] }
+  ],
+  facts: [{ id: "stone_omen", name: "石壁灵纹", description: "The wall hums.", discoverableWhen: { location_is: "outer_cave" } }],
   items: [],
-  quests: [],
+  resources: [{ id: "spiritual_power", name: "Spiritual power", initial: 5, min: 0, max: 10 }],
+  relationships: [{ characterId: "mentor_echo", name: "Mentor trust", initial: 3, min: -5, max: 5 }],
+  objectives: [],
   endings: []
 };
 
 const state: SessionState = {
-  currentLocationId: "foyer",
+  currentLocationId: "outer_cave",
   turn: 1,
   inventory: [],
-  knownClues: ["broken_watch"],
+  knownFacts: ["stone_omen"],
+  resources: { spiritual_power: 5 },
+  relationships: { mentor_echo: 3 },
   flags: {},
-  npcAttitudes: {},
-  questStages: {}
+  objectiveStages: {}
 };
 
 describe("agent contexts", () => {
-  it("keeps NPC private facts out of narrator context", () => {
+  it("keeps character private facts out of narrator context", () => {
     const context = buildNarratorContext(pack, state, { actionText: "look" });
-    expect(JSON.stringify(context)).not.toContain("He reset the bell");
+
+    expect(context.profile.id).toBe("cultivation");
+    expect(context.knownFacts).toEqual([
+      expect.objectContaining({ id: "stone_omen", name: "石壁灵纹", description: "The wall hums." })
+    ]);
+    expect(context.visibleFacts).toEqual(context.knownFacts);
+    expect(context.resources).toEqual({ spiritual_power: 5 });
+    expect(JSON.stringify(context)).not.toContain("private mentor secret");
+    expect(JSON.stringify(context)).not.toContain("rival secret");
   });
 
-  it("scopes NPC context to one NPC", () => {
-    const context = buildNpcContext(pack, state, { npcId: "butler", topic: "alibi" });
-    expect(context.npc.id).toBe("butler");
-    expect(context.allowedKnownClues).toEqual(["broken_watch"]);
+  it("scopes character context to one character", () => {
+    const context = buildCharacterContext(pack, state, { characterId: "mentor_echo", topic: "breathing" });
+
+    expect(context.character.id).toBe("mentor_echo");
+    expect(context.topic).toBe("breathing");
+    expect(context.allowedKnownFacts).toEqual(["stone_omen"]);
+    expect(context.knownFactDetails).toEqual([
+      expect.objectContaining({ id: "stone_omen", name: "石壁灵纹", description: "The wall hums." })
+    ]);
+    expect(context.relationship).toBe(3);
+    expect(JSON.stringify(context)).not.toContain("rival secret");
   });
 });

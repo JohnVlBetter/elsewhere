@@ -3,7 +3,7 @@ import type { ModelProvider } from "./modelProvider";
 
 export interface AgentResponse {
   narration: string;
-  spokenBy: Array<{ npcId: string; text: string }>;
+  spokenBy: Array<{ characterId: string; text: string }>;
   proposedPatches: GamePatch[];
   privateNotes: string;
 }
