@@ -1,13 +1,20 @@
 import { NextResponse } from "next/server";
-import { loadWorldPack } from "@aigame/pack";
 import { createInitialSessionState } from "@aigame/shared";
 import type { WorldPack } from "@aigame/shared";
+import { loadPackById } from "../../../src/server/packRegistry";
 import { sessionStore } from "../../../src/server/sessionStore";
 
-export async function POST() {
-  const pack = loadWorldPack("packs/rain-tower");
+export async function POST(request: Request) {
+  const body = await request.json().catch(() => ({}));
+  const packId = typeof body.packId === "string" && body.packId.trim() ? body.packId.trim() : "rain-tower";
+  let pack: WorldPack;
+  try {
+    pack = loadPackById(packId);
+  } catch {
+    return NextResponse.json({ error: "未找到这个案件。" }, { status: 404 });
+  }
   const state = createInitialSessionState(pack);
-  const session = sessionStore.createSession({ packId: pack.manifest.id, initialState: state });
+  const session = await sessionStore.createSession({ packId: pack.manifest.id, state });
 
   return NextResponse.json({
     sessionId: session.id,

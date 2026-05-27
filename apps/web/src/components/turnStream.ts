@@ -74,12 +74,24 @@ function parseServerSentEvent(rawEvent: string): { name: string; data: string } 
 function readMessage(data: string): string {
   try {
     const body = JSON.parse(data) as { message?: unknown };
-    if (typeof body.message === "string" && body.message) return body.message;
+    if (typeof body.message === "string" && body.message) return playerSafeStatus(body.message);
   } catch {
     // Some event emitters send plain-text data; surface it as-is.
   }
 
   return data || "行动处理失败。";
+}
+
+function playerSafeStatus(message: string): string {
+  const statusLabels: Record<string, string> = {
+    pending: "思索中...",
+    running: "思索中...",
+    complete: "已记录...",
+    "正在调用模型...": "思索中...",
+    "正在写入案卷...": "已记录..."
+  };
+
+  return statusLabels[message] ?? message;
 }
 
 function findEventEnd(buffer: string): number {
