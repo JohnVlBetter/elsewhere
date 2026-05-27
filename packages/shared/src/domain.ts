@@ -18,16 +18,6 @@ export const ProfileActionSchema = z.object({
   acceptsFacts: z.boolean().default(false)
 });
 
-export const ProfileSchema = z.object({
-  id: IdSchema,
-  labels: z.record(z.string(), z.string().min(1)).default({}),
-  quickActions: z.array(z.object({
-    label: z.string().min(1),
-    command: z.string().min(1)
-  })).default([]),
-  actions: z.record(z.string(), ProfileActionSchema).default({})
-});
-
 export type Condition =
   | { all: Condition[] }
   | { any: Condition[] }
@@ -36,6 +26,7 @@ export type Condition =
   | { flag_true: string }
   | { has_item: string }
   | { knows_fact: string }
+  | { factKnown: string }
   | { objective_stage_is: { objective: string; stage: string } }
   | { relationship_at_least: { character: string; value: number } }
   | { relationship_at_most: { character: string; value: number } }
@@ -51,6 +42,7 @@ export const ConditionSchema: z.ZodType<Condition> = z.lazy(() =>
     z.object({ flag_true: IdSchema }),
     z.object({ has_item: IdSchema }),
     z.object({ knows_fact: IdSchema }),
+    z.object({ factKnown: IdSchema }),
     z.object({ objective_stage_is: z.object({ objective: IdSchema, stage: z.string().min(1) }) }),
     z.object({ relationship_at_least: z.object({ character: IdSchema, value: z.number().int() }) }),
     z.object({ relationship_at_most: z.object({ character: IdSchema, value: z.number().int() }) }),
@@ -59,6 +51,17 @@ export const ConditionSchema: z.ZodType<Condition> = z.lazy(() =>
   ])
 );
 
+export const ProfileSchema = z.object({
+  id: IdSchema,
+  labels: z.record(z.string(), z.string().min(1)).default({}),
+  quickActions: z.array(z.object({
+    label: z.string().min(1),
+    command: z.string().min(1),
+    visibleWhen: ConditionSchema.optional()
+  })).default([]),
+  actions: z.record(z.string(), ProfileActionSchema).default({})
+});
+
 export const LocationSchema = z.object({
   id: IdSchema,
   name: z.string().min(1),
@@ -66,7 +69,8 @@ export const LocationSchema = z.object({
   description: z.string().min(1),
   exits: z.array(IdSchema),
   entryCondition: ConditionSchema.optional(),
-  visibleObjects: z.array(IdSchema).default([])
+  visibleObjects: z.array(IdSchema).default([]),
+  visibleCharacters: z.array(IdSchema).default([])
 });
 
 export const CharacterSchema = z.object({
@@ -140,6 +144,41 @@ export const EndingSchema = z.object({
   text: z.string().min(1)
 });
 
+export const TimelineEventSchema = z.discriminatedUnion("kind", [
+  z.object({
+    id: z.string(),
+    kind: z.literal("player_action"),
+    text: z.string(),
+    timestamp: z.string(),
+    actorId: z.literal("player"),
+    visibleToPlayer: z.boolean().default(true)
+  }),
+  z.object({
+    id: z.string(),
+    kind: z.literal("scene"),
+    text: z.string(),
+    timestamp: z.string(),
+    visibleToPlayer: z.boolean().default(true)
+  }),
+  z.object({
+    id: z.string(),
+    kind: z.literal("dialogue"),
+    text: z.string(),
+    timestamp: z.string(),
+    speakerId: IdSchema,
+    speakerName: z.string(),
+    visibleToPlayer: z.boolean().default(true)
+  }),
+  z.object({
+    id: z.string(),
+    kind: z.enum(["evidence", "item", "progress", "location_change", "notice", "debug"]),
+    text: z.string(),
+    timestamp: z.string(),
+    refId: IdSchema.optional(),
+    visibleToPlayer: z.boolean().default(true)
+  })
+]);
+
 export const PatchSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("reveal_fact"), factId: IdSchema, reason: z.string().min(1) }),
   z.object({ type: z.literal("add_item"), itemId: IdSchema, reason: z.string().min(1) }),
@@ -193,19 +232,22 @@ export const WorldPackSchema = z.object({
 export const SessionStateSchema = z.object({
   currentLocationId: IdSchema,
   turn: z.number().int().min(0),
-  inventory: z.array(IdSchema),
-  knownFacts: z.array(IdSchema),
-  resources: z.record(z.string(), z.number().int()),
-  relationships: z.record(z.string(), z.number().int()),
-  flags: z.record(z.string(), z.boolean()),
-  objectiveStages: z.record(z.string(), z.string())
+  inventory: z.array(IdSchema).default([]),
+  knownFacts: z.array(IdSchema).default([]),
+  resources: z.record(z.string(), z.number().int()).default({}),
+  relationships: z.record(z.string(), z.number().int()).default({}),
+  flags: z.record(z.string(), z.boolean()).default({}),
+  objectiveStages: z.record(z.string(), z.string()).default({}),
+  lastInterlocutorId: IdSchema.optional(),
+  packId: IdSchema.optional()
 });
 
 export const ActionSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("look"), rawText: z.string() }),
-  z.object({ type: z.literal("inspect"), targetId: IdSchema, rawText: z.string() }),
+  z.object({ type: z.literal("inspect"), targetId: IdSchema, query: z.string().optional(), rawText: z.string() }),
   z.object({ type: z.literal("move"), locationId: IdSchema, rawText: z.string() }),
-  z.object({ type: z.literal("talk"), characterId: IdSchema, topic: z.string().min(1), rawText: z.string() }),
+  z.object({ type: z.literal("talk"), characterId: IdSchema, targetId: IdSchema.optional(), topic: z.string().min(1), rawText: z.string() }),
+  z.object({ type: z.literal("group_talk"), topic: z.string().min(1).optional(), rawText: z.string() }),
   z.object({ type: z.literal("take"), itemId: IdSchema, rawText: z.string() }),
   z.object({ type: z.literal("use"), itemId: IdSchema, targetId: IdSchema.optional(), rawText: z.string() }),
   z.object({
@@ -235,6 +277,7 @@ export type WorldPack = z.infer<typeof WorldPackSchema>;
 export type SessionState = z.infer<typeof SessionStateSchema>;
 export type GameAction = z.infer<typeof ActionSchema>;
 export type GamePatch = z.infer<typeof PatchSchema>;
+export type TimelineEvent = z.infer<typeof TimelineEventSchema>;
 export type RuleTrigger = z.infer<typeof RuleTriggerSchema>;
 export type TurnMessage = z.infer<typeof TurnMessageSchema>;
 export type LocationDef = z.infer<typeof LocationSchema>;
