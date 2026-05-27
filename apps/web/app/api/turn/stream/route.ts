@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
       };
 
       try {
-        send("status", { message: "行动已接收，正在整理上下文..." });
+        send("status", { message: "行动已记录，正在思索..." });
         const result = await runStoredTurn(body, (message) => send("status", { message }), request.signal);
         send("result", result);
       } catch (error) {

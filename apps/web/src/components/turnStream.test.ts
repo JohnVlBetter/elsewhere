@@ -32,6 +32,20 @@ describe("readTurnEventStream", () => {
     expect(result.outputText).toBe("管家避开了你的目光");
   });
 
+  it("maps internal runtime status labels to player-safe copy", async () => {
+    const statuses: string[] = [];
+    const response = streamResponse([
+      "event: status\ndata: {\"message\":\"正在调用模型...\"}\n\n",
+      "event: result\ndata: {\"outputText\":\"done\"}\n\n"
+    ]);
+
+    await readTurnEventStream<{ outputText: string }>(response, {
+      onStatus: (message) => statuses.push(message)
+    });
+
+    expect(statuses).toEqual(["思索中..."]);
+  });
+
   it("throws the server-provided error event message", async () => {
     const response = streamResponse([
       "event: error\ndata: {\"message\":\"模型返回内容不完整，请重试。\"}\n\n"

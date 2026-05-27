@@ -1,13 +1,17 @@
 import { auditOutput, buildCharacterContext, buildNarratorContext, buildSystemPrompt, FakeModelProvider } from "@aigame/agents";
 import type { ModelProvider } from "@aigame/agents";
 import { PatchSchema } from "@aigame/shared";
-import type { GameAction, GamePatch, SessionState, TurnMessage, WorldPack } from "@aigame/shared";
+import type { GameAction, GamePatch, SessionState, TimelineEvent, TurnMessage, WorldPack } from "@aigame/shared";
 import { applyAcceptedPatch, deriveTriggerPatches, evaluateCondition, judgeEnding, validatePatch } from "@aigame/rules";
 import { parseAction } from "./actionParser";
+import type { ActionLexicon } from "./actionParser";
+import { buildTimelineEvents } from "./timeline";
 
 export interface TurnResult {
+  action: GameAction;
   outputText: string;
   messages: TurnMessage[];
+  timelineEvents: TimelineEvent[];
   state: SessionState;
   acceptedPatches: GamePatch[];
   rejectedPatches: Array<{ patch: GamePatch; reason: string }>;
@@ -25,13 +29,16 @@ export async function runTurn(input: {
 }): Promise<TurnResult> {
   const model = input.model ?? new FakeModelProvider();
   const modelName = input.modelName ?? "fake";
-  const action = resolveStatefulAction(parseAction(input.inputText, input.pack), input.pack, input.state);
+  const timestamp = new Date().toISOString();
+  const action = resolveStatefulAction(parseAction(input.inputText, buildParserLexicon(input.pack, input.state)), input.pack, input.state);
   const precheck = precheckAction(action, input.pack, input.state);
   if (!precheck.ok) {
     const messages: TurnMessage[] = [{ type: "system", text: formatBlockedAction(precheck.reason) }];
     return {
+      action,
       outputText: messagesToText(input.pack, messages),
       messages,
+      timelineEvents: buildTimelineEvents({ command: input.inputText, timestamp, messages, patches: [], pack: input.pack }),
       state: { ...input.state, turn: input.state.turn + 1 },
       acceptedPatches: [],
       rejectedPatches: [],
@@ -68,6 +75,7 @@ export async function runTurn(input: {
       rejectedPatches.push({ patch, reason: validation.reason });
     }
   }
+  nextState = updateConversationFocus(action, input.pack, nextState);
 
   const ending = judgeEnding(input.pack, nextState);
   const messages = buildTurnMessages(input.pack, action, response, acceptedPatches, ending?.text);
@@ -76,8 +84,10 @@ export async function runTurn(input: {
   if (!audit.ok) {
     const auditedMessages = [{ type: "system" as const, text: "这一刻的反馈不够清晰，请换一种行动说法。" }];
     return {
+      action,
       outputText: messagesToText(input.pack, auditedMessages),
       messages: auditedMessages,
+      timelineEvents: buildTimelineEvents({ command: input.inputText, timestamp, messages: auditedMessages, patches: [], pack: input.pack }),
       state: { ...input.state, turn: input.state.turn + 1 },
       acceptedPatches: [],
       rejectedPatches: [
@@ -99,8 +109,10 @@ export async function runTurn(input: {
   }
 
   return {
+    action,
     outputText: messagesToText(input.pack, messages),
     messages,
+    timelineEvents: buildTimelineEvents({ command: input.inputText, timestamp, messages, patches: acceptedPatches, pack: input.pack }),
     state: nextState,
     acceptedPatches,
     rejectedPatches,
@@ -153,6 +165,33 @@ function normalizeProposedPatches(value: unknown): GamePatch[] {
   });
 }
 
+function buildParserLexicon(pack: WorldPack, state: SessionState): ActionLexicon {
+  const location = pack.locations.find((candidate) => candidate.id === state.currentLocationId);
+  const visibleObjectIds = location?.visibleObjects ?? [];
+
+  return {
+    profile: pack.profile,
+    locations: pack.locations,
+    characters: pack.characters,
+    items: pack.items,
+    facts: pack.facts,
+    lastInterlocutorId: state.lastInterlocutorId,
+    visibleCharacterIds: location?.visibleCharacters ?? [],
+    visibleObjectIds,
+    aliases: buildVisibleAliases(pack, state, visibleObjectIds)
+  };
+}
+
+function buildVisibleAliases(pack: WorldPack, state: SessionState, visibleObjectIds: string[]): Array<{ id: string; names: string[] }> {
+  const visibleIds = new Set([...visibleObjectIds, ...state.inventory]);
+  return [...pack.items, ...pack.facts]
+    .filter((entity) => visibleIds.has(entity.id))
+    .map((entity) => ({
+      id: entity.id,
+      names: [entity.id, entity.name, ...(entity.aliases ?? [])]
+    }));
+}
+
 function resolveStatefulAction(action: GameAction, pack: WorldPack, state: SessionState): GameAction {
   if (action.type !== "unknown") return action;
   const hasTimeOrDateIntent = /时间|几点|日期|表盘|指针/.test(action.rawText);
@@ -160,6 +199,22 @@ function resolveStatefulAction(action: GameAction, pack: WorldPack, state: Sessi
 
   const item = pack.items.find((candidate) => candidate.id === state.inventory[0]);
   return item ? { type: "inspect", targetId: item.id, rawText: action.rawText } : action;
+}
+
+function updateConversationFocus(action: GameAction, pack: WorldPack, state: SessionState): SessionState {
+  if (action.type === "talk") {
+    return { ...state, lastInterlocutorId: action.characterId };
+  }
+
+  if (action.type === "move") {
+    const location = pack.locations.find((candidate) => candidate.id === state.currentLocationId);
+    if (!location?.visibleCharacters.includes(state.lastInterlocutorId ?? "")) {
+      const { lastInterlocutorId: _lastInterlocutorId, ...rest } = state;
+      return rest;
+    }
+  }
+
+  return state;
 }
 
 function buildTurnMessages(
@@ -248,13 +303,24 @@ function precheckAction(action: GameAction, pack: WorldPack, state: SessionState
   }
 
   if (action.type === "talk") {
+    const current = pack.locations.find((location) => location.id === state.currentLocationId);
     const character = pack.characters.find((candidate) => candidate.id === action.characterId);
     if (!character) {
       return { ok: false, reason: `Unknown character: ${action.characterId}` };
     }
+    if ((current?.visibleCharacters.length ?? 0) > 0 && !current?.visibleCharacters.includes(action.characterId)) {
+      return { ok: false, reason: `Character is not visible here: ${action.characterId}` };
+    }
     const topic = character.topics.find((candidate) => candidate.id === action.topic);
     if (topic && !evaluateCondition(topic.unlockCondition, state)) {
       return { ok: false, reason: `Topic unlock condition failed: ${action.characterId}.${topic.id}` };
+    }
+  }
+
+  if (action.type === "group_talk") {
+    const current = pack.locations.find((location) => location.id === state.currentLocationId);
+    if ((current?.visibleCharacters.length ?? 0) === 0) {
+      return { ok: false, reason: "No visible characters here" };
     }
   }
 

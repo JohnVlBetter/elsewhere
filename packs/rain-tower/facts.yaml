@@ -38,6 +38,16 @@
   discoverableWhen:
     location_is: study
   tags: [timeline]
+- id: butler_motive
+  kind: motive
+  name: 管家的时间动机
+  aliases: [butler motive, 管家动机, 时间动机]
+  description: 管家的证词、怀表和钟楼记录拼在一起，指向他有重置时间线的动机。
+  discoverableWhen:
+    all:
+      - knows_fact: broken_watch
+      - knows_fact: tower_bell_record
+  tags: [motive]
 - id: false_alibi
   kind: testimony
   name: 虚假不在场证明

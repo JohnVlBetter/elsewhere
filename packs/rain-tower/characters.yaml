@@ -31,9 +31,9 @@
       aliases: [boots, muddy boots, 靴子, 泥靴, 脚印, 靴印]
       revealsFactId: muddy_bootprint
 - id: heiress
-  name: 继承人伊莲
-  aliases: [Elian Halden, Elian, heiress, 继承人, 伊莲, 夫人, 女士]
-  publicDescription: 继承人努力保持镇定，但手指仍在发抖。
+  name: 伊莲夫人
+  aliases: [Elian Halden, Elian, 伊莲, 夫人, 女士]
+  publicDescription: 伊莲夫人努力保持镇定，但手指仍在发抖。
   privateFacts:
     - 她曾因那封被撕裂的信与哈尔登爵士争吵。
   knows:

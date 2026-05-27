@@ -21,8 +21,8 @@ const pack: WorldPack = {
     triggers: []
   },
   locations: [
-    { id: "outer_cave", name: "Outer Cave", description: "Cold stone.", exits: ["stone_chamber"], visibleObjects: [] },
-    { id: "stone_chamber", name: "Stone Chamber", description: "A sealed seat.", exits: [], visibleObjects: [] }
+    { id: "outer_cave", name: "Outer Cave", description: "Cold stone.", exits: ["stone_chamber"], visibleObjects: [], visibleCharacters: [] },
+    { id: "stone_chamber", name: "Stone Chamber", description: "A sealed seat.", exits: [], visibleObjects: [], visibleCharacters: [] }
   ],
   characters: [{ id: "mentor_echo", name: "Mentor Echo", publicDescription: "A faint voice.", privateFacts: [], knows: [], forbiddenDisclosures: [], topics: [] }],
   facts: [{ id: "stone_omen", kind: "fact", name: "Stone omen", description: "The wall hums.", discoverableWhen: { location_is: "outer_cave" }, tags: [] }],
@@ -115,13 +115,14 @@ describe("patch validation", () => {
       {
         ...pack,
         locations: [
-          { id: "outer_cave", name: "Outer Cave", description: "Cold stone.", exits: ["stone_chamber"], visibleObjects: [] },
+          { id: "outer_cave", name: "Outer Cave", description: "Cold stone.", exits: ["stone_chamber"], visibleObjects: [], visibleCharacters: [] },
           {
             id: "stone_chamber",
             name: "Stone Chamber",
             description: "A sealed seat.",
             exits: [],
             visibleObjects: [],
+            visibleCharacters: [],
             entryCondition: { has_item: "jade_token" }
           }
         ]

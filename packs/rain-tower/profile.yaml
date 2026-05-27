@@ -17,6 +17,8 @@ quickActions:
     command: talk butler about alibi
   - label: 指认管家
     command: confront butler with broken_watch muddy_bootprint tower_bell_record
+    visibleWhen:
+      factKnown: butler_motive
 actions:
   confront:
     aliases: [confront, accuse, 指认, 质询]

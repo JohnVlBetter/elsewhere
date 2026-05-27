@@ -11,6 +11,10 @@ export interface ActionLexicon {
   }>;
   items?: Array<{ id: string; name?: string; aliases?: string[] }>;
   facts?: Array<{ id: string; name?: string; aliases?: string[] }>;
+  lastInterlocutorId?: string;
+  visibleCharacterIds?: string[];
+  visibleObjectIds?: string[];
+  aliases?: Array<{ id: string; names: string[] }>;
 }
 
 export function parseAction(inputText: string, lexicon: ActionLexicon = {}): GameAction {
@@ -58,12 +62,24 @@ function parseNaturalAction(rawText: string, lexicon: ActionLexicon): GameAction
   const item = findMention(rawText, lexicon.items ?? []);
   const fact = findMention(rawText, lexicon.facts ?? []);
   const location = findMention(rawText, lexicon.locations ?? []);
+  const groupTalk = parseGroupTalk(rawText);
+  if (groupTalk) return groupTalk;
 
   if (hasAny(rawText, ["询问", "问", "追问", "盘问", "请教"]) && character) {
     return {
       type: "talk",
       characterId: character.entity.id,
       topic: matchTopic(rawText, character.entity.topics ?? []) ?? inferTopic(rawText, character.matchedText),
+      rawText
+    };
+  }
+
+  if (looksLikeTargetlessQuestion(rawText) && lexicon.lastInterlocutorId && lexicon.visibleCharacterIds?.includes(lexicon.lastInterlocutorId)) {
+    return {
+      type: "talk",
+      characterId: lexicon.lastInterlocutorId,
+      targetId: lexicon.lastInterlocutorId,
+      topic: inferTargetlessTopic(rawText),
       rawText
     };
   }
@@ -85,7 +101,55 @@ function parseNaturalAction(rawText: string, lexicon: ActionLexicon): GameAction
     return buildNaturalActAction(rawText, profileAction, lexicon, { character, item, fact, location });
   }
 
+  const visibleAlias = findVisibleAlias(rawText, lexicon);
+  if (visibleAlias) {
+    return { type: "inspect", targetId: visibleAlias, query: normalizeText(rawText), rawText };
+  }
+
   return undefined;
+}
+
+function parseGroupTalk(rawText: string): GameAction | undefined {
+  const normalized = normalizeText(rawText);
+  const talkPrefix = ["询问", "问", "追问", "盘问", "ask"].find((term) => normalized.startsWith(normalizeText(term)));
+  if (!talkPrefix) return undefined;
+
+  const groupTerm = ["众人", "大家", "所有人", "在场的人", "everyone", "all"].find((term) =>
+    normalized.includes(normalizeText(term))
+  );
+  if (!groupTerm) return undefined;
+
+  const topic = rawText
+    .replace(new RegExp(`^\\s*${escapeRegExp(talkPrefix)}\\s*`), "")
+    .replace(groupTerm, "")
+    .replace(/^(关于|有关|就|about)\s*/i, "")
+    .trim();
+
+  return { type: "group_talk", topic: topic || undefined, rawText };
+}
+
+function looksLikeTargetlessQuestion(rawText: string): boolean {
+  return hasAny(rawText, ["继续问", "追问", "询问", "问他", "问她", "问", "哪里", "什么", "为何", "怎么", "?", "？"]);
+}
+
+function inferTargetlessTopic(rawText: string): string {
+  const topic = rawText
+    .replace(/继续问|追问|询问|问他|问她|问/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return topic || "general";
+}
+
+function findVisibleAlias(rawText: string, lexicon: ActionLexicon): string | undefined {
+  const normalized = normalizeText(rawText);
+  return lexicon.aliases?.find((alias) =>
+    lexicon.visibleObjectIds?.includes(alias.id) &&
+    alias.names.some((name) => normalizeText(name) === normalized)
+  )?.id;
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function buildNaturalActAction(

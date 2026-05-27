@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { resolveWebDbPath } from "./sessionStore";
+import { resolveWebSessionRoot } from "./sessionStore";
 
-describe("resolveWebDbPath", () => {
-  it("keeps the default web database under the ignored temp directory", () => {
-    expect(resolveWebDbPath({})).toBe(".tmp/aigame.db");
+describe("resolveWebSessionRoot", () => {
+  it("keeps the default web session logs under the ignored temp directory", () => {
+    expect(resolveWebSessionRoot({})).toBe(".tmp/sessions");
   });
 
-  it("allows the web database path to be configured by environment", () => {
-    expect(resolveWebDbPath({ AIGAME_DB_PATH: "custom.db" })).toBe("custom.db");
+  it("allows the web session log root to be configured by environment", () => {
+    expect(resolveWebSessionRoot({ AIGAME_SESSION_ROOT: "custom-sessions" })).toBe("custom-sessions");
   });
 });

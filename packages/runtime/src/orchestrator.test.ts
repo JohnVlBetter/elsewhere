@@ -45,8 +45,8 @@ const pack: WorldPack = {
     ]
   },
   locations: [
-    { id: "foyer", name: "Foyer", description: "Entry.", exits: ["study"], visibleObjects: ["broken_watch", "silver_watch"] },
-    { id: "study", name: "Study", description: "Books.", exits: [], visibleObjects: ["tower_bell_record"] }
+    { id: "foyer", name: "Foyer", description: "Entry.", exits: ["study"], visibleObjects: ["broken_watch", "silver_watch"], visibleCharacters: ["butler", "heiress"] },
+    { id: "study", name: "Study", description: "Books.", exits: [], visibleObjects: ["tower_bell_record"], visibleCharacters: [] }
   ],
   characters: [
     {
@@ -101,6 +101,7 @@ describe("runTurn", () => {
     expect(result.state.knownFacts).toEqual(["broken_watch"]);
     expect(result.state.turn).toBe(1);
     expect(result.acceptedPatches).toEqual([{ type: "reveal_fact", factId: "broken_watch", reason: "Inspected broken_watch." }]);
+    expect(result.timelineEvents.map((event) => event.kind)).toEqual(["player_action", "evidence"]);
   });
 
   it("keeps canonical item facts stable when inspecting an item that reveals a fact", async () => {
@@ -212,6 +213,50 @@ describe("runTurn", () => {
 
     expect(result.state.knownFacts).toEqual(["broken_watch", "muddy_bootprint"]);
     expect(result.acceptedPatches).toContainEqual({ type: "reveal_fact", factId: "muddy_bootprint", reason: "Topic butler.alibi revealed muddy_bootprint." });
+  });
+
+  it("remembers the last visible interlocutor after a successful talk turn", async () => {
+    const result = await runTurn({
+      pack,
+      state: { ...initialState, knownFacts: ["broken_watch"] },
+      inputText: "talk butler about alibi",
+      model: new FakeModelProvider({
+        narration: "",
+        spokenBy: [{ characterId: "butler", text: "I was checking the hall clock." }],
+        proposedPatches: [],
+        privateNotes: "focus"
+      })
+    });
+
+    expect(result.state.lastInterlocutorId).toBe("butler");
+  });
+
+  it("reuses the last interlocutor for the next targetless question", async () => {
+    const result = await runTurn({
+      pack,
+      state: { ...initialState, knownFacts: ["broken_watch"], lastInterlocutorId: "butler" },
+      inputText: "继续问他昨晚在哪里",
+      model: new FakeModelProvider({
+        narration: "",
+        spokenBy: [{ characterId: "butler", text: "Still in the kitchen." }],
+        proposedPatches: [],
+        privateNotes: "follow up"
+      })
+    });
+
+    expect(result.action).toMatchObject({ type: "talk", characterId: "butler", targetId: "butler" });
+  });
+
+  it("clears conversation focus when movement leaves the character behind", async () => {
+    const result = await runTurn({
+      pack,
+      state: { ...initialState, lastInterlocutorId: "butler" },
+      inputText: "move study",
+      model: new FakeModelProvider()
+    });
+
+    expect(result.state.currentLocationId).toBe("study");
+    expect(result.state.lastInterlocutorId).toBeUndefined();
   });
 
   it("drops character speech that does not belong to the scoped talk character", async () => {

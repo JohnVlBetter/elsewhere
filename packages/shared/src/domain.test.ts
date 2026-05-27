@@ -3,8 +3,11 @@ import {
   ActionSchema,
   ConditionSchema,
   createInitialSessionState,
+  LocationSchema,
   PatchSchema,
+  ProfileSchema,
   SessionStateSchema,
+  TimelineEventSchema,
   WorldPackSchema
 } from "./domain";
 
@@ -67,6 +70,75 @@ describe("v0.2 domain schema", () => {
 
     expect(state.currentLocationId).toBe("classroom");
     expect(state.knownFacts).toEqual([]);
+  });
+
+  it("parses dialogue timeline events", () => {
+    const event = TimelineEventSchema.parse({
+      id: "evt_1",
+      kind: "dialogue",
+      text: "The butler answers quietly.",
+      timestamp: "2026-05-28T12:00:00.000Z",
+      speakerId: "butler",
+      speakerName: "Butler"
+    });
+
+    expect(event.visibleToPlayer).toBe(true);
+  });
+
+  it("tracks visible characters on a location", () => {
+    const location = LocationSchema.parse({
+      id: "hall",
+      name: "Hall",
+      description: "A wet entry hall.",
+      exits: [],
+      visibleObjects: [],
+      visibleCharacters: ["butler", "elaine"]
+    });
+
+    expect(location.visibleCharacters).toContain("butler");
+  });
+
+  it("stores the recent interlocutor and pack id in session state", () => {
+    const state = SessionStateSchema.parse({
+      currentLocationId: "hall",
+      turn: 2,
+      knownFacts: [],
+      inventory: [],
+      flags: {},
+      relationships: {},
+      lastInterlocutorId: "butler",
+      packId: "rain-tower"
+    });
+
+    expect(state.lastInterlocutorId).toBe("butler");
+    expect(state.packId).toBe("rain-tower");
+  });
+
+  it("parses group talk actions", () => {
+    const action = ActionSchema.parse({
+      type: "group_talk",
+      topic: "inheritance",
+      rawText: "ask everyone about inheritance"
+    });
+
+    expect(action.type).toBe("group_talk");
+  });
+
+  it("allows quick actions to be conditionally visible", () => {
+    const profile = ProfileSchema.parse({
+      id: "detective",
+      labels: {},
+      quickActions: [
+        {
+          label: "Accuse butler",
+          command: "confront butler",
+          visibleWhen: { factKnown: "butler_motive" }
+        }
+      ],
+      actions: {}
+    });
+
+    expect(profile.quickActions[0]?.visibleWhen).toEqual({ factKnown: "butler_motive" });
   });
 
   it("creates initial state from resources, relationships, and objectives", () => {

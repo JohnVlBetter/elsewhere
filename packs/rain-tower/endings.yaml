@@ -1,5 +1,5 @@
 - id: true_resolution
-  name: True Resolution
+  name: 真相浮出水面
   priority: 10
   condition:
     all:
@@ -7,16 +7,16 @@
       - knows_fact: broken_watch
       - knows_fact: muddy_bootprint
       - knows_fact: tower_bell_record
-  text: The butler's alibi collapses, and he confesses to resetting the bell.
+  text: 你把证词、怀表和钟楼记录串在一起，指出管家的时间线无法成立。他终于承认自己重置过塔钟，命案的真相浮出水面。
 - id: wrong_accusation
-  name: Wrong Accusation
+  name: 证据不足
   priority: 5
   condition:
     flag_true: wrong_accusation
-  text: The accusation fails, and the household closes ranks.
+  text: 你的指控缺少关键证据，众人很快收回目光，宅邸重新陷入戒备。
 - id: unresolved_failure
-  name: Unresolved Failure
+  name: 雨夜未明
   priority: 1
   condition:
     flag_true: case_failed
-  text: Dawn comes with the case unresolved.
+  text: 黎明到来时，塔下的雨水冲淡了更多痕迹，这桩命案仍没有答案。

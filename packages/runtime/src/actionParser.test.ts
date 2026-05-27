@@ -108,4 +108,34 @@ describe("parseAction", () => {
       rawText: "我要突破"
     });
   });
+
+  it("parses group inquiries", () => {
+    expect(parseAction("询问众人关于遗嘱的事", {
+      visibleCharacterIds: ["butler", "elaine"]
+    })).toMatchObject({
+      type: "group_talk",
+      topic: "遗嘱的事"
+    });
+  });
+
+  it("uses last interlocutor when target is omitted", () => {
+    expect(parseAction("继续问他昨晚在哪里", {
+      lastInterlocutorId: "butler",
+      visibleCharacterIds: ["butler"]
+    })).toMatchObject({
+      type: "talk",
+      characterId: "butler",
+      targetId: "butler"
+    });
+  });
+
+  it("treats a visible object alias as inspect", () => {
+    expect(parseAction("信件", {
+      visibleObjectIds: ["letter"],
+      aliases: [{ id: "letter", names: ["信件", "半湿的信件"] }]
+    })).toMatchObject({
+      type: "inspect",
+      targetId: "letter"
+    });
+  });
 });

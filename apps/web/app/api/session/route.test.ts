@@ -4,24 +4,28 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const originalDbPath = process.env.AIGAME_DB_PATH;
+const originalSessionRoot = process.env.AIGAME_SESSION_ROOT;
 
 describe("POST /api/session", () => {
   afterEach(() => {
-    if (originalDbPath === undefined) {
-      delete process.env.AIGAME_DB_PATH;
+    if (originalSessionRoot === undefined) {
+      delete process.env.AIGAME_SESSION_ROOT;
     } else {
-      process.env.AIGAME_DB_PATH = originalDbPath;
+      process.env.AIGAME_SESSION_ROOT = originalSessionRoot;
     }
     vi.resetModules();
   });
 
-  it("returns profile metadata, pack entities, and generic state", async () => {
+  it("creates a selected pack session and returns generic state", async () => {
     vi.resetModules();
-    process.env.AIGAME_DB_PATH = join(mkdtempSync(join(tmpdir(), `session-route-${randomUUID()}-`)), "session.db");
+    process.env.AIGAME_SESSION_ROOT = mkdtempSync(join(tmpdir(), `session-route-${randomUUID()}-`));
 
     const { POST } = await import("./route");
-    const response = await POST();
+    const response = await POST(new Request("http://test.local/api/session", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ packId: "rain-tower" })
+    }));
     const body = await response.json();
 
     expect(body.packId).toBe("rain-tower");

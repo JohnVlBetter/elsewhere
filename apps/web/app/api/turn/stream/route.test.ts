@@ -5,24 +5,28 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const originalEnv = {
-  AIGAME_DB_PATH: process.env.AIGAME_DB_PATH,
+  AIGAME_SESSION_ROOT: process.env.AIGAME_SESSION_ROOT,
   AIGAME_MODEL_PROVIDER: process.env.AIGAME_MODEL_PROVIDER
 };
 
 describe("POST /api/turn/stream", () => {
   afterEach(() => {
-    restoreEnv("AIGAME_DB_PATH", originalEnv.AIGAME_DB_PATH);
+    restoreEnv("AIGAME_SESSION_ROOT", originalEnv.AIGAME_SESSION_ROOT);
     restoreEnv("AIGAME_MODEL_PROVIDER", originalEnv.AIGAME_MODEL_PROVIDER);
     vi.resetModules();
   });
 
   it("streams progress status events before the final turn result", async () => {
     vi.resetModules();
-    process.env.AIGAME_DB_PATH = join(mkdtempSync(join(tmpdir(), `stream-route-${randomUUID()}-`)), "session.db");
+    process.env.AIGAME_SESSION_ROOT = mkdtempSync(join(tmpdir(), `stream-route-${randomUUID()}-`));
     process.env.AIGAME_MODEL_PROVIDER = "fake";
 
     const { POST: createSession } = await import("../../session/route");
-    const sessionResponse = await createSession();
+    const sessionResponse = await createSession(new Request("http://test.local/api/session", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ packId: "rain-tower" })
+    }));
     const sessionBody = await sessionResponse.json() as { sessionId: string };
 
     const { POST } = await import("./route");
@@ -37,10 +41,10 @@ describe("POST /api/turn/stream", () => {
 
     expect(response.headers.get("content-type")).toContain("text/event-stream");
     expect(text).toContain("event: status");
-    expect(text).toContain("\"message\":\"行动已接收，正在整理上下文...\"");
-    expect(text).toContain("\"message\":\"正在调用模型...\"");
+    expect(text).toContain("\"message\":\"行动已记录，正在思索...\"");
+    expect(text).not.toContain("调用模型");
     expect(text).toContain("event: result");
-    expect(text).toContain("\"outputText\":\"现场暂时没有新的变化。\"");
+    expect(text).toContain("\"timelineEvents\"");
   });
 });
 

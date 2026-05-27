@@ -1,7 +1,6 @@
-import { loadWorldPack } from "@aigame/pack";
 import { runTurn } from "@aigame/runtime";
-import { ActionSchema } from "@aigame/shared";
 import { createRuntimeModelConfig } from "./modelProvider";
+import { loadPackById } from "./packRegistry";
 import { sessionStore } from "./sessionStore";
 
 export interface TurnRequestBody {
@@ -48,14 +47,14 @@ async function runStoredTurnUnlocked(
   signal?: AbortSignal
 ) {
   throwIfAborted(signal);
-  const pack = loadWorldPack("packs/rain-tower");
-  const session = sessionStore.getSession(body.sessionId);
+  const session = await sessionStore.getSession(body.sessionId);
   if (!session) {
     throw new TurnRequestError("Session not found", 404);
   }
+  const pack = loadPackById(session.packId);
 
   const runtimeModel = createRuntimeModelConfig();
-  onStatus?.("正在调用模型...");
+  onStatus?.("思索中...");
   const result = await runTurn({
     pack,
     state: session.state,
@@ -66,18 +65,9 @@ async function runStoredTurnUnlocked(
   });
   throwIfAborted(signal);
 
-  onStatus?.("正在写入案卷...");
-  sessionStore.recordTurn({
-    sessionId: body.sessionId,
-    state: result.state,
-    turnNo: result.state.turn,
-    actor: "player",
-    inputText: body.inputText,
-    action: ActionSchema.parse(result.trace.action),
-    outputText: result.outputText,
-    patches: result.acceptedPatches,
-    trace: result.trace
-  });
+  onStatus?.("已记录...");
+  await sessionStore.updateSessionState(body.sessionId, result.state);
+  await sessionStore.appendTimelineEvents(body.sessionId, result.timelineEvents);
 
   return result;
 }
