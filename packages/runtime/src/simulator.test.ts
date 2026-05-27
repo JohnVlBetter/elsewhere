@@ -21,7 +21,7 @@ const pack: WorldPack = {
       }
     ]
   },
-  locations: [{ id: "outer_cave", name: "Outer Cave", description: "Cold stone.", exits: [], visibleObjects: ["stone_omen"] }],
+  locations: [{ id: "outer_cave", name: "Outer Cave", description: "Cold stone.", exits: [], visibleObjects: ["stone_omen"], visibleCharacters: [] }],
   characters: [{ id: "mentor_echo", name: "Mentor Echo", publicDescription: "A faint voice.", privateFacts: [], knows: [], forbiddenDisclosures: [], topics: [] }],
   facts: [{ id: "stone_omen", kind: "fact", name: "Stone Omen", description: "The wall hums.", discoverableWhen: { location_is: "outer_cave" }, tags: [] }],
   items: [],

@@ -37,7 +37,7 @@ const pack: WorldPack = {
       }
     ]
   },
-  locations: [{ id: "foyer", name: "Foyer", description: "Entry.", exits: [], visibleObjects: [] }],
+  locations: [{ id: "foyer", name: "Foyer", description: "Entry.", exits: [], visibleObjects: [], visibleCharacters: [] }],
   characters: [{ id: "butler", name: "Butler", publicDescription: "Still.", privateFacts: [], knows: [], forbiddenDisclosures: [], topics: [] }],
   facts: [
     { id: "broken_watch", kind: "fact", name: "Broken Watch", description: "Stopped.", tags: [] },

@@ -30,7 +30,7 @@ function basePack(): WorldPack {
         }
       ]
     },
-    locations: [{ id: "foyer", name: "Foyer", description: "Entry.", exits: [], visibleObjects: ["broken_watch"] }],
+    locations: [{ id: "foyer", name: "Foyer", description: "Entry.", exits: [], visibleObjects: ["broken_watch"], visibleCharacters: ["butler"] }],
     characters: [
       {
         id: "butler",

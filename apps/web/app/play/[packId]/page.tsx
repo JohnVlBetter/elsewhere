@@ -1,5 +1,6 @@
 import { GameShell } from "../../../src/components/GameShell";
 
-export default function PlayPage({ params }: { params: { packId: string } }) {
-  return <GameShell packId={params.packId} />;
+export default async function PlayPage({ params }: { params: Promise<{ packId: string }> }) {
+  const { packId } = await params;
+  return <GameShell packId={packId} />;
 }

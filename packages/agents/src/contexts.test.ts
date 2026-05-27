@@ -7,7 +7,7 @@ const pack: WorldPack = {
   worldText: "A quiet cave before a breakthrough.",
   profile: { id: "cultivation", labels: { facts: "玄机" }, quickActions: [], actions: {} },
   rules: { allowedPatchTypes: ["reveal_fact"], triggers: [] },
-  locations: [{ id: "outer_cave", name: "Outer Cave", description: "Cold stone.", exits: [], visibleObjects: ["stone_omen"] }],
+  locations: [{ id: "outer_cave", name: "Outer Cave", description: "Cold stone.", exits: [], visibleObjects: ["stone_omen"], visibleCharacters: ["mentor_echo"] }],
   characters: [
     { id: "mentor_echo", name: "Mentor Echo", publicDescription: "A faint voice.", privateFacts: ["private mentor secret"], knows: ["stone_omen"], forbiddenDisclosures: ["private mentor secret"], topics: [] },
     { id: "rival", name: "Rival", publicDescription: "Watching from afar.", privateFacts: ["rival secret"], knows: [], forbiddenDisclosures: [], topics: [] }
