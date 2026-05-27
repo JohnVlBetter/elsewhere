@@ -1,15 +1,17 @@
 import { auditOutput, buildCharacterContext, buildNarratorContext, buildSystemPrompt, FakeModelProvider } from "@aigame/agents";
 import type { ModelProvider } from "@aigame/agents";
 import { PatchSchema } from "@aigame/shared";
-import type { GameAction, GamePatch, SessionState, TurnMessage, WorldPack } from "@aigame/shared";
+import type { GameAction, GamePatch, SessionState, TimelineEvent, TurnMessage, WorldPack } from "@aigame/shared";
 import { applyAcceptedPatch, deriveTriggerPatches, evaluateCondition, judgeEnding, validatePatch } from "@aigame/rules";
 import { parseAction } from "./actionParser";
 import type { ActionLexicon } from "./actionParser";
+import { buildTimelineEvents } from "./timeline";
 
 export interface TurnResult {
   action: GameAction;
   outputText: string;
   messages: TurnMessage[];
+  timelineEvents: TimelineEvent[];
   state: SessionState;
   acceptedPatches: GamePatch[];
   rejectedPatches: Array<{ patch: GamePatch; reason: string }>;
@@ -27,6 +29,7 @@ export async function runTurn(input: {
 }): Promise<TurnResult> {
   const model = input.model ?? new FakeModelProvider();
   const modelName = input.modelName ?? "fake";
+  const timestamp = new Date().toISOString();
   const action = resolveStatefulAction(parseAction(input.inputText, buildParserLexicon(input.pack, input.state)), input.pack, input.state);
   const precheck = precheckAction(action, input.pack, input.state);
   if (!precheck.ok) {
@@ -35,6 +38,7 @@ export async function runTurn(input: {
       action,
       outputText: messagesToText(input.pack, messages),
       messages,
+      timelineEvents: buildTimelineEvents({ command: input.inputText, timestamp, messages, patches: [], pack: input.pack }),
       state: { ...input.state, turn: input.state.turn + 1 },
       acceptedPatches: [],
       rejectedPatches: [],
@@ -83,6 +87,7 @@ export async function runTurn(input: {
       action,
       outputText: messagesToText(input.pack, auditedMessages),
       messages: auditedMessages,
+      timelineEvents: buildTimelineEvents({ command: input.inputText, timestamp, messages: auditedMessages, patches: [], pack: input.pack }),
       state: { ...input.state, turn: input.state.turn + 1 },
       acceptedPatches: [],
       rejectedPatches: [
@@ -107,6 +112,7 @@ export async function runTurn(input: {
     action,
     outputText: messagesToText(input.pack, messages),
     messages,
+    timelineEvents: buildTimelineEvents({ command: input.inputText, timestamp, messages, patches: acceptedPatches, pack: input.pack }),
     state: nextState,
     acceptedPatches,
     rejectedPatches,

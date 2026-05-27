@@ -101,6 +101,7 @@ describe("runTurn", () => {
     expect(result.state.knownFacts).toEqual(["broken_watch"]);
     expect(result.state.turn).toBe(1);
     expect(result.acceptedPatches).toEqual([{ type: "reveal_fact", factId: "broken_watch", reason: "Inspected broken_watch." }]);
+    expect(result.timelineEvents.map((event) => event.kind)).toEqual(["player_action", "evidence"]);
   });
 
   it("keeps canonical item facts stable when inspecting an item that reveals a fact", async () => {
