@@ -12,7 +12,10 @@ const pack: WorldPack = {
     { id: "mentor_echo", name: "Mentor Echo", publicDescription: "A faint voice.", privateFacts: ["private mentor secret"], knows: ["stone_omen"], forbiddenDisclosures: ["private mentor secret"], topics: [] },
     { id: "rival", name: "Rival", publicDescription: "Watching from afar.", privateFacts: ["rival secret"], knows: [], forbiddenDisclosures: [], topics: [] }
   ],
-  facts: [{ id: "stone_omen", kind: "fact", name: "石壁灵纹", description: "The wall hums.", discoverableWhen: { location_is: "outer_cave" }, tags: [] }],
+  facts: [
+    { id: "stone_omen", kind: "fact", name: "石壁灵纹", description: "The wall hums.", discoverableWhen: { location_is: "outer_cave" }, tags: [] },
+    { id: "hidden_truth", kind: "fact", name: "Hidden Truth", description: "The culprit is named in private notes.", discoverableWhen: { location_is: "outer_cave" }, tags: [] }
+  ],
   items: [],
   resources: [{ id: "spiritual_power", name: "Spiritual power", initial: 5, min: 0, max: 10 }],
   relationships: [{ characterId: "mentor_echo", name: "Mentor trust", initial: 3, min: -5, max: 5 }],
@@ -43,6 +46,13 @@ describe("agent contexts", () => {
     expect(context.resources).toEqual({ spiritual_power: 5 });
     expect(JSON.stringify(context)).not.toContain("private mentor secret");
     expect(JSON.stringify(context)).not.toContain("rival secret");
+  });
+
+  it("does not leak hidden canonical facts into narrator context", () => {
+    const context = buildNarratorContext(pack, state, { actionText: "look" });
+
+    expect(JSON.stringify(context)).not.toContain("hidden_truth");
+    expect(JSON.stringify(context)).not.toContain("The culprit is named in private notes.");
   });
 
   it("scopes character context to one character", () => {

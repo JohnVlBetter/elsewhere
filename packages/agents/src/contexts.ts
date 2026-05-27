@@ -4,8 +4,21 @@ export function buildNarratorContext(pack: WorldPack, state: SessionState, input
   const location = pack.locations.find((candidate) => candidate.id === state.currentLocationId);
   const knownFacts = pack.facts.filter((fact) => state.knownFacts.includes(fact.id));
   const visibleObjects = location?.visibleObjects ?? [];
+  const visibleCharacterIds = location?.visibleCharacters ?? [];
+  const visibleCharacters = pack.characters
+    .filter((character) => visibleCharacterIds.includes(character.id))
+    .map((character) => ({
+      id: character.id,
+      name: character.name,
+      aliases: character.aliases,
+      publicDescription: character.publicDescription,
+      topics: character.topics.map((topic) => ({
+        id: topic.id,
+        prompt: topic.prompt,
+        aliases: topic.aliases
+      }))
+    }));
   const visibleItems = pack.items.filter((item) => visibleObjects.includes(item.id));
-  const visibleFacts = pack.facts.filter((fact) => visibleObjects.includes(fact.id));
   const inventoryItems = pack.items.filter((item) => state.inventory.includes(item.id));
 
   return {
@@ -13,16 +26,15 @@ export function buildNarratorContext(pack: WorldPack, state: SessionState, input
     actionText: input.actionText,
     location,
     currentState: state,
+    visibleCharacters,
     visibleObjects,
     visibleItems,
-    visibleFacts,
+    visibleFacts: knownFacts,
     inventoryItems,
     knownFacts,
     resources: state.resources,
     relationships: state.relationships,
     objectiveStages: state.objectiveStages,
-    canonicalItems: pack.items,
-    canonicalFacts: pack.facts,
     turn: state.turn,
     worldTone: pack.worldText
   };
