@@ -127,4 +127,41 @@ describe("validateWorldPack", () => {
     expect(result.errors).toContain("Trigger bad_trigger references missing profile action: missing_intent");
     expect(result.errors).toContain("Trigger bad_trigger patch set_objective_stage references missing objective stage: solve_murder.missing_stage");
   });
+
+  it("reports trigger patch types that are not allowed by pack rules", () => {
+    const pack = basePack();
+    pack.rules.allowedPatchTypes = ["reveal_fact"];
+
+    const result = validateWorldPack(pack);
+
+    expect(result.errors).toContain("Trigger confront_true_culprit patch type is not allowed: set_flag");
+  });
+
+  it("reports trigger fields that cannot match the declared action kind", () => {
+    const pack = basePack();
+    pack.rules.triggers = [
+      {
+        id: "bad_move_trigger",
+        on: { action: "move", targetId: "foyer" },
+        patches: []
+      }
+    ];
+
+    const result = validateWorldPack(pack);
+
+    expect(result.errors).toContain("Trigger bad_move_trigger field targetId is not valid for action move");
+  });
+
+  it("reports duplicate canonical ids", () => {
+    const pack = basePack();
+    pack.facts.push({ ...pack.facts[0]! });
+    pack.resources.push({ ...pack.resources[0]! });
+    pack.objectives.push({ ...pack.objectives[0]! });
+
+    const result = validateWorldPack(pack);
+
+    expect(result.errors).toContain("Duplicate fact id: broken_watch");
+    expect(result.errors).toContain("Duplicate resource id: pressure");
+    expect(result.errors).toContain("Duplicate objective id: solve_murder");
+  });
 });

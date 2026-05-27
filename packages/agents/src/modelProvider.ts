@@ -17,5 +17,6 @@ export interface ModelProvider {
     schema: JsonSchema;
     temperature?: number;
     maxTokens?: number;
+    signal?: AbortSignal;
   }): Promise<T>;
 }

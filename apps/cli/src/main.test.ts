@@ -113,11 +113,20 @@ describe("CLI", () => {
   });
 
   it("starts a file-backed play session with the default CLI database", async () => {
+    const original = process.env.AIGAME_CLI_DB_PATH;
+    process.env.AIGAME_CLI_DB_PATH = join(mkdtempSync(join(tmpdir(), "aigame-cli-default-")), "cli.db");
+
     const result = await runCli(["play", "packs/rain-tower", "look"]);
 
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain("Session:");
     expect(result.stdout).toContain("Turn: 1");
+
+    if (original === undefined) {
+      delete process.env.AIGAME_CLI_DB_PATH;
+    } else {
+      process.env.AIGAME_CLI_DB_PATH = original;
+    }
   });
 
   it("keeps the default CLI database under the ignored temp directory", () => {

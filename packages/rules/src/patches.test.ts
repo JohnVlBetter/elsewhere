@@ -83,6 +83,17 @@ describe("patch validation", () => {
     });
   });
 
+  it("rejects relationship adjustments outside declared bounds", () => {
+    expect(validatePatch({ type: "adjust_relationship", characterId: "mentor_echo", delta: 6, reason: "Too trusted." }, pack, state)).toEqual({
+      ok: false,
+      reason: "Relationship out of bounds: mentor_echo=6"
+    });
+    expect(validatePatch({ type: "adjust_relationship", characterId: "mentor_echo", delta: -6, reason: "Too hostile." }, pack, state)).toEqual({
+      ok: false,
+      reason: "Relationship out of bounds: mentor_echo=-6"
+    });
+  });
+
   it("rejects unknown and out-of-bounds resources", () => {
     expect(validatePatch({ type: "adjust_resource", resourceId: "invented", delta: 1, reason: "AI guessed." }, pack, state)).toEqual({
       ok: false,

@@ -6,18 +6,18 @@ import { describe, expect, it } from "vitest";
 
 const require = createRequire(import.meta.url);
 const routes = require("../../../scripts/next-env-routes.cjs") as {
-  restoreDevRoutesImport(filePath: string): void;
+  stripGeneratedRoutesImport(filePath: string): void;
 };
 
 describe("Next route type import helper", () => {
-  it("restores the dev route types import after a production build", () => {
+  it("removes generated route type imports after a production build", () => {
     const filePath = join(mkdtempSync(join(tmpdir(), "next-env-")), "next-env.d.ts");
-    writeFileSync(filePath, '/// <reference types="next" />\nimport "./.next/types/routes.d.ts";\n');
+    writeFileSync(filePath, '/// <reference types="next" />\nimport "./.next/types/routes.d.ts";\nimport "./.next/dev/types/routes.d.ts";\n');
 
-    routes.restoreDevRoutesImport(filePath);
+    routes.stripGeneratedRoutesImport(filePath);
 
     expect(readFileSync(filePath, "utf8")).toBe(
-      '/// <reference types="next" />\r\nimport "./.next/dev/types/routes.d.ts";\r\n'
+      '/// <reference types="next" />\r\n'
     );
   });
 });

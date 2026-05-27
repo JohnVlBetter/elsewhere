@@ -46,8 +46,13 @@ export function validatePatch(patch: GamePatch, pack: WorldPack, state: SessionS
     }
   }
 
-  if (patch.type === "adjust_relationship" && !pack.characters.some((character) => character.id === patch.characterId)) {
-    return { ok: false, reason: `Unknown character: ${patch.characterId}` };
+  if (patch.type === "adjust_relationship") {
+    if (!pack.characters.some((character) => character.id === patch.characterId)) {
+      return { ok: false, reason: `Unknown character: ${patch.characterId}` };
+    }
+    const currentValue = state.relationships[patch.characterId] ?? 0;
+    const validation = validateRelationshipValue(patch.characterId, currentValue + patch.delta, pack);
+    if (!validation.ok) return validation;
   }
 
   if (patch.type === "set_objective_stage") {
@@ -131,6 +136,17 @@ function validateResourceValue(resourceId: string, value: number, pack: WorldPac
   }
   if (value < resource.min || value > resource.max) {
     return { ok: false, reason: `Resource out of bounds: ${resourceId}=${value}` };
+  }
+  return { ok: true };
+}
+
+function validateRelationshipValue(characterId: string, value: number, pack: WorldPack): PatchValidation {
+  const relationship = pack.relationships.find((candidate) => candidate.characterId === characterId);
+  if (!relationship) {
+    return { ok: false, reason: `Unknown relationship: ${characterId}` };
+  }
+  if (value < relationship.min || value > relationship.max) {
+    return { ok: false, reason: `Relationship out of bounds: ${characterId}=${value}` };
   }
   return { ok: true };
 }

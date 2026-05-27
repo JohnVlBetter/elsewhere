@@ -51,4 +51,20 @@ describe("pack archive builder", () => {
     expect(archive.files["profile.yaml"]).toContain("id: romance");
     expect(archive.files["prompts/narrator.md"]).toBeUndefined();
   });
+
+  it("does not archive arbitrary local files from a pack directory", () => {
+    const root = mkdtempSync(join(tmpdir(), "pack-"));
+    const outputPath = join(mkdtempSync(join(tmpdir(), "aipack-")), "campus-lunch.aipack");
+    writeMiniPack(root);
+    writeFileSync(join(root, ".env.local"), "SECRET=do-not-package");
+    writeFileSync(join(root, "notes.txt"), "private author notes");
+
+    buildPackArchive(root, outputPath);
+    const archive = JSON.parse(readFileSync(outputPath, "utf8")) as {
+      files: Record<string, string>;
+    };
+
+    expect(archive.files[".env.local"]).toBeUndefined();
+    expect(archive.files["notes.txt"]).toBeUndefined();
+  });
 });

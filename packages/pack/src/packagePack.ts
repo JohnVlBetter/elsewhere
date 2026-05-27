@@ -1,4 +1,4 @@
-import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { lstatSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, sep } from "node:path";
 import type { Manifest } from "@aigame/shared";
 import { loadWorldPack } from "./loadPack";
@@ -18,6 +18,21 @@ export interface PackArchiveResult {
   validation: ValidationResult;
   fileCount: number;
 }
+
+const ROOT_ARCHIVE_FILES = new Set([
+  "manifest.yaml",
+  "world.md",
+  "profile.yaml",
+  "rules.yaml",
+  "locations.yaml",
+  "characters.yaml",
+  "facts.yaml",
+  "items.yaml",
+  "resources.yaml",
+  "relationships.yaml",
+  "objectives.yaml",
+  "endings.yaml"
+]);
 
 export function buildPackArchive(packRoot: string, outputPath: string): PackArchiveResult {
   const pack = loadWorldPack(packRoot);
@@ -51,7 +66,7 @@ function readPackFiles(packRoot: string): Record<string, string> {
       .sort()
       .flatMap((filePath) => {
         const archivePath = relative(packRoot, filePath).split(sep).join("/");
-        if (archivePath.startsWith("prompts/")) return [];
+        if (!isAllowedArchivePath(archivePath)) return [];
         return [[archivePath, readFileSync(filePath, "utf8")]];
       })
   );
@@ -60,9 +75,16 @@ function readPackFiles(packRoot: string): Record<string, string> {
 function listFiles(root: string): string[] {
   return readdirSync(root, { withFileTypes: true }).flatMap((entry) => {
     const path = join(root, entry.name);
+    const stat = lstatSync(path);
+    if (stat.isSymbolicLink()) return [];
     if (entry.isDirectory()) {
       return listFiles(path);
     }
-    return statSync(path).isFile() ? [path] : [];
+    return stat.isFile() ? [path] : [];
   });
+}
+
+function isAllowedArchivePath(archivePath: string): boolean {
+  if (ROOT_ARCHIVE_FILES.has(archivePath)) return true;
+  return archivePath.startsWith("scripts/") && /\.(ya?ml)$/i.test(archivePath);
 }

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { formatTurnFailure, parseTurnRequestBody, runStoredTurn } from "../../../../src/server/turnService";
+import { formatTurnFailure, parseTurnRequestBody, runStoredTurn, TurnRequestError } from "../../../../src/server/turnService";
 
 export async function POST(request: NextRequest) {
   let body: ReturnType<typeof parseTurnRequestBody>;
   try {
-    body = parseTurnRequestBody(await request.json());
+    body = parseTurnRequestBody(await readJsonBody(request));
   } catch (error) {
     const failure = formatTurnFailure(error);
     return NextResponse.json({ error: failure.error }, { status: failure.status });
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
 
       try {
         send("status", { message: "行动已接收，正在整理上下文..." });
-        const result = await runStoredTurn(body, (message) => send("status", { message }));
+        const result = await runStoredTurn(body, (message) => send("status", { message }), request.signal);
         send("result", result);
       } catch (error) {
         const failure = formatTurnFailure(error);
@@ -37,4 +37,12 @@ export async function POST(request: NextRequest) {
       connection: "keep-alive"
     }
   });
+}
+
+async function readJsonBody(request: NextRequest): Promise<unknown> {
+  try {
+    return await request.json();
+  } catch {
+    throw new TurnRequestError("Invalid turn request", 400);
+  }
 }

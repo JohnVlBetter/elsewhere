@@ -49,13 +49,22 @@ const pack: WorldPack = {
     { id: "study", name: "Study", description: "Books.", exits: [], visibleObjects: ["tower_bell_record"] }
   ],
   characters: [
-    { id: "butler", name: "Butler", publicDescription: "Precise.", privateFacts: ["He reset the bell."], knows: [], forbiddenDisclosures: ["He reset the bell."], topics: [] },
+    {
+      id: "butler",
+      name: "Butler",
+      publicDescription: "Precise.",
+      privateFacts: ["He reset the bell."],
+      knows: [],
+      forbiddenDisclosures: ["He reset the bell.", "LEAK"],
+      topics: [{ id: "alibi", prompt: "Ask about the alibi.", unlockCondition: { knows_fact: "broken_watch" }, revealsFactId: "muddy_bootprint" }]
+    },
     { id: "heiress", name: "Heiress", publicDescription: "Tense.", privateFacts: [], knows: [], forbiddenDisclosures: [], topics: [] }
   ],
   facts: [
     { id: "broken_watch", kind: "fact", name: "Broken Watch", description: "The silver pocket watch is cracked and stopped at 8:47.", discoverableWhen: { location_is: "foyer" }, tags: [] },
     { id: "muddy_bootprint", kind: "fact", name: "Muddy Bootprint", description: "A narrow print.", discoverableWhen: { location_is: "foyer" }, tags: [] },
-    { id: "tower_bell_record", kind: "fact", name: "Bell Record", description: "The bell was reset.", discoverableWhen: { location_is: "study" }, tags: [] }
+    { id: "tower_bell_record", kind: "fact", name: "Bell Record", description: "The bell was reset.", discoverableWhen: { location_is: "study" }, tags: [] },
+    { id: "hidden_letter", kind: "fact", name: "Hidden Letter", description: "A locked-away letter.", discoverableWhen: { location_is: "foyer" }, tags: [] }
   ],
   items: [{ id: "silver_watch", name: "Silver Watch", description: "Stopped at 8:47.", revealsFactId: "broken_watch" }],
   resources: [],
@@ -118,6 +127,41 @@ describe("runTurn", () => {
     });
   });
 
+  it("does not reveal direct fact ids that are not visible in the current scene", async () => {
+    const result = await runTurn({
+      pack,
+      state: initialState,
+      inputText: "inspect hidden_letter",
+      model: new FakeModelProvider({
+        narration: "Nothing obvious changes.",
+        spokenBy: [],
+        proposedPatches: [],
+        privateNotes: "hidden fact probe"
+      })
+    });
+
+    expect(result.state.knownFacts).toEqual([]);
+    expect(result.acceptedPatches).toEqual([]);
+  });
+
+  it("rolls back accepted patches when the visible output fails audit", async () => {
+    const result = await runTurn({
+      pack,
+      state: initialState,
+      inputText: "look",
+      model: new FakeModelProvider({
+        narration: "LEAK",
+        spokenBy: [],
+        proposedPatches: [{ type: "set_flag", flag: "audit_probe", value: true, reason: "Unsafe output." }],
+        privateNotes: "unsafe"
+      })
+    });
+
+    expect(result.outputText).toBe("这一刻的反馈不够清晰，请换一种行动说法。");
+    expect(result.state).toEqual({ ...initialState, turn: 1 });
+    expect(result.acceptedPatches).toEqual([]);
+  });
+
   it("routes talk actions to an on-demand character actor with scoped context", async () => {
     const requests: Array<Parameters<ModelProvider["generateStructured"]>[0]> = [];
     const model: ModelProvider = {
@@ -151,6 +195,45 @@ describe("runTurn", () => {
     });
     expect(result.trace.contextIds).toEqual(["location:foyer", "character:butler"]);
     expect(result.trace.agentRole).toBe("character");
+  });
+
+  it("reveals a topic fact when a valid talk topic declares revealsFactId", async () => {
+    const result = await runTurn({
+      pack,
+      state: { ...initialState, knownFacts: ["broken_watch"] },
+      inputText: "talk butler about alibi",
+      model: new FakeModelProvider({
+        narration: "",
+        spokenBy: [{ characterId: "butler", text: "Look at the mud near the foyer." }],
+        proposedPatches: [],
+        privateNotes: "topic reveal"
+      })
+    });
+
+    expect(result.state.knownFacts).toEqual(["broken_watch", "muddy_bootprint"]);
+    expect(result.acceptedPatches).toContainEqual({ type: "reveal_fact", factId: "muddy_bootprint", reason: "Topic butler.alibi revealed muddy_bootprint." });
+  });
+
+  it("drops character speech that does not belong to the scoped talk character", async () => {
+    const result = await runTurn({
+      pack,
+      state: { ...initialState, knownFacts: ["broken_watch"] },
+      inputText: "talk butler about alibi",
+      model: new FakeModelProvider({
+        narration: "",
+        spokenBy: [
+          { characterId: "butler", text: "I will answer only for myself." },
+          { characterId: "heiress", text: "I should not speak in this turn." },
+          { characterId: "ghost", text: "Unknown speakers should not render." }
+        ],
+        proposedPatches: [],
+        privateNotes: "cross speaker"
+      })
+    });
+
+    expect(result.outputText).toContain("Butler：I will answer only for myself.");
+    expect(result.outputText).not.toContain("Heiress");
+    expect(result.outputText).not.toContain("ghost");
   });
 
   it("derives confrontation outcomes from pack triggers", async () => {

@@ -9,7 +9,7 @@
   aliases: [study, 书房]
   description: 哈尔登爵士的私人房间，四周摆着账本，书桌上了锁。
   exits: [foyer]
-  visibleObjects: [torn_letter]
+  visibleObjects: [torn_letter, tower_bell_record]
 - id: greenhouse
   name: 温室
   aliases: [greenhouse, 温室]

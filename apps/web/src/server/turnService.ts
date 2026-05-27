@@ -9,6 +9,8 @@ export interface TurnRequestBody {
   inputText: string;
 }
 
+const sessionTurnLocks = new Map<string, Promise<void>>();
+
 export class TurnRequestError extends Error {
   constructor(message: string, readonly status: number) {
     super(message);
@@ -20,17 +22,32 @@ export function parseTurnRequestBody(value: unknown): TurnRequestBody {
   if (!isRecord(value) || typeof value.sessionId !== "string" || typeof value.inputText !== "string") {
     throw new TurnRequestError("Invalid turn request", 400);
   }
+  const sessionId = value.sessionId.trim();
+  const inputText = value.inputText.trim();
+  if (!sessionId || !inputText) {
+    throw new TurnRequestError("Invalid turn request", 400);
+  }
 
   return {
-    sessionId: value.sessionId,
-    inputText: value.inputText
+    sessionId,
+    inputText
   };
 }
 
 export async function runStoredTurn(
   body: TurnRequestBody,
-  onStatus?: (message: string) => void
+  onStatus?: (message: string) => void,
+  signal?: AbortSignal
 ) {
+  return withSessionTurnLock(body.sessionId, () => runStoredTurnUnlocked(body, onStatus, signal));
+}
+
+async function runStoredTurnUnlocked(
+  body: TurnRequestBody,
+  onStatus?: (message: string) => void,
+  signal?: AbortSignal
+) {
+  throwIfAborted(signal);
   const pack = loadWorldPack("packs/rain-tower");
   const session = sessionStore.getSession(body.sessionId);
   if (!session) {
@@ -44,13 +61,15 @@ export async function runStoredTurn(
     state: session.state,
     inputText: body.inputText,
     model: runtimeModel.model,
-    modelName: runtimeModel.modelName
+    modelName: runtimeModel.modelName,
+    signal
   });
+  throwIfAborted(signal);
 
   onStatus?.("正在写入案卷...");
-  sessionStore.updateSessionState(body.sessionId, result.state);
-  sessionStore.appendEvent({
+  sessionStore.recordTurn({
     sessionId: body.sessionId,
+    state: result.state,
     turnNo: result.state.turn,
     actor: "player",
     inputText: body.inputText,
@@ -87,6 +106,32 @@ export function formatTurnFailure(error: unknown): { status: number; error: stri
     status: 500,
     error: "行动处理失败，刚才的行动没有生效；请重试。"
   };
+}
+
+async function withSessionTurnLock<T>(sessionId: string, operation: () => Promise<T>): Promise<T> {
+  const previous = sessionTurnLocks.get(sessionId) ?? Promise.resolve();
+  let releaseCurrent!: () => void;
+  const current = new Promise<void>((resolve) => {
+    releaseCurrent = resolve;
+  });
+  const tail = previous.catch(() => undefined).then(() => current);
+  sessionTurnLocks.set(sessionId, tail);
+
+  await previous.catch(() => undefined);
+  try {
+    return await operation();
+  } finally {
+    releaseCurrent();
+    if (sessionTurnLocks.get(sessionId) === tail) {
+      sessionTurnLocks.delete(sessionId);
+    }
+  }
+}
+
+function throwIfAborted(signal: AbortSignal | undefined): void {
+  if (signal?.aborted) {
+    throw new TurnRequestError("Turn request was cancelled", 499);
+  }
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

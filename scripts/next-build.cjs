@@ -1,9 +1,9 @@
 const path = require("node:path");
-const { restoreDevRoutesImport } = require("./next-env-routes.cjs");
+const { stripGeneratedRoutesImport } = require("./next-env-routes.cjs");
 
 process.env.AIGAME_DB_PATH ??= ":memory:";
 process.on("exit", () => {
-  restoreDevRoutesImport(path.resolve("apps/web/next-env.d.ts"));
+  stripGeneratedRoutesImport(path.resolve("apps/web/next-env.d.ts"));
 });
 
 process.argv = [

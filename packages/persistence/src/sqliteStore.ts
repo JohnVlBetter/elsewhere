@@ -49,6 +49,32 @@ export function createSqliteStore(path: string) {
       created_at text not null
     );
   `);
+  const updateSessionStateStatement = db.prepare("update sessions set state_json = ? where id = ?");
+  const insertEventStatement = db.prepare(`
+    insert into events (id, session_id, turn_no, actor, input_text, action_json, output_text, patches_json, trace_json, created_at)
+    values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  const insertEvent = (input: Omit<StoredEvent, "id">): StoredEvent => {
+    const id = randomUUID();
+    insertEventStatement.run(
+      id,
+      input.sessionId,
+      input.turnNo,
+      input.actor,
+      input.inputText,
+      JSON.stringify(input.action),
+      input.outputText,
+      JSON.stringify(input.patches),
+      JSON.stringify(input.trace),
+      new Date().toISOString()
+    );
+    return { id, ...input };
+  };
+  const recordTurnTransaction = db.transaction((input: Omit<StoredEvent, "id"> & { state: SessionState }) => {
+    updateSessionStateStatement.run(JSON.stringify(input.state), input.sessionId);
+    const { state: _state, ...eventInput } = input;
+    return insertEvent(eventInput);
+  });
 
   return {
     createSession(input: { packId: string; initialState: SessionState }): StoredSession {
@@ -58,7 +84,7 @@ export function createSqliteStore(path: string) {
       return { id, packId: input.packId, state: input.initialState };
     },
     updateSessionState(sessionId: string, state: SessionState): void {
-      db.prepare("update sessions set state_json = ? where id = ?").run(JSON.stringify(state), sessionId);
+      updateSessionStateStatement.run(JSON.stringify(state), sessionId);
     },
     getSession(sessionId: string): StoredSession | undefined {
       const row = db.prepare("select id, pack_id as packId, state_json as stateJson from sessions where id = ?").get(sessionId) as
@@ -68,23 +94,10 @@ export function createSqliteStore(path: string) {
       return { id: row.id, packId: row.packId, state: SessionStateSchema.parse(JSON.parse(row.stateJson)) };
     },
     appendEvent(input: Omit<StoredEvent, "id">): StoredEvent {
-      const id = randomUUID();
-      db.prepare(`
-        insert into events (id, session_id, turn_no, actor, input_text, action_json, output_text, patches_json, trace_json, created_at)
-        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(
-        id,
-        input.sessionId,
-        input.turnNo,
-        input.actor,
-        input.inputText,
-        JSON.stringify(input.action),
-        input.outputText,
-        JSON.stringify(input.patches),
-        JSON.stringify(input.trace),
-        new Date().toISOString()
-      );
-      return { id, ...input };
+      return insertEvent(input);
+    },
+    recordTurn(input: Omit<StoredEvent, "id"> & { state: SessionState }): StoredEvent {
+      return recordTurnTransaction(input);
     },
     listEvents(sessionId: string): StoredEvent[] {
       const rows = db.prepare("select * from events where session_id = ? order by turn_no asc").all(sessionId) as Array<Record<string, unknown>>;

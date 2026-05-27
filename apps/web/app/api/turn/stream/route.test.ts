@@ -1,4 +1,7 @@
 import { randomUUID } from "node:crypto";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const originalEnv = {
@@ -15,7 +18,7 @@ describe("POST /api/turn/stream", () => {
 
   it("streams progress status events before the final turn result", async () => {
     vi.resetModules();
-    process.env.AIGAME_DB_PATH = `.tmp/stream-route-${randomUUID()}.db`;
+    process.env.AIGAME_DB_PATH = join(mkdtempSync(join(tmpdir(), `stream-route-${randomUUID()}-`)), "session.db");
     process.env.AIGAME_MODEL_PROVIDER = "fake";
 
     const { POST: createSession } = await import("../../session/route");

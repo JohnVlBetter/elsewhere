@@ -15,6 +15,16 @@ export function validateWorldPack(pack: WorldPack): ValidationResult {
   const profileActionIds = new Set(Object.keys(pack.profile.actions));
   const references = { locationIds, characterIds, factIds, itemIds, resourceIds, objectives: pack.objectives };
 
+  collectDuplicateIds("location", pack.locations.map((location) => location.id), errors);
+  collectDuplicateIds("character", pack.characters.map((character) => character.id), errors);
+  collectDuplicateIds("fact", pack.facts.map((fact) => fact.id), errors);
+  collectDuplicateIds("item", pack.items.map((item) => item.id), errors);
+  collectDuplicateIds("resource", pack.resources.map((resource) => resource.id), errors);
+  collectDuplicateIds("relationship", pack.relationships.map((relationship) => relationship.characterId), errors);
+  collectDuplicateIds("objective", pack.objectives.map((objective) => objective.id), errors);
+  collectDuplicateIds("ending", pack.endings.map((ending) => ending.id), errors);
+  collectDuplicateIds("trigger", pack.rules.triggers.map((trigger) => trigger.id), errors);
+
   if (pack.manifest.profileId !== pack.profile.id) {
     errors.push(`Manifest profileId ${pack.manifest.profileId} does not match profile id ${pack.profile.id}`);
   }
@@ -96,6 +106,9 @@ export function validateWorldPack(pack: WorldPack): ValidationResult {
     validateConditionReferences(`Trigger ${trigger.id} when`, trigger.when, references, errors);
     validateConditionReferences(`Trigger ${trigger.id} unless`, trigger.unless, references, errors);
     for (const patch of trigger.patches) {
+      if (!pack.rules.allowedPatchTypes.includes(patch.type)) {
+        errors.push(`Trigger ${trigger.id} patch type is not allowed: ${patch.type}`);
+      }
       validatePatchReferences(`Trigger ${trigger.id} patch ${patch.type}`, patch, references, errors);
     }
   }
@@ -217,7 +230,9 @@ function validateTriggerActionReferences(
   references: ReferenceSets,
   errors: string[]
 ): void {
-  if (on.targetId && !references.characterIds.has(on.targetId) && !references.itemIds.has(on.targetId) && !references.locationIds.has(on.targetId)) {
+  validateTriggerActionShape(triggerId, on, errors);
+
+  if (on.targetId && !references.characterIds.has(on.targetId) && !references.itemIds.has(on.targetId) && !references.locationIds.has(on.targetId) && !references.factIds.has(on.targetId)) {
     errors.push(`Trigger ${triggerId} references missing target: ${on.targetId}`);
   }
   if (on.characterId && !references.characterIds.has(on.characterId)) {
@@ -232,6 +247,41 @@ function validateTriggerActionReferences(
   for (const factId of on.factIds ?? []) {
     if (!references.factIds.has(factId)) {
       errors.push(`Trigger ${triggerId} references missing fact: ${factId}`);
+    }
+  }
+}
+
+function validateTriggerActionShape(
+  triggerId: string,
+  on: WorldPack["rules"]["triggers"][number]["on"],
+  errors: string[]
+): void {
+  const allowedFieldsByAction: Record<string, Set<string>> = {
+    look: new Set(),
+    move: new Set(["locationId"]),
+    inspect: new Set(["targetId"]),
+    talk: new Set(["characterId"]),
+    take: new Set(["itemId"]),
+    use: new Set(["itemId", "targetId"]),
+    act: new Set(["intent", "targetId", "itemId", "locationId", "factIds"]),
+    unknown: new Set()
+  };
+  const allowedFields = allowedFieldsByAction[on.action] ?? new Set<string>();
+  const presentFields = [
+    "intent",
+    "targetId",
+    "characterId",
+    "itemId",
+    "locationId",
+    "factIds"
+  ].filter((field) => {
+    const value = on[field as keyof typeof on];
+    return Array.isArray(value) ? value.length > 0 : value !== undefined;
+  });
+
+  for (const field of presentFields) {
+    if (!allowedFields.has(field)) {
+      errors.push(`Trigger ${triggerId} field ${field} is not valid for action ${on.action}`);
     }
   }
 }
@@ -274,4 +324,16 @@ function validateObjectiveStageReference(
 
 function addString(target: Set<string>, value: string | undefined): void {
   if (value) target.add(value);
+}
+
+function collectDuplicateIds(label: string, ids: string[], errors: string[]): void {
+  const seen = new Set<string>();
+  const reported = new Set<string>();
+  for (const id of ids) {
+    if (seen.has(id) && !reported.has(id)) {
+      errors.push(`Duplicate ${label} id: ${id}`);
+      reported.add(id);
+    }
+    seen.add(id);
+  }
 }

@@ -16,6 +16,7 @@ export class OpenAICompatibleProvider implements ModelProvider {
     schema: JsonSchema;
     temperature?: number;
     maxTokens?: number;
+    signal?: AbortSignal;
   }): Promise<T> {
     let lastBody: unknown;
     let lastParseError: unknown;
@@ -52,6 +53,7 @@ export class OpenAICompatibleProvider implements ModelProvider {
     schema: JsonSchema;
     temperature?: number;
     maxTokens?: number;
+    signal?: AbortSignal;
   }): Promise<{ choices?: Array<{ message?: { content?: string } }> }> {
     const response = await fetch(`${this.options.baseUrl.replace(/\/$/, "")}/chat/completions`, {
       method: "POST",
@@ -68,7 +70,8 @@ export class OpenAICompatibleProvider implements ModelProvider {
           ...request.messages
         ],
         response_format: this.buildResponseFormat(request.schema)
-      })
+      }),
+      signal: request.signal
     });
 
     if (!response.ok) {

@@ -106,9 +106,9 @@ export async function runCli(args: string[], options: RunCliOptions = {}): Promi
     }
 
     const result = await runTurn({ pack, state: session.state, inputText });
-    store.updateSessionState(session.id, result.state);
-    store.appendEvent({
+    store.recordTurn({
       sessionId: session.id,
+      state: result.state,
       turnNo: result.state.turn,
       actor: "player",
       inputText,

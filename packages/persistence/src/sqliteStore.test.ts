@@ -40,6 +40,31 @@ describe("sqlite store", () => {
     expect(store.listEvents(session.id)).toHaveLength(1);
   });
 
+  it("records a completed turn with state and event in one operation", () => {
+    const store = createSqliteStore(":memory:");
+    const session = store.createSession({
+      packId: "rain-tower",
+      initialState
+    });
+
+    const nextState: SessionState = { ...initialState, turn: 1, knownFacts: ["broken_watch"] };
+    const event = store.recordTurn({
+      sessionId: session.id,
+      state: nextState,
+      turnNo: 1,
+      actor: "player",
+      inputText: "inspect silver_watch",
+      action: { type: "inspect", targetId: "silver_watch", rawText: "inspect silver_watch" },
+      outputText: "Known fact: broken_watch",
+      patches: [{ type: "reveal_fact", factId: "broken_watch", reason: "Inspected silver_watch." }],
+      trace: { contextIds: ["location:foyer"] }
+    });
+
+    expect(event.turnNo).toBe(1);
+    expect(store.getSession(session.id)?.state.knownFacts).toEqual(["broken_watch"]);
+    expect(store.listEvents(session.id)).toHaveLength(1);
+  });
+
   it("writes to a workspace file database without deleting journal files", () => {
     const store = createSqliteStore(join(".tmp", `sqlite-store-workspace-${randomUUID()}.db`));
     const session = store.createSession({

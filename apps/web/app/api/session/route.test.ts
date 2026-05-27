@@ -1,4 +1,7 @@
 import { randomUUID } from "node:crypto";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const originalDbPath = process.env.AIGAME_DB_PATH;
@@ -15,7 +18,7 @@ describe("POST /api/session", () => {
 
   it("returns profile metadata, pack entities, and generic state", async () => {
     vi.resetModules();
-    process.env.AIGAME_DB_PATH = `.tmp/session-route-${randomUUID()}.db`;
+    process.env.AIGAME_DB_PATH = join(mkdtempSync(join(tmpdir(), `session-route-${randomUUID()}-`)), "session.db");
 
     const { POST } = await import("./route");
     const response = await POST();

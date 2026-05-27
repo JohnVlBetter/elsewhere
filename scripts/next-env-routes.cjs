@@ -2,20 +2,29 @@ const fs = require("node:fs");
 
 const PRODUCTION_ROUTES_IMPORT = 'import "./.next/types/routes.d.ts";';
 const DEV_ROUTES_IMPORT = 'import "./.next/dev/types/routes.d.ts";';
+const GENERATED_ROUTES_IMPORTS = new Set([PRODUCTION_ROUTES_IMPORT, DEV_ROUTES_IMPORT]);
 
-function restoreDevRoutesImport(filePath) {
+function stripGeneratedRoutesImport(filePath) {
   if (!fs.existsSync(filePath)) {
     return;
   }
 
   const original = fs.readFileSync(filePath, "utf8");
-  const restored = original.replace(PRODUCTION_ROUTES_IMPORT, DEV_ROUTES_IMPORT).replace(/\r?\n/g, "\r\n");
+  const stripped = original
+    .split(/\r?\n/)
+    .filter((line) => !GENERATED_ROUTES_IMPORTS.has(line.trim()))
+    .join("\r\n")
+    .replace(/(?:\r\n)*$/, "\r\n");
 
-  if (restored !== original) {
-    fs.writeFileSync(filePath, restored, "utf8");
+  if (stripped !== original) {
+    fs.writeFileSync(filePath, stripped, "utf8");
   }
 }
 
+if (require.main === module) {
+  stripGeneratedRoutesImport(process.argv[2] ?? "apps/web/next-env.d.ts");
+}
+
 module.exports = {
-  restoreDevRoutesImport
+  stripGeneratedRoutesImport
 };

@@ -8,10 +8,14 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "tsc --noEmit -p tsconfig.base.json",
+    "build": "npm run typecheck",
     "test": "node --require ./scripts/vite-windows-net-use-shim.cjs ./node_modules/vitest/vitest.mjs run",
     "test:watch": "node --require ./scripts/vite-windows-net-use-shim.cjs ./node_modules/vitest/vitest.mjs",
-    "typecheck": "tsc --noEmit -p tsconfig.base.json --pretty false",
+    "test:coverage": "node scripts/v8-coverage-gate.cjs",
+    "typecheck": "node scripts/next-env-routes.cjs apps/web/next-env.d.ts && tsc --noEmit -p tsconfig.base.json --pretty false",
+    "lint": "npm run typecheck",
+    "ci": "npm run lint && npm test && npm run test:coverage && npm run web:build && npm run web:smoke",
+    "ci:e2e": "npm run e2e",
     "cli": "node --no-warnings=ExperimentalWarning --experimental-transform-types --experimental-loader ./scripts/extensionless-ts-loader.mjs apps/cli/src/main.ts",
     "web:start": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-web.ps1",
     "web:dev": "node --require ./scripts/sandbox-node-compat.cjs ./scripts/next-dev-in-process.cjs",

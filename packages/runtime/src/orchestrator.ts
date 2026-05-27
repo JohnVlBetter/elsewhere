@@ -21,6 +21,7 @@ export async function runTurn(input: {
   inputText: string;
   model?: ModelProvider;
   modelName?: string;
+  signal?: AbortSignal;
 }): Promise<TurnResult> {
   const model = input.model ?? new FakeModelProvider();
   const modelName = input.modelName ?? "fake";
@@ -48,7 +49,8 @@ export async function runTurn(input: {
     model: modelName,
     system: agentRequest.system,
     messages: [{ role: "user", content: JSON.stringify({ action, context: agentRequest.context }) }],
-    schema: agentResponseSchema()
+    schema: agentResponseSchema(),
+    signal: input.signal
   });
   const response = normalizeAgentResponse(rawResponse);
 
@@ -71,13 +73,34 @@ export async function runTurn(input: {
   const messages = buildTurnMessages(input.pack, action, response, acceptedPatches, ending?.text);
   const outputText = messagesToText(input.pack, messages);
   const audit = auditOutput(outputText, { forbiddenPhrases: collectForbiddenPhrases(input.pack), requireInWorld: true });
-  const auditedMessages = audit.ok
-    ? messages
-    : [{ type: "system" as const, text: "这一刻的反馈不够清晰，请换一种行动说法。" }];
+  if (!audit.ok) {
+    const auditedMessages = [{ type: "system" as const, text: "这一刻的反馈不够清晰，请换一种行动说法。" }];
+    return {
+      outputText: messagesToText(input.pack, auditedMessages),
+      messages: auditedMessages,
+      state: { ...input.state, turn: input.state.turn + 1 },
+      acceptedPatches: [],
+      rejectedPatches: [
+        ...rejectedPatches,
+        ...acceptedPatches.map((patch) => ({ patch, reason: `Rolled back after audit failure: ${audit.reason}` }))
+      ],
+      trace: {
+        action,
+        contextIds: agentRequest.contextIds,
+        agentRole: agentRequest.agentRole,
+        modelName,
+        agentRawOutput: response,
+        precheck,
+        privateNotes: response.privateNotes,
+        audit,
+        rolledBackPatches: acceptedPatches
+      }
+    };
+  }
 
   return {
-    outputText: messagesToText(input.pack, auditedMessages),
-    messages: auditedMessages,
+    outputText: messagesToText(input.pack, messages),
+    messages,
     state: nextState,
     acceptedPatches,
     rejectedPatches,
@@ -158,10 +181,12 @@ function buildTurnMessages(
 
   for (const speech of response.spokenBy) {
     const character = pack.characters.find((candidate) => candidate.id === speech.characterId);
+    if (!character) continue;
+    if (action.type === "talk" && speech.characterId !== action.characterId) continue;
     messages.push({
       type: "character",
       characterId: speech.characterId,
-      label: character?.name ?? speech.characterId,
+      label: character.name,
       text: speech.text
     });
   }
@@ -342,6 +367,7 @@ function localizeRuleReason(reason: string): string {
 function deriveRulePatches(action: GameAction, pack: WorldPack, state: SessionState): GamePatch[] {
   return [
     ...deriveInspectionPatches(action, pack, state),
+    ...deriveTalkTopicPatches(action, pack, state),
     ...deriveTakeMovePatches(action, state),
     ...deriveTriggerPatches(pack, state, action)
   ];
@@ -374,6 +400,20 @@ function findInspectableFact(targetId: string, pack: WorldPack, state: SessionSt
   const fact = directFact ?? (item?.revealsFactId ? pack.facts.find((candidate) => candidate.id === item.revealsFactId) : undefined);
 
   if (!fact || state.knownFacts.includes(fact.id)) return undefined;
-  if (!directFact && !targetIsVisible) return undefined;
+  if (!targetIsVisible) return undefined;
   return evaluateCondition(fact.discoverableWhen, state) ? fact : undefined;
+}
+
+function deriveTalkTopicPatches(action: GameAction, pack: WorldPack, state: SessionState): GamePatch[] {
+  if (action.type !== "talk") return [];
+
+  const character = pack.characters.find((candidate) => candidate.id === action.characterId);
+  const topic = character?.topics.find((candidate) => candidate.id === action.topic);
+  if (!topic?.revealsFactId || state.knownFacts.includes(topic.revealsFactId)) return [];
+
+  return [{
+    type: "reveal_fact",
+    factId: topic.revealsFactId,
+    reason: `Topic ${action.characterId}.${topic.id} revealed ${topic.revealsFactId}.`
+  }];
 }
