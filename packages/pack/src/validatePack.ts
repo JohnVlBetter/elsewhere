@@ -45,6 +45,15 @@ export function validateWorldPack(pack: WorldPack): ValidationResult {
         errors.push(`Location ${location.id} references missing visible object: ${visibleObjectId}`);
       }
     }
+    for (const visibleCharacterId of location.visibleCharacters ?? []) {
+      if (!characterIds.has(visibleCharacterId)) {
+        errors.push(`Location ${location.id} references missing visible character: ${visibleCharacterId}`);
+      }
+    }
+  }
+
+  for (const quickAction of pack.profile.quickActions) {
+    validateConditionReferences(`Profile quick action ${quickAction.label} visibleWhen`, quickAction.visibleWhen, references, errors);
   }
 
   for (const character of pack.characters) {
@@ -189,6 +198,7 @@ function collectConditionReferences(condition: unknown): {
     if ("location_is" in node) addString(locationIds, (node as { location_is?: string }).location_is);
     if ("has_item" in node) addString(itemIds, (node as { has_item?: string }).has_item);
     if ("knows_fact" in node) addString(factIds, (node as { knows_fact?: string }).knows_fact);
+    if ("factKnown" in node) addString(factIds, (node as { factKnown?: string }).factKnown);
 
     if ("relationship_at_least" in node) {
       addString(characterIds, (node as { relationship_at_least?: { character?: string } }).relationship_at_least?.character);

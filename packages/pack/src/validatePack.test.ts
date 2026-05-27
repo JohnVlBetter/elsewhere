@@ -82,6 +82,15 @@ describe("validateWorldPack", () => {
     expect(result.errors).toContain("Location foyer references missing visible object: missing_object");
   });
 
+  it("reports broken location visible character references", () => {
+    const pack = basePack();
+    pack.locations[0]!.visibleCharacters = ["missing_character"];
+
+    const result = validateWorldPack(pack);
+
+    expect(result.errors).toContain("Location foyer references missing visible character: missing_character");
+  });
+
   it("reports character topic fact references", () => {
     const pack = basePack();
     pack.characters[0]!.topics = [{ id: "alibi", prompt: "Ask alibi.", revealsFactId: "missing_fact" }];
@@ -110,6 +119,15 @@ describe("validateWorldPack", () => {
     expect(result.errors).toContain("Item greenhouse_key pickupCondition references missing character: missing_character");
     expect(result.errors).toContain("Ending unresolved_failure condition references missing objective stage: solve_murder.missing_stage");
     expect(result.errors).toContain("Trigger confront_true_culprit when references missing resource: missing_resource");
+  });
+
+  it("reports quick action visibility references", () => {
+    const pack = basePack();
+    pack.profile.quickActions = [{ label: "Accuse", command: "confront butler", visibleWhen: { factKnown: "missing_fact" } }];
+
+    const result = validateWorldPack(pack);
+
+    expect(result.errors).toContain("Profile quick action Accuse visibleWhen references missing fact: missing_fact");
   });
 
   it("reports invalid trigger intent and trigger patch references", () => {

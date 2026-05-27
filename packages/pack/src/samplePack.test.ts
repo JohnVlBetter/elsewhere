@@ -16,9 +16,22 @@ describe("sample packs", () => {
   it("covers small, medium, and large non-detective shapes", () => {
     expect(loadWorldPack("packs/campus-lunch").manifest.profileId).toBe("romance");
     expect(loadWorldPack("packs/cave-breakthrough").resources.length).toBeGreaterThanOrEqual(2);
-    expect(loadWorldPack("packs/rain-tower").facts).toHaveLength(6);
+    expect(loadWorldPack("packs/rain-tower").facts).toHaveLength(7);
     expect(loadWorldPack("packs/ember-crypt").resources.map((resource) => resource.id).sort()).toEqual(["gold", "hp", "spell_slot"]);
     expect(loadWorldPack("packs/mist-sect").locations.length).toBeGreaterThanOrEqual(6);
     expect(loadWorldPack("packs/spring-festival").relationships.length).toBeGreaterThanOrEqual(5);
+  });
+
+  it("does not expose Rain Tower plot roles through character names", () => {
+    const pack = loadWorldPack("packs/rain-tower");
+
+    expect(pack.characters.map((character) => character.name)).not.toContain("继承人伊莲");
+  });
+
+  it("hides the butler accusation behind a condition", () => {
+    const pack = loadWorldPack("packs/rain-tower");
+    const accuse = pack.profile.quickActions.find((action) => action.label === "指认管家");
+
+    expect(accuse?.visibleWhen).toEqual({ factKnown: "butler_motive" });
   });
 });
