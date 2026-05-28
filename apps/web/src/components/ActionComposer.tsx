@@ -21,16 +21,16 @@ export function ActionComposer({
   return (
     <form className="action-composer" onSubmit={onSubmit}>
       <div className="action-row">
-        <input
+        <textarea
           aria-label="行动"
+          rows={2}
           value={input}
           onChange={(event) => onInputChange(event.target.value)}
-          placeholder="输入你的行动"
-          autoComplete="off"
+          placeholder="写下你的行动"
           disabled={!isReady || isSubmitting}
         />
         <button type="submit" disabled={!input.trim() || !isReady || isSubmitting}>
-          {isSubmitting ? "思索" : "发送"}
+          {isSubmitting ? "继续中" : "发送"}
         </button>
       </div>
       {quickActions.length ? (

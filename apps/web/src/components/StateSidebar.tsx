@@ -18,21 +18,21 @@ export function StateSidebar({
   labels: Labels;
   entityMaps: EntityMaps;
 }) {
-  const currentLocation = state ? labelEntity(entityMaps.locations, state.currentLocationId) : "...";
+  const currentLocation = state ? labelEntity(entityMaps.locations, state.currentLocationId) : "未知地点";
 
   return (
-    <aside className="state-sidebar" aria-label="案情状态">
+    <aside className="state-sidebar" aria-label="故事状态">
       <section aria-label={labels.location}>
         <h2>{labels.location}</h2>
         <p>{currentLocation}</p>
       </section>
       <section aria-label={labels.facts}>
         <h2>{labels.facts}</h2>
-        <p>{formatList(state?.knownFacts, entityMaps.facts, "暂无线索")}</p>
+        <p>{formatList(state?.knownFacts, entityMaps.facts, "还没有发现")}</p>
       </section>
       <section aria-label={labels.inventory}>
         <h2>{labels.inventory}</h2>
-        <p>{formatList(state?.inventory, entityMaps.items, "暂无物品")}</p>
+        <p>{formatList(state?.inventory, entityMaps.items, "暂未携带物品")}</p>
       </section>
       <section aria-label={labels.objectives}>
         <h2>{labels.objectives}</h2>
@@ -49,7 +49,7 @@ function formatList(ids: string[] | undefined, map: Map<string, string>, emptyTe
 
 function formatObjectives(state: SessionState | undefined, entityMaps: EntityMaps): string {
   const rows = Object.entries(state?.objectiveStages ?? {});
-  if (rows.length === 0) return "暂无进展";
+  if (rows.length === 0) return "目标尚未展开";
   return rows
     .map(([id, stage]) => `${entityMaps.objectives.get(id)?.name ?? id}: ${stage}`)
     .join("、");

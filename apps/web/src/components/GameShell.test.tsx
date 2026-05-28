@@ -34,7 +34,7 @@ function sessionBody() {
       id: "romance",
       labels: {
         location: "地点",
-        facts: "线索",
+        facts: "发现",
         inventory: "物品",
         objectives: "进展"
       },
@@ -79,11 +79,12 @@ describe("GameShell", () => {
 
     expect(await screen.findByRole("heading", { name: "Campus Lunch" })).toBeTruthy();
     expect(screen.getByText("Campus intro")).toBeTruthy();
-    expect(screen.getByPlaceholderText("输入你的行动")).toBeTruthy();
+    expect(screen.getByPlaceholderText("写下你的行动")).toBeTruthy();
     expect(screen.getByRole("button", { name: "发送" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "环顾四周" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "指认管家" })).toBeNull();
     expect(screen.queryByText("Runtime")).toBeNull();
+    expect(document.body.textContent).not.toContain("閫");
     expect(fetchSpy).toHaveBeenCalledWith("/api/session", expect.objectContaining({
       method: "POST",
       body: JSON.stringify({ packId: "campus-lunch" })
@@ -94,7 +95,7 @@ describe("GameShell", () => {
     vi.spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(new Response(JSON.stringify(sessionBody())))
       .mockResolvedValueOnce(turnStreamResponse([
-        { event: "status", data: { message: "思索中..." } },
+        { event: "status", data: { message: "文字正在延展" } },
         {
           event: "result",
           data: {
@@ -112,7 +113,7 @@ describe("GameShell", () => {
             timelineEvents: [
               { id: "evt_1", kind: "player_action", actorId: "player", text: "询问林同学", timestamp: "2026-05-28T12:00:00.000Z", visibleToPlayer: true },
               { id: "evt_2", kind: "dialogue", speakerId: "lin", speakerName: "Lin", text: "I waited by the courtyard.", timestamp: "2026-05-28T12:00:00.000Z", visibleToPlayer: true },
-              { id: "evt_3", kind: "evidence", refId: "missed_note", text: "Missed note - The note was tucked into the wrong book.", timestamp: "2026-05-28T12:00:00.000Z", visibleToPlayer: true }
+              { id: "evt_3", kind: "evidence", refId: "missed_note", text: "The note was tucked into the wrong book.", timestamp: "2026-05-28T12:00:00.000Z", visibleToPlayer: true }
             ],
             acceptedPatches: [],
             rejectedPatches: [],
@@ -124,18 +125,20 @@ describe("GameShell", () => {
     render(<GameShell packId="campus-lunch" />);
     await screen.findByRole("heading", { name: "Campus Lunch" });
 
-    fireEvent.change(screen.getByPlaceholderText("输入你的行动"), { target: { value: "询问林同学" } });
+    fireEvent.change(screen.getByPlaceholderText("写下你的行动"), { target: { value: "询问林同学" } });
     fireEvent.click(screen.getByRole("button", { name: "发送" }));
 
     await waitFor(() => {
       expect(screen.getByText("I waited by the courtyard.")).toBeTruthy();
-      expect(screen.getByText("Missed note - The note was tucked into the wrong book.")).toBeTruthy();
+      expect(screen.getAllByText("Missed note").length).toBeGreaterThan(0);
+      expect(screen.getByText("The note was tucked into the wrong book.")).toBeTruthy();
       expect(document.querySelector("[data-event-kind='player_action']")).toBeTruthy();
       expect(document.querySelector("[data-event-kind='dialogue']")).toBeTruthy();
       expect(document.querySelector("[data-event-kind='evidence']")).toBeTruthy();
-      expect(screen.getByLabelText("线索").textContent).toContain("Missed note");
+      expect(screen.getByLabelText("发现").textContent).toContain("Missed note");
       expect(screen.getByLabelText("物品").textContent).toContain("Paper note");
       expect(screen.getByLabelText("进展").textContent).toContain("Repair lunch: warm");
+      expect(document.body.textContent).not.toContain("閫");
     });
   });
 });

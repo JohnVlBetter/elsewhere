@@ -35,8 +35,8 @@ type TurnResponse = {
   trace: Record<string, unknown>;
 };
 
-const WAITING_TEXT = "思索中...";
-const READY_TEXT = "待命";
+const WAITING_TEXT = "文字正在延展";
+const READY_TEXT = "准备继续";
 
 export function GameShell({ packId }: { packId: string }) {
   const [session, setSession] = useState<SessionResponse>();
@@ -56,7 +56,7 @@ export function GameShell({ packId }: { packId: string }) {
   );
 
   useEffect(() => {
-    setStatus("载入中...");
+    setStatus("载入故事");
     setError(undefined);
     void fetch("/api/session", {
       method: "POST",
@@ -75,7 +75,7 @@ export function GameShell({ packId }: { packId: string }) {
         setEvents(body.intro ? [createLocalSceneEvent(body.intro)] : []);
       })
       .catch(() => {
-        setError("未能载入案件。");
+        setError("没能载入这个故事。");
         setStatus("连接失败");
       });
   }, [packId]);
@@ -120,10 +120,10 @@ export function GameShell({ packId }: { packId: string }) {
     <main className="game-shell">
       <header className="game-header">
         <div>
-          <p className="eyebrow">案件</p>
-          <h1>{session?.manifest.name ?? "载入案件"}</h1>
+          <p className="eyebrow">故事</p>
+          <h1>{session?.manifest.name ?? "载入故事"}</h1>
         </div>
-        <dl className="game-header__meta" aria-label="案件状态">
+        <dl className="game-header__meta" aria-label="故事状态">
           <div>
             <dt>{labels.location}</dt>
             <dd>{state ? labelEntity(entityMaps.locations, state.currentLocationId) : "..."}</dd>
@@ -141,7 +141,7 @@ export function GameShell({ packId }: { packId: string }) {
 
       {error ? <p className="notice" role="status">{error}</p> : null}
 
-      <Timeline events={events} />
+      <Timeline events={events} entityMaps={entityMaps} />
 
       <StateSidebar state={state} labels={labels} entityMaps={entityMaps} />
 
@@ -190,8 +190,8 @@ function createLocalNoticeEvent(text: string): TimelineEvent {
 
 function resolveLabels(labels: Record<string, string> | undefined) {
   return {
-    location: labels?.location ?? "现场",
-    facts: labels?.facts ?? "线索",
+    location: labels?.location ?? "地点",
+    facts: labels?.facts ?? "发现",
     inventory: labels?.inventory ?? "物品",
     objectives: labels?.objectives ?? "进展"
   };
