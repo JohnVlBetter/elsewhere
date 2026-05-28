@@ -22,7 +22,7 @@ test("uses immersive reader layout without broken visual slots", async ({ page }
   await page.goto("/");
   await expect(page.locator(".story-card__cover").first()).toBeVisible();
 
-  await page.getByRole("link", { name: /雨塔谜案|雨塔谋杀案|闆ㄥ/ }).click();
+  await page.locator('a[href="/play/rain-tower"]').click();
   await expect(page.locator(".game-shell")).toBeVisible();
   await expect(page.locator(".timeline")).toBeVisible();
   await expect(page.locator(".action-composer")).toBeVisible();

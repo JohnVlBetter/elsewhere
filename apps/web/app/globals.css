@@ -118,7 +118,7 @@ a {
   overflow-wrap: anywhere;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: var(--surface);
+  background: var(--story-bg, var(--surface));
   color: var(--story-text, var(--ink));
   box-shadow: 0 16px 40px rgba(39, 34, 28, 0.08);
   transition:
