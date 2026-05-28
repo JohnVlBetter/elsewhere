@@ -2,6 +2,8 @@
   name: 管家维尔
   aliases: [Mr. Vale, Vale, 管家, 维尔]
   publicDescription: 管家脸色苍白，说话谨慎而精确。
+  assets:
+    avatar: generated/characters/butler.webp
   privateFacts:
     - 命案后他重置过塔钟机关。
   knows:

@@ -5,6 +5,8 @@
   exits: [study, greenhouse]
   visibleObjects: [silver_watch]
   visibleCharacters: [butler, gardener, heiress]
+  assets:
+    sceneImage: generated/locations/foyer.webp
 - id: study
   name: 书房
   aliases: [study, 书房]

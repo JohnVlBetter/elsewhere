@@ -1,6 +1,11 @@
 export type EntitySummary = {
   id: string;
   name: string;
+  assets?: {
+    avatar?: string;
+    portrait?: string;
+    sceneImage?: string;
+  };
 };
 
 export type ObjectiveSummary = EntitySummary & {
