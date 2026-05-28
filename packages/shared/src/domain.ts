@@ -18,6 +18,39 @@ export const ProfileActionSchema = z.object({
   acceptsFacts: z.boolean().default(false)
 });
 
+export const ProfileThemeSchema = z.object({
+  tone: z.enum(["neutral", "warm", "cool", "dark", "light"]).optional(),
+  accentColor: z.string().min(1).optional(),
+  backgroundColor: z.string().min(1).optional(),
+  textColor: z.string().min(1).optional()
+});
+
+export const ProfileAssetsSchema = z.object({
+  coverImage: z.string().min(1).optional(),
+  bannerImage: z.string().min(1).optional(),
+  fallbackPattern: z.string().min(1).optional()
+});
+
+export const CharacterAssetsSchema = z.object({
+  avatar: z.string().min(1).optional(),
+  portrait: z.string().min(1).optional()
+});
+
+export const LocationAssetsSchema = z.object({
+  sceneImage: z.string().min(1).optional()
+});
+
+export const TimelineMetadataSchema = z.object({
+  characterId: IdSchema.optional(),
+  speakerName: z.string().min(1).optional(),
+  factId: IdSchema.optional(),
+  factName: z.string().min(1).optional(),
+  itemId: IdSchema.optional(),
+  itemName: z.string().min(1).optional(),
+  locationId: IdSchema.optional(),
+  locationName: z.string().min(1).optional()
+}).passthrough();
+
 export type Condition =
   | { all: Condition[] }
   | { any: Condition[] }
@@ -54,6 +87,8 @@ export const ConditionSchema: z.ZodType<Condition> = z.lazy(() =>
 export const ProfileSchema = z.object({
   id: IdSchema,
   labels: z.record(z.string(), z.string().min(1)).default({}),
+  theme: ProfileThemeSchema.optional(),
+  assets: ProfileAssetsSchema.optional(),
   quickActions: z.array(z.object({
     label: z.string().min(1),
     command: z.string().min(1),
@@ -70,7 +105,8 @@ export const LocationSchema = z.object({
   exits: z.array(IdSchema),
   entryCondition: ConditionSchema.optional(),
   visibleObjects: z.array(IdSchema).default([]),
-  visibleCharacters: z.array(IdSchema).default([])
+  visibleCharacters: z.array(IdSchema).default([]),
+  assets: LocationAssetsSchema.optional()
 });
 
 export const CharacterSchema = z.object({
@@ -78,6 +114,7 @@ export const CharacterSchema = z.object({
   name: z.string().min(1),
   aliases: z.array(z.string().min(1)).optional(),
   publicDescription: z.string().min(1),
+  assets: CharacterAssetsSchema.optional(),
   privateFacts: z.array(z.string()).default([]),
   knows: z.array(z.string()).default([]),
   forbiddenDisclosures: z.array(z.string()).default([]),
@@ -151,14 +188,16 @@ export const TimelineEventSchema = z.discriminatedUnion("kind", [
     text: z.string(),
     timestamp: z.string(),
     actorId: z.literal("player"),
-    visibleToPlayer: z.boolean().default(true)
+    visibleToPlayer: z.boolean().default(true),
+    metadata: TimelineMetadataSchema.optional()
   }),
   z.object({
     id: z.string(),
     kind: z.literal("scene"),
     text: z.string(),
     timestamp: z.string(),
-    visibleToPlayer: z.boolean().default(true)
+    visibleToPlayer: z.boolean().default(true),
+    metadata: TimelineMetadataSchema.optional()
   }),
   z.object({
     id: z.string(),
@@ -167,7 +206,8 @@ export const TimelineEventSchema = z.discriminatedUnion("kind", [
     timestamp: z.string(),
     speakerId: IdSchema,
     speakerName: z.string(),
-    visibleToPlayer: z.boolean().default(true)
+    visibleToPlayer: z.boolean().default(true),
+    metadata: TimelineMetadataSchema.optional()
   }),
   z.object({
     id: z.string(),
@@ -175,7 +215,8 @@ export const TimelineEventSchema = z.discriminatedUnion("kind", [
     text: z.string(),
     timestamp: z.string(),
     refId: IdSchema.optional(),
-    visibleToPlayer: z.boolean().default(true)
+    visibleToPlayer: z.boolean().default(true),
+    metadata: TimelineMetadataSchema.optional()
   })
 ]);
 
@@ -273,6 +314,11 @@ export const TurnMessageSchema = z.object({
 
 export type Manifest = z.infer<typeof ManifestSchema>;
 export type Profile = z.infer<typeof ProfileSchema>;
+export type ProfileTheme = z.infer<typeof ProfileThemeSchema>;
+export type ProfileAssets = z.infer<typeof ProfileAssetsSchema>;
+export type CharacterAssets = z.infer<typeof CharacterAssetsSchema>;
+export type LocationAssets = z.infer<typeof LocationAssetsSchema>;
+export type TimelineMetadata = z.infer<typeof TimelineMetadataSchema>;
 export type WorldPack = z.infer<typeof WorldPackSchema>;
 export type SessionState = z.infer<typeof SessionStateSchema>;
 export type GameAction = z.infer<typeof ActionSchema>;
