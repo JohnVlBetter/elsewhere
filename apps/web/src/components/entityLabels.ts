@@ -35,8 +35,11 @@ export function buildEntityMaps(entities: {
     ...(entities?.items ?? []),
     ...(entities?.facts ?? [])
   ]) {
-    if (entity.assets && !assets.has(entity.id)) {
-      assets.set(entity.id, entity.assets);
+    if (entity.assets) {
+      assets.set(entity.id, {
+        ...entity.assets,
+        ...assets.get(entity.id)
+      });
     }
   }
 
