@@ -58,12 +58,16 @@ export function resolveStoryVisuals(story: StoryVisualSource): StoryVisuals {
     },
     coverStyle: {
       backgroundImage: coverImage
-        ? `url("${coverImage}")`
+        ? `url("${escapeCssQuotedUrl(coverImage)}")`
         : `linear-gradient(135deg, ${background} 0%, ${accent} 100%)`
     },
     tone,
     hasCoverImage: Boolean(coverImage)
   };
+}
+
+function escapeCssQuotedUrl(url: string): string {
+  return url.replace(/\\/g, "\\\\").replace(/"/g, "\\\"");
 }
 
 export function normalizeTimelineEvent(event: TimelineEvent, entityMaps: EntityMaps): TimelineEventViewModel {
