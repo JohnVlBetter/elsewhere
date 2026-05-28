@@ -3,6 +3,7 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { formatTurnFailure } from "../../../../src/server/turnService";
 
 const originalEnv = {
   AIGAME_SESSION_ROOT: process.env.AIGAME_SESSION_ROOT,
@@ -45,6 +46,30 @@ describe("POST /api/turn/stream", () => {
     expect(text).not.toContain("调用模型");
     expect(text).toContain("event: result");
     expect(text).toContain("\"timelineEvents\"");
+  });
+
+  it("formats known stream failures without exposing runtime internals", () => {
+    const failures = [
+      {
+        error: new Error("Model response content was not valid JSON"),
+        copy: "刚才的回应没有整理成可继续的故事，行动没有生效；请重试。"
+      },
+      {
+        error: new Error("Model request failed: 503"),
+        copy: "故事暂时没有继续，刚才的行动没有生效；请稍后重试。"
+      },
+      {
+        error: new Error("No runtime model provider configured"),
+        copy: "故事还没有准备好，暂时不能继续。"
+      }
+    ];
+
+    for (const failure of failures) {
+      const result = formatTurnFailure(failure.error);
+
+      expect(result.error).toBe(failure.copy);
+      expect(result.error).not.toMatch(/模型|DEEPSEEK|AIGAME_MODEL_PROVIDER|provider|Runtime/);
+    }
   });
 });
 

@@ -89,7 +89,8 @@ function playerSafeStatus(message: string): string {
     complete: "故事已记录",
     "正在调用模型...": "文字正在延展",
     "正在写入案卷...": "故事已记录",
-    "行动已记录，正在思考...": "文字正在延展"
+    "行动已记录，正在思考...": "文字正在延展",
+    "行动已记录，正在思索...": "文字正在延展"
   };
 
   return statusLabels[message] ?? message;

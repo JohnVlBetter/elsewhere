@@ -81,21 +81,21 @@ export function formatTurnFailure(error: unknown): { status: number; error: stri
   if (message.includes("Model response content was not valid JSON")) {
     return {
       status: 502,
-      error: "模型返回内容不完整，刚才的行动没有生效；请重试。"
+      error: "刚才的回应没有整理成可继续的故事，行动没有生效；请重试。"
     };
   }
 
   if (message.includes("Model request failed")) {
     return {
       status: 502,
-      error: "模型服务暂时不可用，刚才的行动没有生效；请稍后重试。"
+      error: "故事暂时没有继续，刚才的行动没有生效；请稍后重试。"
     };
   }
 
   if (message.includes("No runtime model provider configured")) {
     return {
       status: 503,
-      error: "模型未配置：请设置 DEEPSEEK_API_KEY，或显式设置 AIGAME_MODEL_PROVIDER=fake 进入测试模式。"
+      error: "故事还没有准备好，暂时不能继续。"
     };
   }
 
