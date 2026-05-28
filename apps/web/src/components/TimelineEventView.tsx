@@ -1,6 +1,6 @@
 import type { TimelineEvent } from "@aigame/shared";
 import type { EntityMaps } from "./entityLabels";
-import { normalizeTimelineEvent } from "./packVisuals";
+import { cssUrl, normalizeTimelineEvent } from "./packVisuals";
 
 export function TimelineEventView({ event, entityMaps }: { event: TimelineEvent; entityMaps: EntityMaps }) {
   const view = normalizeTimelineEvent(event, entityMaps);
@@ -16,7 +16,7 @@ export function TimelineEventView({ event, entityMaps }: { event: TimelineEvent;
   if (view.kind === "dialogue") {
     return (
       <article className="timeline-event timeline-event--dialogue" data-event-kind={view.kind}>
-        <div className="timeline-event__avatar" data-has-image={Boolean(view.avatar)} style={view.avatar ? { backgroundImage: `url("${view.avatar}")` } : undefined} aria-hidden="true" />
+        <div className="timeline-event__avatar" data-has-image={Boolean(view.avatar)} style={view.avatar ? { backgroundImage: cssUrl(view.avatar) } : undefined} aria-hidden="true" />
         <div>
           <strong>{view.title}</strong>
           <p>{view.text}</p>

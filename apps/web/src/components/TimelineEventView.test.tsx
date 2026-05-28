@@ -4,6 +4,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { afterEach, describe, expect, it } from "vitest";
 import { buildEntityMaps } from "./entityLabels";
+import { cssUrl } from "./packVisuals";
 import { TimelineEventView } from "./TimelineEventView";
 
 const maps = buildEntityMaps({
@@ -44,6 +45,31 @@ describe("TimelineEventView", () => {
     expect(screen.getByText("林同学")).toBeTruthy();
     expect(document.querySelector(".timeline-event__avatar")).toBeTruthy();
     expect(document.querySelector(".timeline-event__avatar")).toHaveAttribute("data-has-image", "true");
+  });
+
+  it("escapes quoted avatar urls before assigning background image style", () => {
+    const avatarUrl = "generated/avatars/lin\"quote\\path.webp";
+    const specialMaps = buildEntityMaps({
+      locations: [],
+      characters: [{ id: "lin", name: "Lin", assets: { avatar: avatarUrl } }],
+      items: [],
+      facts: [],
+      objectives: []
+    });
+
+    render(<TimelineEventView entityMaps={specialMaps} event={{
+      id: "evt_dialogue_escaped",
+      kind: "dialogue",
+      text: "Avatar path needs escaping.",
+      timestamp: "2026-05-29T12:00:00.000Z",
+      speakerId: "lin",
+      speakerName: "Lin",
+      visibleToPlayer: true
+    }} />);
+
+    const avatar = document.querySelector(".timeline-event__avatar");
+    expect(avatar).toBeTruthy();
+    expect(avatar?.getAttribute("style")).toContain(cssUrl(avatarUrl));
   });
 
   it("renders evidence with a player-facing title", () => {

@@ -58,12 +58,16 @@ export function resolveStoryVisuals(story: StoryVisualSource): StoryVisuals {
     },
     coverStyle: {
       backgroundImage: coverImage
-        ? `url("${escapeCssQuotedUrl(coverImage)}")`
+        ? cssUrl(coverImage)
         : `linear-gradient(135deg, ${background} 0%, ${accent} 100%)`
     },
     tone,
     hasCoverImage: Boolean(coverImage)
   };
+}
+
+export function cssUrl(value: string): string {
+  return `url("${escapeCssQuotedUrl(value)}")`;
 }
 
 function escapeCssQuotedUrl(url: string): string {
