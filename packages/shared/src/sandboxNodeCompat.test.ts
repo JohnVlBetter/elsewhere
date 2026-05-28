@@ -11,6 +11,8 @@ describe("sandbox node compatibility helpers", () => {
     expect(compat.isGeneratedOutputPath("apps/web/.next/app-path-routes-manifest.json")).toBe(true);
     expect(compat.isGeneratedOutputPath("apps/web/.next-build/export/_next/chunk")).toBe(true);
     expect(compat.isGeneratedOutputPath("test-results/.last-run.json")).toBe(true);
+    expect(compat.isGeneratedOutputPath(".tmp/sessions/session-1/state.json.tmp")).toBe(true);
+    expect(compat.isGeneratedOutputPath(".tmp/sessions/session-1/state.json")).toBe(true);
     expect(compat.isGeneratedOutputPath("packages/shared/src/domain.ts")).toBe(false);
   });
 });

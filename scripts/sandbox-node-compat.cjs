@@ -30,7 +30,11 @@ function isGeneratedOutputPath(value) {
     portable.startsWith("playwright-report/") ||
     portable === "playwright-report" ||
     portable.includes("/playwright-report/") ||
-    portable.endsWith("/playwright-report")
+    portable.endsWith("/playwright-report") ||
+    portable.startsWith(".tmp/sessions/") ||
+    portable === ".tmp/sessions" ||
+    portable.includes("/.tmp/sessions/") ||
+    portable.endsWith("/.tmp/sessions")
   );
 }
 
