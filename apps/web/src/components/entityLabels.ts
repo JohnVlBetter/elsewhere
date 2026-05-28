@@ -18,6 +18,7 @@ export type EntityMaps = {
   items: Map<string, string>;
   facts: Map<string, string>;
   objectives: Map<string, ObjectiveSummary>;
+  assets: Map<string, EntitySummary["assets"]>;
 };
 
 export function buildEntityMaps(entities: {
@@ -27,12 +28,20 @@ export function buildEntityMaps(entities: {
   facts: EntitySummary[];
   objectives: ObjectiveSummary[];
 } | undefined): EntityMaps {
+  const allEntities = [
+    ...(entities?.locations ?? []),
+    ...(entities?.characters ?? []),
+    ...(entities?.items ?? []),
+    ...(entities?.facts ?? [])
+  ];
+
   return {
     locations: new Map((entities?.locations ?? []).map((entity) => [entity.id, entity.name])),
     characters: new Map((entities?.characters ?? []).map((entity) => [entity.id, entity.name])),
     items: new Map((entities?.items ?? []).map((entity) => [entity.id, entity.name])),
     facts: new Map((entities?.facts ?? []).map((entity) => [entity.id, entity.name])),
-    objectives: new Map((entities?.objectives ?? []).map((entity) => [entity.id, entity]))
+    objectives: new Map((entities?.objectives ?? []).map((entity) => [entity.id, entity])),
+    assets: new Map(allEntities.map((entity) => [entity.id, entity.assets]))
   };
 }
 
