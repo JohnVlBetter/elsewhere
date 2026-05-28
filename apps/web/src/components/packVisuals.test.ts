@@ -115,6 +115,28 @@ describe("normalizeTimelineEvent", () => {
     expect(view.avatar).toBe("avatar.webp");
   });
 
+  it("ignores undefined asset fields when merging duplicate ids", () => {
+    const maps = buildEntityMaps({
+      locations: [{ id: "shared", name: "Shared Location", assets: { avatar: undefined, sceneImage: "scene.webp" } }],
+      characters: [{ id: "shared", name: "Shared Character", assets: { avatar: "avatar.webp" } }],
+      items: [],
+      facts: [],
+      objectives: []
+    });
+
+    const view = normalizeTimelineEvent({
+      id: "evt_undefined_asset",
+      kind: "dialogue",
+      text: "Defined later fields should fill undefined earlier fields.",
+      timestamp: "2026-05-29T12:00:00.000Z",
+      speakerId: "shared",
+      speakerName: "Shared Character",
+      visibleToPlayer: true
+    }, maps);
+
+    expect(view.avatar).toBe("avatar.webp");
+  });
+
   it("maps discovery ref ids to player-facing names", () => {
     const maps = buildEntityMaps({
       locations: [],

@@ -36,10 +36,7 @@ export function buildEntityMaps(entities: {
     ...(entities?.facts ?? [])
   ]) {
     if (entity.assets) {
-      assets.set(entity.id, {
-        ...entity.assets,
-        ...assets.get(entity.id)
-      });
+      assets.set(entity.id, mergeEntityAssets(assets.get(entity.id), entity.assets));
     }
   }
 
@@ -55,4 +52,17 @@ export function buildEntityMaps(entities: {
 
 export function labelEntity(map: Map<string, string>, id: string): string {
   return map.get(id) ?? id.replace(/[_:-]+/g, " ");
+}
+
+function mergeEntityAssets(
+  current: EntitySummary["assets"] | undefined,
+  candidate: EntitySummary["assets"]
+): EntitySummary["assets"] {
+  const merged: EntitySummary["assets"] = { ...current };
+  for (const field of ["avatar", "portrait", "sceneImage"] as const) {
+    if (candidate?.[field] !== undefined && merged[field] === undefined) {
+      merged[field] = candidate[field];
+    }
+  }
+  return merged;
 }
