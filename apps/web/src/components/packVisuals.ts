@@ -1,9 +1,40 @@
 import type { CSSProperties } from "react";
-import type { ProfileAssets, ProfileTheme, TimelineEvent } from "@aigame/shared";
+import type { TimelineEvent } from "@aigame/shared";
 import type { EntityMaps } from "./entityLabels";
 import { labelEntity } from "./entityLabels";
 
-type StoryTone = NonNullable<ProfileTheme["tone"]>;
+type StoryTone = "neutral" | "warm" | "cool" | "dark" | "light";
+
+type StoryTheme = {
+  tone?: StoryTone;
+  accentColor?: string;
+  backgroundColor?: string;
+  textColor?: string;
+};
+
+type StoryAssets = {
+  coverImage?: string;
+  bannerImage?: string;
+  fallbackPattern?: string;
+};
+
+type TimelineMetadata = {
+  characterId?: string;
+  speakerName?: string;
+  factId?: string;
+  factName?: string;
+  itemId?: string;
+  itemName?: string;
+  locationId?: string;
+  locationName?: string;
+};
+
+type NormalizableTimelineEvent = TimelineEvent & {
+  metadata?: TimelineMetadata;
+  speakerId?: string;
+  speakerName?: string;
+  refId?: string;
+};
 
 export type StoryVisualSource = {
   id: string;
@@ -11,8 +42,8 @@ export type StoryVisualSource = {
   subtitle: string;
   introduction: string;
   version: string;
-  theme?: ProfileTheme;
-  assets?: ProfileAssets;
+  theme?: StoryTheme;
+  assets?: StoryAssets;
 };
 
 export type StoryVisuals = {
@@ -74,7 +105,7 @@ function escapeCssQuotedUrl(url: string): string {
   return url.replace(/\\/g, "\\\\").replace(/"/g, "\\\"");
 }
 
-export function normalizeTimelineEvent(event: TimelineEvent, entityMaps: EntityMaps): TimelineEventViewModel {
+export function normalizeTimelineEvent(event: NormalizableTimelineEvent, entityMaps: EntityMaps): TimelineEventViewModel {
   const base = {
     id: event.id,
     kind: event.kind,

@@ -22,8 +22,8 @@ export async function POST(request: Request) {
     manifest: pack.manifest,
     profile: pack.profile,
     entities: {
-      locations: pack.locations.map(({ id, name, assets }) => ({ id, name, assets })),
-      characters: pack.characters.map(({ id, name, assets }) => ({ id, name, assets })),
+      locations: pack.locations.map(entitySummary),
+      characters: pack.characters.map(entitySummary),
       items: pack.items.map(({ id, name }) => ({ id, name })),
       facts: pack.facts.map(({ id, name }) => ({ id, name })),
       objectives: pack.objectives.map(({ id, name, stages }) => ({ id, name, stages }))
@@ -43,4 +43,13 @@ function buildSessionIntro(pack: WorldPack): string {
   const locationText = entryLocation ? `当前位置是${entryLocation.name}。` : "";
   const objectiveText = objectiveNames ? `目标：${objectiveNames}。` : "";
   return `你进入《${pack.manifest.name}》。${worldText} ${locationText}${objectiveText}`.trim();
+}
+
+function entitySummary(entity: { id: string; name: string; assets?: unknown }) {
+  const { id, name, assets } = entity;
+  return isRecord(assets) ? { id, name, assets } : { id, name };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
