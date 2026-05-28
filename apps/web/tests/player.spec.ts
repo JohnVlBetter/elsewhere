@@ -18,6 +18,17 @@ test("starts selected story and keeps runtime details hidden", async ({ page }) 
   await expect(page.getByRole("button", { name: "指认管家" })).not.toBeVisible();
 });
 
+test("uses immersive reader layout without broken visual slots", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator(".story-card__cover").first()).toBeVisible();
+
+  await page.getByRole("link", { name: /雨塔谜案|雨塔谋杀案|闆ㄥ/ }).click();
+  await expect(page.locator(".game-shell")).toBeVisible();
+  await expect(page.locator(".timeline")).toBeVisible();
+  await expect(page.locator(".action-composer")).toBeVisible();
+  await expect(page.locator(".state-sidebar")).toBeVisible();
+});
+
 test("renders different event classes for action dialogue and evidence", async ({ page }) => {
   await page.route("**/api/session", async (route) => {
     await route.fulfill({
