@@ -76,4 +76,29 @@ describe("readTurnEventStream", () => {
 
     await expect(readTurnEventStream(response, {})).rejects.toThrow("Session not found");
   });
+
+  it("throws player-safe copy when an ok response has no body", async () => {
+    const response = new Response(null);
+
+    await expect(readTurnEventStream(response, {})).rejects.toThrow("故事暂时没有回应，请重试。");
+  });
+
+  it("throws player-safe copy when the stream ends before a result", async () => {
+    const response = streamResponse([
+      "event: status\ndata: {\"message\":\"文字正在延展\"}\n\n"
+    ]);
+
+    await expect(readTurnEventStream(response, {})).rejects.toThrow("故事回应中断，请重试。");
+  });
+
+  it("throws player-safe copy for non-json response errors without a server error body", async () => {
+    const response = new Response("Bad gateway", {
+      status: 502,
+      headers: { "content-type": "text/plain" }
+    });
+
+    await expect(readTurnEventStream(response, {})).rejects.toThrow("行动没有成功提交，请重试。");
+    await expect(readTurnEventStream(new Response("Bad gateway", { status: 502 }), {}))
+      .rejects.not.toThrow("Turn stream request failed");
+  });
 });

@@ -7,7 +7,7 @@ export async function readTurnEventStream<T>(
   }
 
   if (!response.body) {
-    throw new Error("Turn stream did not include a response body.");
+    throw new Error("故事暂时没有回应，请重试。");
   }
 
   const reader = response.body.getReader();
@@ -40,7 +40,7 @@ export async function readTurnEventStream<T>(
     if (done) break;
   }
 
-  throw new Error("Turn stream ended before a result.");
+  throw new Error("故事回应中断，请重试。");
 }
 
 async function readErrorResponse(response: Response): Promise<string> {
@@ -51,7 +51,7 @@ async function readErrorResponse(response: Response): Promise<string> {
     // Fall through to a stable generic message.
   }
 
-  return `Turn stream request failed: ${response.status}`;
+  return "行动没有成功提交，请重试。";
 }
 
 function parseServerSentEvent(rawEvent: string): { name: string; data: string } {
