@@ -60,21 +60,29 @@ describe("readTurnEventStream", () => {
     expect(statuses).toEqual(["文字正在延展"]);
   });
 
-  it("throws the server-provided error event message", async () => {
+  it("sanitizes unsafe server-provided error event messages", async () => {
     const response = streamResponse([
       "event: error\ndata: {\"message\":\"模型返回内容不完整，请重试。\"}\n\n"
     ]);
 
-    await expect(readTurnEventStream(response, {})).rejects.toThrow("模型返回内容不完整，请重试。");
+    await expect(readTurnEventStream(response, {}))
+      .rejects.toThrow("刚才的回应没有整理成可继续的故事，请重试。");
+    await expect(readTurnEventStream(streamResponse([
+      "event: error\ndata: {\"message\":\"模型返回内容不完整，请重试。\"}\n\n"
+    ]), {})).rejects.not.toThrow("模型");
   });
 
-  it("throws a response error body when the stream request is rejected before SSE starts", async () => {
+  it("sanitizes unsafe response error bodies when the stream request is rejected before SSE starts", async () => {
     const response = new Response(JSON.stringify({ error: "Session not found" }), {
       status: 404,
       headers: { "content-type": "application/json" }
     });
 
-    await expect(readTurnEventStream(response, {})).rejects.toThrow("Session not found");
+    await expect(readTurnEventStream(response, {})).rejects.toThrow("行动没有成功提交，请重试。");
+    await expect(readTurnEventStream(new Response(JSON.stringify({ error: "Session not found" }), {
+      status: 404,
+      headers: { "content-type": "application/json" }
+    }), {})).rejects.not.toThrow("Session not found");
   });
 
   it("throws player-safe copy when an ok response has no body", async () => {

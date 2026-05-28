@@ -31,7 +31,7 @@ export async function readTurnEventStream<T>(
       } else if (event.name === "result") {
         return JSON.parse(event.data) as T;
       } else if (event.name === "error") {
-        throw new Error(readMessage(event.data));
+        throw new Error(playerSafeError(readMessage(event.data)));
       }
 
       eventEnd = findEventEnd(buffer);
@@ -46,12 +46,12 @@ export async function readTurnEventStream<T>(
 async function readErrorResponse(response: Response): Promise<string> {
   try {
     const body = await response.json() as { error?: unknown };
-    if (typeof body.error === "string" && body.error) return body.error;
+    if (typeof body.error === "string" && body.error) return playerSafeError(body.error);
   } catch {
     // Fall through to a stable generic message.
   }
 
-  return "行动没有成功提交，请重试。";
+  return playerSafeError("行动没有成功提交，请重试。");
 }
 
 function parseServerSentEvent(rawEvent: string): { name: string; data: string } {
@@ -94,6 +94,27 @@ function playerSafeStatus(message: string): string {
   };
 
   return statusLabels[message] ?? message;
+}
+
+function playerSafeError(message: string): string {
+  if (message.includes("模型")) {
+    return "刚才的回应没有整理成可继续的故事，请重试。";
+  }
+
+  const unsafeTerms = [
+    "DEEPSEEK",
+    "AIGAME_MODEL_PROVIDER",
+    "provider",
+    "Runtime",
+    "Session not found",
+    "Turn stream",
+    "stream",
+    "request failed"
+  ];
+
+  return unsafeTerms.some((term) => message.includes(term))
+    ? "行动没有成功提交，请重试。"
+    : message;
 }
 
 function findEventEnd(buffer: string): number {
