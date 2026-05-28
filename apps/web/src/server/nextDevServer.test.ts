@@ -17,6 +17,7 @@ describe("Next dev server launcher", () => {
       console,
       process: fakeProcess,
       require: (specifier: string) => {
+        if (specifier === "node:fs") return { existsSync: () => false };
         if (specifier === "node:path") return path;
         if (specifier === "next/dist/server/lib/start-server") {
           return {
@@ -45,14 +46,15 @@ describe("Next dev server launcher", () => {
       scripts: Record<string, string>;
     };
 
-    expect(packageJson.scripts["web:restart"]).toBe(
-      "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/restart-web.ps1"
-    );
+    expect(packageJson.scripts["web:stop"]).toBe("node scripts/stop-web.cjs");
+    expect(packageJson.scripts["web:restart"]).toBe("npm run web:stop && npm run web:dev");
 
-    const script = readFileSync("scripts/restart-web.ps1", "utf8");
-    expect(script).toContain('$tmpRoot = Join-Path $repoRoot ".tmp"');
-    expect(script).toContain('$pidPath = Join-Path $tmpRoot "web-dev.pid"');
-    expect(script).toContain("Start-Process");
-    expect(script).toContain("Invoke-WebRequest");
+    const launcher = readFileSync("scripts/next-dev-in-process.cjs", "utf8");
+    expect(launcher).toContain("function loadDotEnv");
+    expect(launcher).toContain('loadDotEnv(path.resolve(".env.local"))');
+
+    const stopScript = readFileSync("scripts/stop-web.cjs", "utf8");
+    expect(stopScript).toContain("web-dev.pid");
+    expect(stopScript).toContain("taskkill.exe");
   });
 });

@@ -9,6 +9,13 @@ export interface RuntimeModelConfig {
   providerName: "deepseek" | "openai-compatible" | "fake";
 }
 
+export class RuntimeModelConfigurationError extends Error {
+  constructor(message = "No runtime model provider configured") {
+    super(message);
+    this.name = "RuntimeModelConfigurationError";
+  }
+}
+
 export function createRuntimeModelConfig(env: EnvLike = process.env): RuntimeModelConfig {
   if (env.AIGAME_MODEL_PROVIDER === "fake") {
     return {
@@ -41,9 +48,5 @@ export function createRuntimeModelConfig(env: EnvLike = process.env): RuntimeMod
     };
   }
 
-  return {
-    providerName: "fake",
-    modelName: "fake",
-    model: new FakeModelProvider()
-  };
+  throw new RuntimeModelConfigurationError();
 }

@@ -26,11 +26,7 @@ describe("createRuntimeModelConfig", () => {
     expect(config.model).toBeInstanceOf(FakeModelProvider);
   });
 
-  it("falls back to the fake provider without a cloud key", () => {
-    const config = createRuntimeModelConfig({});
-
-    expect(config.providerName).toBe("fake");
-    expect(config.modelName).toBe("fake");
-    expect(config.model).toBeInstanceOf(FakeModelProvider);
+  it("requires an explicit fake provider when no cloud key is configured", () => {
+    expect(() => createRuntimeModelConfig({})).toThrow("No runtime model provider configured");
   });
 });

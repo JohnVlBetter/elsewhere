@@ -92,6 +92,13 @@ export function formatTurnFailure(error: unknown): { status: number; error: stri
     };
   }
 
+  if (message.includes("No runtime model provider configured")) {
+    return {
+      status: 503,
+      error: "模型未配置：请设置 DEEPSEEK_API_KEY，或显式设置 AIGAME_MODEL_PROVIDER=fake 进入测试模式。"
+    };
+  }
+
   return {
     status: 500,
     error: "行动处理失败，刚才的行动没有生效；请重试。"
