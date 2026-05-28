@@ -19,7 +19,7 @@ export function ActionComposer({
   onSubmit: (event: FormEvent) => void;
 }) {
   return (
-    <form className="action-composer" onSubmit={onSubmit}>
+    <form className="action-composer" onSubmit={onSubmit} data-testid="action-composer">
       <div className="action-row">
         <textarea
           aria-label="行动"

@@ -20,13 +20,13 @@ test("starts selected story and keeps runtime details hidden", async ({ page }) 
 
 test("uses immersive reader layout without broken visual slots", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator(".story-card__cover").first()).toBeVisible();
+  await expect(page.getByTestId("story-cover-slot").first()).toBeVisible();
 
   await page.locator('a[href="/play/rain-tower"]').click();
-  await expect(page.locator(".game-shell")).toBeVisible();
-  await expect(page.locator(".timeline")).toBeVisible();
-  await expect(page.locator(".action-composer")).toBeVisible();
-  await expect(page.locator(".state-sidebar")).toBeVisible();
+  await expect(page.getByTestId("game-shell")).toBeVisible();
+  await expect(page.getByTestId("timeline")).toBeVisible();
+  await expect(page.getByTestId("action-composer")).toBeVisible();
+  await expect(page.getByTestId("state-sidebar")).toBeVisible();
 });
 
 test("renders different event classes for action dialogue and evidence", async ({ page }) => {

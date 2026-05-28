@@ -24,7 +24,7 @@ export function PackOverview({ packs }: { packs: WorldPackSummary[] }) {
             const visuals = resolveStoryVisuals(pack);
             return (
               <Link key={pack.id} className="story-card" href={`/play/${pack.id}`} style={visuals.cssVars} aria-label={`${pack.title}，开始阅读`}>
-                <div className="story-card__cover" style={visuals.coverStyle} data-has-cover={visuals.hasCoverImage}>
+                <div className="story-card__cover" style={visuals.coverStyle} data-has-cover={visuals.hasCoverImage} data-testid="story-cover-slot">
                   <span>{pack.subtitle}</span>
                 </div>
                 <div className="story-card__body">

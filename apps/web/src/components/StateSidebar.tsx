@@ -21,7 +21,7 @@ export function StateSidebar({
   const currentLocation = state ? labelEntity(entityMaps.locations, state.currentLocationId) : "未知地点";
 
   return (
-    <aside className="state-sidebar" aria-label="故事状态">
+    <aside className="state-sidebar" aria-label="故事状态" data-testid="state-sidebar">
       <section aria-label={labels.location}>
         <h2>{labels.location}</h2>
         <p>{currentLocation}</p>

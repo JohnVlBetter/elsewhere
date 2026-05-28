@@ -4,7 +4,7 @@ import { TimelineEventView } from "./TimelineEventView";
 
 export function Timeline({ events, entityMaps }: { events: TimelineEvent[]; entityMaps: EntityMaps }) {
   return (
-    <section className="timeline" aria-label="故事记录">
+    <section className="timeline" aria-label="故事记录" data-testid="timeline">
       {events.length === 0 ? <p className="timeline__empty">故事正在开始。</p> : null}
       {events.map((event) => (
         <TimelineEventView key={event.id} event={event} entityMaps={entityMaps} />

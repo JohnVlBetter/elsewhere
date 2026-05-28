@@ -117,7 +117,7 @@ export function GameShell({ packId }: { packId: string }) {
   }
 
   return (
-    <main className="game-shell">
+    <main className="game-shell" data-testid="game-shell">
       <header className="game-header">
         <div>
           <p className="eyebrow">故事</p>
