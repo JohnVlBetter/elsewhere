@@ -11,7 +11,7 @@ export async function POST(request: Request) {
   try {
     pack = loadPackById(packId);
   } catch {
-    return NextResponse.json({ error: "未找到这个案件。" }, { status: 404 });
+    return NextResponse.json({ error: "没有找到这个故事。" }, { status: 404 });
   }
   const state = createInitialSessionState(pack);
   const session = await sessionStore.createSession({ packId: pack.manifest.id, state });
@@ -22,8 +22,8 @@ export async function POST(request: Request) {
     manifest: pack.manifest,
     profile: pack.profile,
     entities: {
-      locations: pack.locations.map(({ id, name }) => ({ id, name })),
-      characters: pack.characters.map(({ id, name }) => ({ id, name })),
+      locations: pack.locations.map(({ id, name, assets }) => ({ id, name, assets })),
+      characters: pack.characters.map(({ id, name, assets }) => ({ id, name, assets })),
       items: pack.items.map(({ id, name }) => ({ id, name })),
       facts: pack.facts.map(({ id, name }) => ({ id, name })),
       objectives: pack.objectives.map(({ id, name, stages }) => ({ id, name, stages }))
@@ -40,7 +40,7 @@ function buildSessionIntro(pack: WorldPack): string {
     .replace(/\s+/g, " ")
     .trim();
   const objectiveNames = pack.objectives.map((objective) => objective.name).join("、");
-  const locationText = entryLocation ? `当前地点是${entryLocation.name}。` : "";
+  const locationText = entryLocation ? `当前位置是${entryLocation.name}。` : "";
   const objectiveText = objectiveNames ? `目标：${objectiveNames}。` : "";
   return `你进入《${pack.manifest.name}》。${worldText} ${locationText}${objectiveText}`.trim();
 }

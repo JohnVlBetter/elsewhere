@@ -31,11 +31,16 @@ describe("POST /api/session", () => {
     expect(body.packId).toBe("rain-tower");
     expect(body.manifest.profileId).toBe("detective");
     expect(body.profile.id).toBe("detective");
+    expect(body.profile.theme).toBeDefined();
+    expect(body.entities.locations[0]).toEqual(expect.objectContaining({ id: expect.any(String), name: expect.any(String) }));
+    expect(body.entities.characters[0]).toEqual(expect.objectContaining({ id: expect.any(String), name: expect.any(String) }));
     expect(body.entities.characters).toEqual(expect.arrayContaining([expect.objectContaining({ id: "butler" })]));
     expect(body.entities.facts).toEqual(expect.arrayContaining([expect.objectContaining({ id: "broken_watch" })]));
     expect(body.entities.objectives).toEqual(expect.arrayContaining([expect.objectContaining({ id: "solve_murder" })]));
     expect(body.state.knownFacts).toEqual([]);
     expect(body.state.objectiveStages).toEqual({ solve_murder: "investigate" });
     expect(body.intro).toContain(body.manifest.name);
+    expect(JSON.stringify(body)).not.toContain("鏈");
+    expect(JSON.stringify(body)).not.toContain("鐜");
   });
 });

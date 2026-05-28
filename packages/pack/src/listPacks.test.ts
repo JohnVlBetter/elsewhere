@@ -16,7 +16,18 @@ async function writePack(root: string, id: string, name: string, worldText: stri
     "profileId: detective"
   ].join("\n"));
   await writeFile(join(packRoot, "world.md"), worldText);
-  await writeFile(join(packRoot, "profile.yaml"), "id: detective\nlabels: {}\nquickActions: []\nactions: {}\n");
+  await writeFile(join(packRoot, "profile.yaml"), [
+    "id: detective",
+    "labels: {}",
+    "theme:",
+    "  tone: cool",
+    "  accentColor: '#4f8cff'",
+    "assets:",
+    "  coverImage: generated/covers/rain-tower.webp",
+    "  bannerImage: generated/banners/rain-tower.webp",
+    "quickActions: []",
+    "actions: {}"
+  ].join("\n"));
   await writeFile(join(packRoot, "rules.yaml"), "allowedPatchTypes:\n  - reveal_fact\ntriggers: []\n");
   await writeFile(join(packRoot, "locations.yaml"), "- id: foyer\n  name: Foyer\n  description: Entry.\n  exits: []\n");
   await writeFile(join(packRoot, "characters.yaml"), "[]\n");
@@ -40,7 +51,15 @@ describe("listWorldPackSummaries", () => {
           title: "Rain Tower",
           subtitle: "detective",
           introduction: "A stormy tower mystery.",
-          version: "0.2.0"
+          version: "0.2.0",
+          theme: {
+            tone: "cool",
+            accentColor: "#4f8cff"
+          },
+          assets: {
+            coverImage: "generated/covers/rain-tower.webp",
+            bannerImage: "generated/banners/rain-tower.webp"
+          }
         }
       ]);
     } finally {

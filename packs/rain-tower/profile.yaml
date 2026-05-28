@@ -8,6 +8,11 @@ labels:
   relationships: 关系
   objectives: 案件进展
   ending: 结局
+theme:
+  tone: cool
+  accentColor: "#5f8dd3"
+assets:
+  fallbackPattern: rain
 quickActions:
   - label: 环顾门厅
     command: look

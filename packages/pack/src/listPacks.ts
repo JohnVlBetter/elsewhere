@@ -1,5 +1,6 @@
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
+import type { ProfileAssets, ProfileTheme } from "@aigame/shared";
 import { loadWorldPack } from "./loadPack";
 
 export type WorldPackSummary = {
@@ -8,6 +9,8 @@ export type WorldPackSummary = {
   subtitle: string;
   introduction: string;
   version: string;
+  theme?: ProfileTheme;
+  assets?: ProfileAssets;
 };
 
 export async function listWorldPackSummaries(root = "packs"): Promise<WorldPackSummary[]> {
@@ -22,7 +25,9 @@ export async function listWorldPackSummaries(root = "packs"): Promise<WorldPackS
           title: pack.manifest.name,
           subtitle: pack.profile.id,
           introduction: summarizeWorldText(pack.worldText),
-          version: pack.manifest.version
+          version: pack.manifest.version,
+          theme: pack.profile.theme,
+          assets: pack.profile.assets
         };
       })
   );
