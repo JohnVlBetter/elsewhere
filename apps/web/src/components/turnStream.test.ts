@@ -21,7 +21,7 @@ describe("readTurnEventStream", () => {
     const response = streamResponse([
       "event: status\ndata: {\"message\":\"行动已接收\"}\n\n",
       "event: res",
-      "ult\ndata: {\"outputText\":\"管家避开了你的目光\"}\n\n"
+      "ult\ndata: {\"outputText\":\"管家避开了你的目光。\"}\n\n"
     ]);
 
     const result = await readTurnEventStream<{ outputText: string }>(response, {
@@ -29,7 +29,7 @@ describe("readTurnEventStream", () => {
     });
 
     expect(statuses).toEqual(["行动已接收"]);
-    expect(result.outputText).toBe("管家避开了你的目光");
+    expect(result.outputText).toBe("管家避开了你的目光。");
   });
 
   it("maps internal runtime status labels to player-safe copy", async () => {
@@ -43,7 +43,7 @@ describe("readTurnEventStream", () => {
       onStatus: (message) => statuses.push(message)
     });
 
-    expect(statuses).toEqual(["思索中..."]);
+    expect(statuses).toEqual(["文字正在延展"]);
   });
 
   it("throws the server-provided error event message", async () => {

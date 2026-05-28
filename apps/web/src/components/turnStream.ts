@@ -84,11 +84,12 @@ function readMessage(data: string): string {
 
 function playerSafeStatus(message: string): string {
   const statusLabels: Record<string, string> = {
-    pending: "思索中...",
-    running: "思索中...",
-    complete: "已记录...",
-    "正在调用模型...": "思索中...",
-    "正在写入案卷...": "已记录..."
+    pending: "文字正在延展",
+    running: "文字正在延展",
+    complete: "故事已记录",
+    "正在调用模型...": "文字正在延展",
+    "正在写入案卷...": "故事已记录",
+    "行动已记录，正在思考...": "文字正在延展"
   };
 
   return statusLabels[message] ?? message;

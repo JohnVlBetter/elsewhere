@@ -54,7 +54,7 @@ async function runStoredTurnUnlocked(
   const pack = loadPackById(session.packId);
 
   const runtimeModel = createRuntimeModelConfig();
-  onStatus?.("思索中...");
+  onStatus?.("文字正在延展");
   const result = await runTurn({
     pack,
     state: session.state,
@@ -65,7 +65,7 @@ async function runStoredTurnUnlocked(
   });
   throwIfAborted(signal);
 
-  onStatus?.("已记录...");
+  onStatus?.("故事已记录");
   await sessionStore.updateSessionState(body.sessionId, result.state);
   await sessionStore.appendTimelineEvents(body.sessionId, result.timelineEvents);
 

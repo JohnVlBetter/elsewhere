@@ -41,7 +41,7 @@ describe("POST /api/turn/stream", () => {
 
     expect(response.headers.get("content-type")).toContain("text/event-stream");
     expect(text).toContain("event: status");
-    expect(text).toContain("\"message\":\"行动已记录，正在思索...\"");
+    expect(text).toContain("\"message\":\"文字正在延展\"");
     expect(text).not.toContain("调用模型");
     expect(text).toContain("event: result");
     expect(text).toContain("\"timelineEvents\"");
