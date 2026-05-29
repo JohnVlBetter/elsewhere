@@ -14,6 +14,7 @@ describe("POST /api/turn/stream", () => {
   afterEach(() => {
     restoreEnv("AIGAME_SESSION_ROOT", originalEnv.AIGAME_SESSION_ROOT);
     restoreEnv("AIGAME_MODEL_PROVIDER", originalEnv.AIGAME_MODEL_PROVIDER);
+    vi.doUnmock("@aigame/runtime");
     vi.resetModules();
   });
 
@@ -46,6 +47,36 @@ describe("POST /api/turn/stream", () => {
     expect(text).not.toContain("调用模型");
     expect(text).toContain("event: result");
     expect(text).toContain("\"timelineEvents\"");
+  });
+
+  it("filters debug timeline events from the streamed result payload", async () => {
+    vi.resetModules();
+    process.env.AIGAME_SESSION_ROOT = mkdtempSync(join(tmpdir(), `stream-route-${randomUUID()}-`));
+    process.env.AIGAME_MODEL_PROVIDER = "fake";
+    mockRuntimeTurnWithDebugEvent();
+
+    const { POST: createSession } = await import("../../session/route");
+    const sessionResponse = await createSession(new Request("http://test.local/api/session", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ packId: "rain-tower" })
+    }));
+    const sessionBody = await sessionResponse.json() as { sessionId: string };
+
+    const { POST } = await import("./route");
+    const request = new Request("http://test.local/api/turn/stream", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ sessionId: sessionBody.sessionId, inputText: "look" })
+    });
+
+    const response = await POST(request as Parameters<typeof POST>[0]);
+    const text = await response.text();
+
+    expect(text).toContain("event: result");
+    expect(text).toContain("\"kind\":\"scene\"");
+    expect(text).not.toContain("\"kind\":\"debug\"");
+    expect(text).not.toContain("Runtime model");
   });
 
   it("formats known stream failures without exposing runtime internals", () => {
@@ -94,4 +125,34 @@ function restoreEnv(name: keyof typeof originalEnv, value: string | undefined) {
   } else {
     process.env[name] = value;
   }
+}
+
+function mockRuntimeTurnWithDebugEvent() {
+  vi.doMock("@aigame/runtime", () => ({
+    runTurn: vi.fn(async (input: { state: { turn: number }; inputText: string }) => ({
+      action: { type: "look", rawText: input.inputText },
+      outputText: "Visible turn result.",
+      messages: [],
+      timelineEvents: [
+        {
+          id: "evt_scene",
+          kind: "scene",
+          text: "Visible turn result.",
+          timestamp: "2026-05-29T12:00:00.000Z",
+          visibleToPlayer: true
+        },
+        {
+          id: "evt_debug",
+          kind: "debug",
+          text: "Runtime model: fake-provider",
+          timestamp: "2026-05-29T12:00:00.000Z",
+          visibleToPlayer: true
+        }
+      ],
+      state: { ...input.state, turn: input.state.turn + 1 },
+      acceptedPatches: [],
+      rejectedPatches: [],
+      trace: { modelName: "fake" }
+    }))
+  }));
 }

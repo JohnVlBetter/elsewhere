@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { toPlayerTurnResult } from "../../../../src/server/playerTurnResult";
 import { formatTurnFailure, parseTurnRequestBody, runStoredTurn, TurnRequestError } from "../../../../src/server/turnService";
 
 export async function POST(request: NextRequest) {
@@ -20,7 +21,7 @@ export async function POST(request: NextRequest) {
       try {
         send("status", { message: "文字正在延展" });
         const result = await runStoredTurn(body, (message) => send("status", { message }), request.signal);
-        send("result", result);
+        send("result", toPlayerTurnResult(result));
       } catch (error) {
         const failure = formatTurnFailure(error);
         send("error", { message: failure.error });
