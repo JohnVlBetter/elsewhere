@@ -49,8 +49,10 @@ export type StoryVisualSource = {
 export type StoryVisuals = {
   cssVars: CSSProperties & Record<"--story-accent" | "--story-bg" | "--story-text", string>;
   coverStyle: CSSProperties;
+  bannerStyle: CSSProperties;
   tone: StoryTone;
   hasCoverImage: boolean;
+  hasBannerImage: boolean;
 };
 
 export type TimelineEventViewModel = {
@@ -79,7 +81,10 @@ export function resolveStoryVisuals(story: StoryVisualSource): StoryVisuals {
   const accent = story.theme?.accentColor ?? ACCENTS[tone];
   const background = story.theme?.backgroundColor ?? DEFAULT_BACKGROUND;
   const text = story.theme?.textColor ?? DEFAULT_TEXT;
-  const coverImage = story.assets?.coverImage;
+  const coverImage = story.assets?.coverImage ? cssUrl(story.assets.coverImage) : undefined;
+  const bannerImage = story.assets?.bannerImage ? cssUrl(story.assets.bannerImage) : undefined;
+  const fallbackPattern = story.assets?.fallbackPattern ? cssUrl(story.assets.fallbackPattern) : undefined;
+  const fallbackImage = fallbackPattern ?? `linear-gradient(135deg, ${background} 0%, ${accent} 100%)`;
 
   return {
     cssVars: {
@@ -88,21 +93,54 @@ export function resolveStoryVisuals(story: StoryVisualSource): StoryVisuals {
       "--story-text": text
     },
     coverStyle: {
-      backgroundImage: coverImage
-        ? cssUrl(coverImage)
-        : `linear-gradient(135deg, ${background} 0%, ${accent} 100%)`
+      backgroundImage: coverImage ?? fallbackImage
+    },
+    bannerStyle: {
+      backgroundImage: bannerImage ?? coverImage ?? fallbackImage
     },
     tone,
-    hasCoverImage: Boolean(coverImage)
+    hasCoverImage: Boolean(coverImage),
+    hasBannerImage: Boolean(bannerImage)
   };
 }
 
-export function cssUrl(value: string): string {
-  return `url("${escapeCssQuotedUrl(value)}")`;
+export function cssUrl(value: string): string | undefined {
+  const normalized = normalizeAssetUrl(value);
+  return normalized ? `url("${escapeCssQuotedUrl(normalized)}")` : undefined;
 }
 
 function escapeCssQuotedUrl(url: string): string {
   return url.replace(/\\/g, "\\\\").replace(/"/g, "\\\"");
+}
+
+function normalizeAssetUrl(value: string): string | undefined {
+  const trimmed = value.trim();
+  if (!trimmed || /[\u0000-\u001f\u007f]/.test(trimmed)) return undefined;
+
+  const slashPath = trimmed.replace(/\\/g, "/");
+  if (slashPath.startsWith("//")) return undefined;
+
+  try {
+    const url = new URL(slashPath);
+    if (url.protocol === "http:" || url.protocol === "https:") {
+      return url.href;
+    }
+    return undefined;
+  } catch {
+    // Local asset path; validate below.
+  }
+
+  if (/^[a-z][a-z0-9+.-]*:/i.test(slashPath)) return undefined;
+
+  const relativePath = slashPath.replace(/^\.\/+/, "");
+  if (!relativePath || relativePath.split("/").some((part) => part === "..")) return undefined;
+
+  const absolutePath = relativePath.startsWith("/") ? relativePath : `/${relativePath}`;
+  return encodeURI(absolutePath)
+    .replace(/"/g, "%22")
+    .replace(/'/g, "%27")
+    .replace(/\(/g, "%28")
+    .replace(/\)/g, "%29");
 }
 
 export function normalizeTimelineEvent(event: NormalizableTimelineEvent, entityMaps: EntityMaps): TimelineEventViewModel {

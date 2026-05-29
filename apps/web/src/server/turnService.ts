@@ -74,7 +74,7 @@ async function runStoredTurnUnlocked(
 
 export function formatTurnFailure(error: unknown): { status: number; error: string } {
   if (error instanceof TurnRequestError) {
-    return { status: error.status, error: error.message };
+    return { status: error.status, error: "行动没有成功提交，请重试。" };
   }
 
   const message = error instanceof Error ? error.message : String(error);

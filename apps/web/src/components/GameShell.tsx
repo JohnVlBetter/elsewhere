@@ -6,7 +6,10 @@ import { ActionComposer } from "./ActionComposer";
 import { DebugDrawer } from "./DebugDrawer";
 import { buildEntityMaps, labelEntity } from "./entityLabels";
 import type { EntitySummary, ObjectiveSummary } from "./entityLabels";
+import { resolveStoryVisuals } from "./packVisuals";
+import type { StoryVisualSource } from "./packVisuals";
 import { StateSidebar } from "./StateSidebar";
+import { isPlayerVisibleTimelineEvent } from "../timelineVisibility";
 import { Timeline } from "./Timeline";
 import { readTurnEventStream } from "./turnStream";
 
@@ -20,6 +23,8 @@ export type SessionResponse = {
     characters: EntitySummary[];
     items: EntitySummary[];
     facts: EntitySummary[];
+    resources?: EntitySummary[];
+    relationships?: EntitySummary[];
     objectives: ObjectiveSummary[];
   };
   state: SessionState;
@@ -50,6 +55,7 @@ export function GameShell({ packId }: { packId: string }) {
 
   const entityMaps = useMemo(() => buildEntityMaps(session?.entities), [session]);
   const labels = useMemo(() => resolveLabels(session?.profile.labels), [session]);
+  const storyVisuals = useMemo(() => session ? resolveStoryVisuals(toStoryVisualSource(session)) : undefined, [session]);
   const quickActions = useMemo(
     () => (session?.profile.quickActions ?? []).filter((action) => conditionMatches(action.visibleWhen, state)),
     [session, state]
@@ -117,8 +123,8 @@ export function GameShell({ packId }: { packId: string }) {
   }
 
   return (
-    <main className="game-shell" data-testid="game-shell">
-      <header className="game-header">
+    <main className="game-shell" style={storyVisuals?.cssVars} data-testid="game-shell">
+      <header className="game-header" style={storyVisuals?.bannerStyle} data-has-banner={storyVisuals?.hasBannerImage ?? false}>
         <div>
           <p className="eyebrow">故事</p>
           <h1>{session?.manifest.name ?? "载入故事"}</h1>
@@ -162,7 +168,7 @@ export function GameShell({ packId }: { packId: string }) {
 
 function visibleTimelineEvents(body: TurnResponse, command: string): TimelineEvent[] {
   if (body.timelineEvents?.length) {
-    return body.timelineEvents.filter((event) => event.visibleToPlayer);
+    return body.timelineEvents.filter(isPlayerVisibleTimelineEvent);
   }
 
   return [createLocalSceneEvent(body.outputText || command)];
@@ -191,9 +197,25 @@ function createLocalNoticeEvent(text: string): TimelineEvent {
 function resolveLabels(labels: Record<string, string> | undefined) {
   return {
     location: labels?.location ?? "地点",
+    characters: labels?.characters ?? "角色",
     facts: labels?.facts ?? "发现",
     inventory: labels?.inventory ?? "物品",
+    resources: labels?.resources ?? "资源",
+    relationships: labels?.relationships ?? "关系",
     objectives: labels?.objectives ?? "进展"
+  };
+}
+
+function toStoryVisualSource(session: SessionResponse): StoryVisualSource {
+  const profileVisuals = session.profile as Pick<StoryVisualSource, "theme" | "assets">;
+  return {
+    id: session.manifest.id,
+    title: session.manifest.name,
+    subtitle: session.profile.id,
+    introduction: session.intro ?? "",
+    version: session.manifest.version,
+    theme: profileVisuals.theme,
+    assets: profileVisuals.assets
   };
 }
 

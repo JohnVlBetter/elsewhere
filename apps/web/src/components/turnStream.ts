@@ -27,11 +27,11 @@ export async function readTurnEventStream<T>(
       const event = parseServerSentEvent(rawEvent);
 
       if (event.name === "status") {
-        options.onStatus?.(readMessage(event.data));
+        options.onStatus?.(readStatusMessage(event.data));
       } else if (event.name === "result") {
         return JSON.parse(event.data) as T;
       } else if (event.name === "error") {
-        throw new Error(playerSafeError(readMessage(event.data)));
+        throw new Error(playerSafeError(readEventMessage(event.data)));
       }
 
       eventEnd = findEventEnd(buffer);
@@ -71,12 +71,16 @@ function parseServerSentEvent(rawEvent: string): { name: string; data: string } 
   return { name, data: data.join("\n") };
 }
 
-function readMessage(data: string): string {
+function readStatusMessage(data: string): string {
+  return playerSafeStatus(readEventMessage(data));
+}
+
+function readEventMessage(data: string): string {
   try {
     const body = JSON.parse(data) as { message?: unknown };
-    if (typeof body.message === "string" && body.message) return playerSafeStatus(body.message);
+    if (typeof body.message === "string" && body.message) return body.message;
   } catch {
-    // Some event emitters send plain-text data; surface it as-is.
+    // Some event emitters send plain-text data; sanitize it at the call site.
   }
 
   return data || "行动处理失败。";
@@ -87,13 +91,16 @@ function playerSafeStatus(message: string): string {
     pending: "文字正在延展",
     running: "文字正在延展",
     complete: "故事已记录",
+    "行动已接收": "行动已接收",
+    "文字正在延展": "文字正在延展",
+    "故事已记录": "故事已记录",
     "正在调用模型...": "文字正在延展",
     "正在写入案卷...": "故事已记录",
     "行动已记录，正在思考...": "文字正在延展",
     "行动已记录，正在思索...": "文字正在延展"
   };
 
-  return statusLabels[message] ?? message;
+  return statusLabels[message] ?? "文字正在延展";
 }
 
 function playerSafeError(message: string): string {
@@ -104,15 +111,19 @@ function playerSafeError(message: string): string {
   const unsafeTerms = [
     "DEEPSEEK",
     "AIGAME_MODEL_PROVIDER",
+    "Invalid turn request",
     "provider",
     "Runtime",
     "Session not found",
+    "Turn request",
+    "cancelled",
     "Turn stream",
     "stream",
     "request failed"
   ];
 
-  return unsafeTerms.some((term) => message.includes(term))
+  const normalized = message.toLowerCase();
+  return unsafeTerms.some((term) => normalized.includes(term.toLowerCase()))
     ? "行动没有成功提交，请重试。"
     : message;
 }

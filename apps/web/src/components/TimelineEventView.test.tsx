@@ -69,7 +69,33 @@ describe("TimelineEventView", () => {
 
     const avatar = document.querySelector(".timeline-event__avatar");
     expect(avatar).toBeTruthy();
-    expect(avatar?.getAttribute("style")).toContain(cssUrl(avatarUrl));
+    const safeAvatarUrl = cssUrl(avatarUrl);
+    expect(safeAvatarUrl).toBeDefined();
+    expect(avatar?.getAttribute("style")).toContain(safeAvatarUrl);
+  });
+
+  it("does not assign unsafe avatar urls to inline styles", () => {
+    const specialMaps = buildEntityMaps({
+      locations: [],
+      characters: [{ id: "lin", name: "Lin", assets: { avatar: "javascript:alert(1)" } }],
+      items: [],
+      facts: [],
+      objectives: []
+    });
+
+    render(<TimelineEventView entityMaps={specialMaps} event={{
+      id: "evt_dialogue_unsafe_avatar",
+      kind: "dialogue",
+      text: "Unsafe avatar path should be ignored.",
+      timestamp: "2026-05-29T12:00:00.000Z",
+      speakerId: "lin",
+      speakerName: "Lin",
+      visibleToPlayer: true
+    }} />);
+
+    const avatar = document.querySelector(".timeline-event__avatar");
+    expect(avatar).toBeTruthy();
+    expect(avatar?.getAttribute("style") ?? "").not.toContain("javascript");
   });
 
   it("renders evidence with a player-facing title", () => {

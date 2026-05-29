@@ -36,7 +36,19 @@ function sessionBody() {
         location: "地点",
         facts: "发现",
         inventory: "物品",
-        objectives: "进展"
+        objectives: "进展",
+        characters: "角色",
+        resources: "资源",
+        relationships: "关系"
+      },
+      theme: {
+        tone: "cool",
+        accentColor: "#4f8cff",
+        backgroundColor: "#f8fbff",
+        textColor: "#18202a"
+      },
+      assets: {
+        bannerImage: "generated/banners/campus.webp"
       },
       quickActions: [
         { label: "环顾四周", command: "look" },
@@ -45,10 +57,12 @@ function sessionBody() {
       actions: {}
     },
     entities: {
-      locations: [{ id: "classroom", name: "Classroom" }],
-      characters: [{ id: "lin", name: "Lin" }],
+      locations: [{ id: "classroom", name: "Classroom", visibleCharacters: ["lin"] }],
+      characters: [{ id: "lin", name: "Lin", assets: { avatar: "generated/avatars/lin.webp" } }],
       items: [{ id: "paper_note", name: "Paper note" }],
       facts: [{ id: "missed_note", name: "Missed note" }],
+      resources: [{ id: "courage", name: "Courage" }],
+      relationships: [{ id: "lin", name: "Trust" }],
       objectives: [{ id: "repair_lunch", name: "Repair lunch", stages: ["awkward", "warm"] }]
     },
     intro: "Campus intro",
@@ -78,6 +92,8 @@ describe("GameShell", () => {
     render(<GameShell packId="campus-lunch" />);
 
     expect(await screen.findByRole("heading", { name: "Campus Lunch" })).toBeTruthy();
+    expect(screen.getByTestId("game-shell").getAttribute("style")).toContain("--story-accent: #4f8cff");
+    expect(document.querySelector(".game-header")?.getAttribute("style")).toContain("/generated/banners/campus.webp");
     expect(screen.getByText("Campus intro")).toBeTruthy();
     expect(screen.getByPlaceholderText("写下你的行动")).toBeTruthy();
     expect(screen.getByRole("button", { name: "发送" })).toBeTruthy();
@@ -113,7 +129,8 @@ describe("GameShell", () => {
             timelineEvents: [
               { id: "evt_1", kind: "player_action", actorId: "player", text: "询问林同学", timestamp: "2026-05-28T12:00:00.000Z", visibleToPlayer: true },
               { id: "evt_2", kind: "dialogue", speakerId: "lin", speakerName: "Lin", text: "I waited by the courtyard.", timestamp: "2026-05-28T12:00:00.000Z", visibleToPlayer: true },
-              { id: "evt_3", kind: "evidence", refId: "missed_note", text: "The note was tucked into the wrong book.", timestamp: "2026-05-28T12:00:00.000Z", visibleToPlayer: true }
+              { id: "evt_3", kind: "evidence", refId: "missed_note", text: "The note was tucked into the wrong book.", timestamp: "2026-05-28T12:00:00.000Z", visibleToPlayer: true },
+              { id: "evt_debug", kind: "debug", text: "Runtime model: fake-provider", timestamp: "2026-05-28T12:00:00.000Z", visibleToPlayer: true }
             ],
             acceptedPatches: [],
             rejectedPatches: [],
@@ -138,6 +155,10 @@ describe("GameShell", () => {
       expect(screen.getByLabelText("发现").textContent).toContain("Missed note");
       expect(screen.getByLabelText("物品").textContent).toContain("Paper note");
       expect(screen.getByLabelText("进展").textContent).toContain("Repair lunch: warm");
+      expect(screen.getByLabelText("角色").textContent).toContain("Lin");
+      expect(screen.getByLabelText("资源").textContent).toContain("Courage: 2");
+      expect(screen.getByLabelText("关系").textContent).toContain("Trust: 1");
+      expect(document.body.textContent).not.toContain("Runtime model");
       expect(document.body.textContent).not.toContain("閫");
     });
   });

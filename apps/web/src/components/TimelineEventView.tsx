@@ -4,6 +4,7 @@ import { cssUrl, normalizeTimelineEvent } from "./packVisuals";
 
 export function TimelineEventView({ event, entityMaps }: { event: TimelineEvent; entityMaps: EntityMaps }) {
   const view = normalizeTimelineEvent(event, entityMaps);
+  const avatarImage = view.avatar ? cssUrl(view.avatar) : undefined;
 
   if (view.kind === "scene") {
     return (
@@ -16,7 +17,7 @@ export function TimelineEventView({ event, entityMaps }: { event: TimelineEvent;
   if (view.kind === "dialogue") {
     return (
       <article className="timeline-event timeline-event--dialogue" data-event-kind={view.kind}>
-        <div className="timeline-event__avatar" data-has-image={Boolean(view.avatar)} style={view.avatar ? { backgroundImage: cssUrl(view.avatar) } : undefined} aria-hidden="true" />
+        <div className="timeline-event__avatar" data-has-image={Boolean(avatarImage)} style={avatarImage ? { backgroundImage: avatarImage } : undefined} aria-hidden="true" />
         <div>
           <strong>{view.title}</strong>
           <p>{view.text}</p>

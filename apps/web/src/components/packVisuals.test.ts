@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildEntityMaps } from "./entityLabels";
-import { normalizeTimelineEvent, resolveStoryVisuals } from "./packVisuals";
+import { cssUrl, normalizeTimelineEvent, resolveStoryVisuals } from "./packVisuals";
 
 describe("resolveStoryVisuals", () => {
   it("resolves theme variables and cover style from profile data", () => {
@@ -15,8 +15,27 @@ describe("resolveStoryVisuals", () => {
     });
 
     expect(visuals.cssVars["--story-accent"]).toBe("#4f8cff");
-    expect(visuals.coverStyle.backgroundImage).toContain("generated/covers/mist-sect.webp");
+    expect(visuals.coverStyle.backgroundImage).toContain("/generated/covers/mist-sect.webp");
     expect(visuals.hasCoverImage).toBe(true);
+  });
+
+  it("uses banner and fallback image slots with route-safe URLs", () => {
+    const visuals = resolveStoryVisuals({
+      id: "mist-sect",
+      title: "Mist Sect",
+      subtitle: "xianxia",
+      introduction: "Mist lingers outside the mountain gate.",
+      version: "0.2.0",
+      assets: {
+        bannerImage: "generated/banners/mist-sect.webp",
+        fallbackPattern: "generated/patterns/mist.webp"
+      }
+    });
+
+    expect(visuals.bannerStyle.backgroundImage).toBe('url("/generated/banners/mist-sect.webp")');
+    expect(visuals.coverStyle.backgroundImage).toBe('url("/generated/patterns/mist.webp")');
+    expect(visuals.hasBannerImage).toBe(true);
+    expect(visuals.hasCoverImage).toBe(false);
   });
 
   it("uses a complete fallback visual when no assets exist", () => {
@@ -43,7 +62,29 @@ describe("resolveStoryVisuals", () => {
       assets: { coverImage: String.raw`generated\covers/"mist".webp` }
     });
 
-    expect(visuals.coverStyle.backgroundImage).toBe(String.raw`url("generated\\covers/\"mist\".webp")`);
+    expect(visuals.coverStyle.backgroundImage).toBe(String.raw`url("/generated/covers/%22mist%22.webp")`);
+  });
+
+  it("drops unsafe asset URLs instead of emitting CSS", () => {
+    const visuals = resolveStoryVisuals({
+      id: "unsafe-cover",
+      title: "Unsafe Cover",
+      subtitle: "test",
+      introduction: "Unsafe URLs should not become inline CSS.",
+      version: "0.2.0",
+      assets: {
+        coverImage: "javascript:alert(1)",
+        bannerImage: "data:text/html,<svg></svg>",
+        fallbackPattern: "../private/secret.webp"
+      }
+    });
+
+    expect(cssUrl("generated/avatars/lin.webp")).toBe('url("/generated/avatars/lin.webp")');
+    expect(cssUrl("javascript:alert(1)")).toBeUndefined();
+    expect(visuals.coverStyle.backgroundImage).toContain("linear-gradient");
+    expect(visuals.bannerStyle.backgroundImage).toContain("linear-gradient");
+    expect(visuals.hasCoverImage).toBe(false);
+    expect(visuals.hasBannerImage).toBe(false);
   });
 });
 

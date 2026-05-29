@@ -232,12 +232,32 @@ a {
 
 .game-header {
   grid-column: 1 / -1;
+  position: relative;
+  overflow: hidden;
   display: flex;
   align-items: end;
   justify-content: space-between;
   gap: 16px;
-  border-bottom: 1px solid var(--line);
-  padding-bottom: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background-color: var(--story-bg, var(--surface));
+  background-size: cover;
+  background-position: center;
+  color: var(--story-text, var(--ink));
+  padding: 16px;
+}
+
+.game-header::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.62));
+  pointer-events: none;
+}
+
+.game-header > * {
+  position: relative;
+  z-index: 1;
 }
 
 .game-header__meta {
@@ -414,6 +434,34 @@ dd {
   color: var(--ink);
   line-height: 1.55;
   overflow-wrap: anywhere;
+}
+
+.state-sidebar__list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.state-chip {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-wrap: anywhere;
+}
+
+.state-chip__avatar {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  border: 1px solid rgba(82, 104, 122, 0.22);
+  border-radius: 50%;
+  background:
+    linear-gradient(145deg, var(--story-accent, var(--accent)), #d7dde3);
+  background-size: cover;
+  background-position: center;
 }
 
 .action-composer {

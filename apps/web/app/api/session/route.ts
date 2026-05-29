@@ -26,6 +26,8 @@ export async function POST(request: Request) {
       characters: pack.characters.map(entitySummary),
       items: pack.items.map(({ id, name }) => ({ id, name })),
       facts: pack.facts.map(({ id, name }) => ({ id, name })),
+      resources: pack.resources.map(({ id, name }) => ({ id, name })),
+      relationships: pack.relationships.map(({ characterId, name }) => ({ id: characterId, name })),
       objectives: pack.objectives.map(({ id, name, stages }) => ({ id, name, stages }))
     },
     intro: buildSessionIntro(pack),
@@ -45,9 +47,14 @@ function buildSessionIntro(pack: WorldPack): string {
   return `你进入《${pack.manifest.name}》。${worldText} ${locationText}${objectiveText}`.trim();
 }
 
-function entitySummary(entity: { id: string; name: string; assets?: unknown }) {
-  const { id, name, assets } = entity;
-  return isRecord(assets) ? { id, name, assets } : { id, name };
+function entitySummary(entity: { id: string; name: string; assets?: unknown; visibleCharacters?: unknown }) {
+  const { id, name, assets, visibleCharacters } = entity;
+  const summary: { id: string; name: string; assets?: unknown; visibleCharacters?: string[] } = { id, name };
+  if (isRecord(assets)) summary.assets = assets;
+  if (Array.isArray(visibleCharacters) && visibleCharacters.every((value) => typeof value === "string")) {
+    summary.visibleCharacters = visibleCharacters;
+  }
+  return summary;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

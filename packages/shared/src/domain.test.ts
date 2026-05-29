@@ -86,6 +86,17 @@ describe("v0.2 domain schema", () => {
     expect(event.visibleToPlayer).toBe(true);
   });
 
+  it("hides debug timeline events from player timelines by default", () => {
+    const event = TimelineEventSchema.parse({
+      id: "evt_debug",
+      kind: "debug",
+      text: "Runtime trace",
+      timestamp: "2026-05-28T12:00:00.000Z"
+    });
+
+    expect(event.visibleToPlayer).toBe(false);
+  });
+
   it("tracks visible characters on a location", () => {
     const location = LocationSchema.parse({
       id: "hall",

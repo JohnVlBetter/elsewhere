@@ -211,11 +211,20 @@ export const TimelineEventSchema = z.discriminatedUnion("kind", [
   }),
   z.object({
     id: z.string(),
-    kind: z.enum(["evidence", "item", "progress", "location_change", "notice", "debug"]),
+    kind: z.enum(["evidence", "item", "progress", "location_change", "notice"]),
     text: z.string(),
     timestamp: z.string(),
     refId: IdSchema.optional(),
     visibleToPlayer: z.boolean().default(true),
+    metadata: TimelineMetadataSchema.optional()
+  }),
+  z.object({
+    id: z.string(),
+    kind: z.literal("debug"),
+    text: z.string(),
+    timestamp: z.string(),
+    refId: IdSchema.optional(),
+    visibleToPlayer: z.boolean().default(false),
     metadata: TimelineMetadataSchema.optional()
   })
 ]);

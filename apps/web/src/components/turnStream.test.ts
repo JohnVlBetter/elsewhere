@@ -60,6 +60,20 @@ describe("readTurnEventStream", () => {
     expect(statuses).toEqual(["文字正在延展"]);
   });
 
+  it("maps unknown status messages to stable player-safe copy", async () => {
+    const statuses: string[] = [];
+    const response = streamResponse([
+      "event: status\ndata: {\"message\":\"AIGAME_MODEL_PROVIDER missing\"}\n\n",
+      "event: result\ndata: {\"outputText\":\"done\"}\n\n"
+    ]);
+
+    await readTurnEventStream<{ outputText: string }>(response, {
+      onStatus: (message) => statuses.push(message)
+    });
+
+    expect(statuses).toEqual(["文字正在延展"]);
+  });
+
   it("sanitizes unsafe server-provided error event messages", async () => {
     const response = streamResponse([
       "event: error\ndata: {\"message\":\"模型返回内容不完整，请重试。\"}\n\n"
@@ -83,6 +97,18 @@ describe("readTurnEventStream", () => {
       status: 404,
       headers: { "content-type": "application/json" }
     }), {})).rejects.not.toThrow("Session not found");
+  });
+
+  it("sanitizes unsafe error events without treating them as statuses", async () => {
+    const response = streamResponse([
+      "event: error\ndata: {\"message\":\"Session not found\"}\n\n"
+    ]);
+
+    await expect(readTurnEventStream(response, {}))
+      .rejects.toThrow("行动没有成功提交，请重试。");
+    await expect(readTurnEventStream(streamResponse([
+      "event: error\ndata: {\"message\":\"Session not found\"}\n\n"
+    ]), {})).rejects.not.toThrow("Session not found");
   });
 
   it("throws player-safe copy when an ok response has no body", async () => {

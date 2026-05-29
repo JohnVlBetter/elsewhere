@@ -35,7 +35,8 @@ describe("POST /api/session", () => {
     expect(body.entities.locations[0]).toEqual(expect.objectContaining({
       id: expect.any(String),
       name: expect.any(String),
-      assets: expect.objectContaining({ sceneImage: expect.any(String) })
+      assets: expect.objectContaining({ sceneImage: expect.any(String) }),
+      visibleCharacters: expect.any(Array)
     }));
     expect(body.entities.characters[0]).toEqual(expect.objectContaining({
       id: expect.any(String),
@@ -43,6 +44,8 @@ describe("POST /api/session", () => {
       assets: expect.objectContaining({ avatar: expect.any(String) })
     }));
     expect(body.entities.characters).toEqual(expect.arrayContaining([expect.objectContaining({ id: "butler" })]));
+    expect(body.entities.resources).toEqual([]);
+    expect(body.entities.relationships).toEqual([]);
     expect(body.entities.facts).toEqual(expect.arrayContaining([expect.objectContaining({ id: "broken_watch" })]));
     expect(body.entities.objectives).toEqual(expect.arrayContaining([expect.objectContaining({ id: "solve_murder" })]));
     expect(body.state.knownFacts).toEqual([]);

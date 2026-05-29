@@ -3,7 +3,7 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { formatTurnFailure } from "../../../../src/server/turnService";
+import { formatTurnFailure, TurnRequestError } from "../../../../src/server/turnService";
 
 const originalEnv = {
   AIGAME_SESSION_ROOT: process.env.AIGAME_SESSION_ROOT,
@@ -69,6 +69,21 @@ describe("POST /api/turn/stream", () => {
 
       expect(result.error).toBe(failure.copy);
       expect(result.error).not.toMatch(/模型|DEEPSEEK|AIGAME_MODEL_PROVIDER|provider|Runtime/);
+    }
+  });
+
+  it("formats turn request failures without exposing server internals", () => {
+    const failures = [
+      new TurnRequestError("Invalid turn request", 400),
+      new TurnRequestError("Session not found", 404),
+      new TurnRequestError("Turn request was cancelled", 499)
+    ];
+
+    for (const failure of failures) {
+      const result = formatTurnFailure(failure);
+
+      expect(result.error).toBe("行动没有成功提交，请重试。");
+      expect(result.error).not.toMatch(/Invalid turn request|Session not found|cancelled|Turn request/);
     }
   });
 });

@@ -1,6 +1,7 @@
 export type EntitySummary = {
   id: string;
   name: string;
+  visibleCharacters?: string[];
   assets?: {
     avatar?: string;
     portrait?: string;
@@ -17,7 +18,10 @@ export type EntityMaps = {
   characters: Map<string, string>;
   items: Map<string, string>;
   facts: Map<string, string>;
+  resources: Map<string, string>;
+  relationships: Map<string, string>;
   objectives: Map<string, ObjectiveSummary>;
+  locationCharacters: Map<string, string[]>;
   assets: Map<string, EntitySummary["assets"]>;
 };
 
@@ -26,6 +30,8 @@ export function buildEntityMaps(entities: {
   characters: EntitySummary[];
   items: EntitySummary[];
   facts: EntitySummary[];
+  resources?: EntitySummary[];
+  relationships?: EntitySummary[];
   objectives: ObjectiveSummary[];
 } | undefined): EntityMaps {
   const assets = new Map<string, EntitySummary["assets"]>();
@@ -45,7 +51,10 @@ export function buildEntityMaps(entities: {
     characters: new Map((entities?.characters ?? []).map((entity) => [entity.id, entity.name])),
     items: new Map((entities?.items ?? []).map((entity) => [entity.id, entity.name])),
     facts: new Map((entities?.facts ?? []).map((entity) => [entity.id, entity.name])),
+    resources: new Map((entities?.resources ?? []).map((entity) => [entity.id, entity.name])),
+    relationships: new Map((entities?.relationships ?? []).map((entity) => [entity.id, entity.name])),
     objectives: new Map((entities?.objectives ?? []).map((entity) => [entity.id, entity])),
+    locationCharacters: new Map((entities?.locations ?? []).map((entity) => [entity.id, entity.visibleCharacters ?? []])),
     assets
   };
 }
