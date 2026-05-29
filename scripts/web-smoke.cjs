@@ -1,5 +1,6 @@
 const path = require("node:path");
 const { startServer } = require("next/dist/server/lib/start-server");
+const { configureWebSmokeEnvironment } = require("./web-smoke-env.cjs");
 
 async function readJson(response, label) {
   const text = await response.text();
@@ -10,9 +11,7 @@ async function readJson(response, label) {
 }
 
 async function main() {
-  process.env.NODE_ENV = "production";
-  process.env.AIGAME_DB_PATH = ":memory:";
-  process.env.NEXT_PRIVATE_START_TIME = Date.now().toString();
+  configureWebSmokeEnvironment(process.env);
 
   await startServer({
     dir: path.resolve("apps/web"),
