@@ -111,4 +111,35 @@ describe("TimelineEventView", () => {
     expect(screen.getByText("错放的纸条")).toBeTruthy();
     expect(screen.getByText("纸条夹在错误的课本里。")).toBeTruthy();
   });
+
+  it("renders icon hooks for typed non-scene events", () => {
+    render(<>
+      <TimelineEventView entityMaps={maps} event={{
+        id: "evt_item",
+        kind: "item",
+        text: "你收好了纸条。",
+        timestamp: "2026-05-29T12:00:00.000Z",
+        refId: "paper_note",
+        visibleToPlayer: true
+      }} />
+      <TimelineEventView entityMaps={maps} event={{
+        id: "evt_progress",
+        kind: "progress",
+        text: "午餐误会出现新的进展。",
+        timestamp: "2026-05-29T12:00:00.000Z",
+        visibleToPlayer: true
+      }} />
+      <TimelineEventView entityMaps={maps} event={{
+        id: "evt_location",
+        kind: "location_change",
+        text: "你来到走廊。",
+        timestamp: "2026-05-29T12:00:00.000Z",
+        visibleToPlayer: true
+      }} />
+    </>);
+
+    expect(document.querySelector("[data-event-kind='item'] [data-testid='timeline-event-icon']")).toBeTruthy();
+    expect(document.querySelector("[data-event-kind='progress'] [data-testid='timeline-event-icon']")).toBeTruthy();
+    expect(document.querySelector("[data-event-kind='location_change'] [data-testid='timeline-event-icon']")).toBeTruthy();
+  });
 });
