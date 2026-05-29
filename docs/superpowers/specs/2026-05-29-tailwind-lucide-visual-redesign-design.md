@@ -31,17 +31,16 @@ The project does not currently depend on Tailwind CSS or Lucide React. The exist
 Add frontend styling and icon dependencies at the workspace root:
 
 - `tailwindcss`
+- `@tailwindcss/postcss`
 - `postcss`
-- `autoprefixer`
 - `lucide-react`
 
 Add the minimum config needed for Next.js:
 
-- `tailwind.config.ts`
 - `postcss.config.mjs`
-- Tailwind directives in `apps/web/app/globals.css`
+- `@import "tailwindcss";` in `apps/web/app/globals.css`
 
-Keep Tailwind content paths scoped to `apps/web/app` and `apps/web/src`.
+Do not add a Tailwind config file unless the implementation needs project-specific theme tokens beyond utility classes and CSS variables.
 
 ## Visual Direction
 
