@@ -1,3 +1,6 @@
+import type { ComponentType, ReactNode } from "react";
+import type { LucideProps } from "lucide-react";
+import { Backpack, Flag, Gem, Handshake, Lightbulb, MapPin, Users } from "lucide-react";
 import type { SessionState } from "@aigame/shared";
 import type { EntityMaps } from "./entityLabels";
 import { labelEntity } from "./entityLabels";
@@ -28,50 +31,55 @@ export function StateSidebar({
     : [];
 
   return (
-    <aside className="state-sidebar" aria-label="故事状态" data-testid="state-sidebar">
-      <section aria-label={labels.location}>
-        <h2>{labels.location}</h2>
-        <p>{currentLocation}</p>
-      </section>
-      <section aria-label={labels.characters}>
-        <h2>{labels.characters}</h2>
+    <aside className="state-sidebar grid min-h-0 content-start gap-3 overflow-auto" aria-label="故事状态" data-testid="state-sidebar">
+      <StateSection label={labels.location} icon={MapPin}>
+        <p className="m-0 leading-7 [overflow-wrap:anywhere]">{currentLocation}</p>
+      </StateSection>
+      <StateSection label={labels.characters} icon={Users}>
         {visibleCharacters.length ? (
-          <ul className="state-sidebar__list">
+          <ul className="state-sidebar__list m-0 grid list-none gap-2 p-0">
             {visibleCharacters.map((id) => {
               const avatarImage = cssUrl(entityMaps.assets.get(id)?.avatar ?? "");
               return (
-                <li key={id} className="state-chip">
-                  <span className="state-chip__avatar" data-has-image={Boolean(avatarImage)} style={avatarImage ? { backgroundImage: avatarImage } : undefined} aria-hidden="true" />
+                <li key={id} className="state-chip flex min-w-0 items-center gap-2 [overflow-wrap:anywhere]">
+                  <span className="state-chip__avatar h-8 w-8 shrink-0 rounded-full border border-[rgba(82,104,122,0.22)] bg-[linear-gradient(145deg,var(--story-accent),#d7dde3)] bg-cover bg-center" data-has-image={Boolean(avatarImage)} style={avatarImage ? { backgroundImage: avatarImage } : undefined} aria-hidden="true" />
                   <span>{labelEntity(entityMaps.characters, id)}</span>
                 </li>
               );
             })}
           </ul>
         ) : (
-          <p>当前没有可见角色</p>
+          <p className="m-0 leading-7">当前没有可见角色</p>
         )}
-      </section>
-      <section aria-label={labels.facts}>
-        <h2>{labels.facts}</h2>
-        <p>{formatList(state?.knownFacts, entityMaps.facts, "还没有发现")}</p>
-      </section>
-      <section aria-label={labels.inventory}>
-        <h2>{labels.inventory}</h2>
-        <p>{formatList(state?.inventory, entityMaps.items, "暂未携带物品")}</p>
-      </section>
-      <section aria-label={labels.resources}>
-        <h2>{labels.resources}</h2>
-        <p>{formatValues(state?.resources, entityMaps.resources, "暂无资源")}</p>
-      </section>
-      <section aria-label={labels.relationships}>
-        <h2>{labels.relationships}</h2>
-        <p>{formatValues(state?.relationships, entityMaps.relationships, "暂无关系变化")}</p>
-      </section>
-      <section aria-label={labels.objectives}>
-        <h2>{labels.objectives}</h2>
-        <p>{formatObjectives(state, entityMaps)}</p>
-      </section>
+      </StateSection>
+      <StateSection label={labels.facts} icon={Lightbulb}>
+        <p className="m-0 leading-7 [overflow-wrap:anywhere]">{formatList(state?.knownFacts, entityMaps.facts, "还没有发现")}</p>
+      </StateSection>
+      <StateSection label={labels.inventory} icon={Backpack}>
+        <p className="m-0 leading-7 [overflow-wrap:anywhere]">{formatList(state?.inventory, entityMaps.items, "暂未携带物品")}</p>
+      </StateSection>
+      <StateSection label={labels.resources} icon={Gem}>
+        <p className="m-0 leading-7 [overflow-wrap:anywhere]">{formatValues(state?.resources, entityMaps.resources, "暂无资源")}</p>
+      </StateSection>
+      <StateSection label={labels.relationships} icon={Handshake}>
+        <p className="m-0 leading-7 [overflow-wrap:anywhere]">{formatValues(state?.relationships, entityMaps.relationships, "暂无关系变化")}</p>
+      </StateSection>
+      <StateSection label={labels.objectives} icon={Flag}>
+        <p className="m-0 leading-7 [overflow-wrap:anywhere]">{formatObjectives(state, entityMaps)}</p>
+      </StateSection>
     </aside>
+  );
+}
+
+function StateSection({ label, icon: Icon, children }: { label: string; icon: ComponentType<LucideProps>; children: ReactNode }) {
+  return (
+    <section className="rounded-lg border border-[var(--line)] bg-white p-4 shadow-[0_10px_28px_rgba(39,34,28,0.05)]" aria-label={label}>
+      <h2 className="mb-2 flex items-center gap-2 text-sm font-bold text-[var(--accent-strong)]">
+        <Icon className="h-4 w-4" aria-hidden="true" data-testid="state-section-icon" />
+        {label}
+      </h2>
+      {children}
+    </section>
   );
 }
 
