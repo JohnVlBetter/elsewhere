@@ -17,7 +17,7 @@ describe("PackOverview", () => {
     }]} />);
 
     expect(screen.getByRole("heading", { name: "故事库" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: /午餐误会/ })).toBeTruthy();
+    expect(screen.getAllByRole("link", { name: /午餐误会/ }).length).toBeGreaterThan(0);
     expect(screen.getByText("开始阅读")).toBeTruthy();
     expect(document.body.textContent).not.toContain("閫");
   });
@@ -44,5 +44,30 @@ describe("PackOverview", () => {
     expect(document.querySelectorAll(".story-card__cover")).toHaveLength(2);
     expect(document.querySelector("[data-has-cover='true']")).toBeTruthy();
     expect(document.querySelector("[data-has-cover='false']")).toBeTruthy();
+  });
+
+  it("renders a featured story region and upgraded card hooks", () => {
+    render(<PackOverview packs={[
+      {
+        id: "campus-lunch",
+        title: "午餐误会",
+        subtitle: "campus",
+        introduction: "午休铃声响起，错放的便当让两个人都停下了脚步。",
+        version: "0.2.0",
+        assets: { coverImage: "generated/covers/campus.webp" }
+      },
+      {
+        id: "rain-tower",
+        title: "雨塔谜案",
+        subtitle: "detective",
+        introduction: "暴雨夜，旧塔下传来钟声。",
+        version: "0.2.0"
+      }
+    ]} />);
+
+    expect(screen.getByRole("region", { name: "精选故事" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "进入 午餐误会" })).toBeTruthy();
+    expect(document.querySelector("[data-testid='library-hero-icon']")).toBeTruthy();
+    expect(document.querySelectorAll("[data-testid='story-card']")).toHaveLength(2);
   });
 });

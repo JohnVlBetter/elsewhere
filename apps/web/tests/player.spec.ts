@@ -4,6 +4,8 @@ test("shows story overview before starting a session", async ({ page }) => {
   await page.goto("/");
 
   await expect(page.getByRole("heading", { name: "故事库" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "精选故事" })).toBeVisible();
+  await expect(page.getByTestId("story-card").first()).toBeVisible();
   await expect(page.getByRole("link", { name: /雨塔谜案/ })).toBeVisible();
 });
 
