@@ -92,6 +92,8 @@ describe("GameShell", () => {
     render(<GameShell packId="campus-lunch" />);
 
     expect(await screen.findByRole("heading", { name: "Campus Lunch" })).toBeTruthy();
+    expect(screen.getAllByTestId("story-stat")).toHaveLength(3);
+    expect(screen.getByLabelText("故事状态").textContent).toContain("准备继续");
     expect(screen.getByTestId("game-shell").getAttribute("style")).toContain("--story-accent: #4f8cff");
     expect(document.querySelector(".game-header")?.getAttribute("style")).toContain("/generated/banners/campus.webp");
     expect(screen.getByText("Campus intro")).toBeTruthy();
@@ -100,6 +102,7 @@ describe("GameShell", () => {
     expect(screen.getByRole("button", { name: "环顾四周" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "指认管家" })).toBeNull();
     expect(screen.queryByText("Runtime")).toBeNull();
+    expect(document.body.textContent).not.toContain("鍑");
     expect(document.body.textContent).not.toContain("閫");
     expect(fetchSpy).toHaveBeenCalledWith("/api/session", expect.objectContaining({
       method: "POST",

@@ -31,7 +31,7 @@ export function StateSidebar({
     : [];
 
   return (
-    <aside className="state-sidebar grid min-h-0 content-start gap-3 overflow-auto" aria-label="故事状态" data-testid="state-sidebar">
+    <aside className="state-sidebar order-4 grid min-h-0 content-start gap-3 overflow-auto lg:col-start-2 lg:row-span-2 lg:row-start-2" aria-label="玩家状态" data-testid="state-sidebar">
       <StateSection label={labels.location} icon={MapPin}>
         <p className="m-0 leading-7 [overflow-wrap:anywhere]">{currentLocation}</p>
       </StateSection>

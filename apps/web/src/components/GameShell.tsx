@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { Activity, BookOpen, Clock, MapPin } from "lucide-react";
 import type { Manifest, Profile, SessionState, TimelineEvent } from "@aigame/shared";
 import { ActionComposer } from "./ActionComposer";
 import { DebugDrawer } from "./DebugDrawer";
@@ -123,33 +124,46 @@ export function GameShell({ packId }: { packId: string }) {
   }
 
   return (
-    <main className="game-shell" style={storyVisuals?.cssVars} data-testid="game-shell">
-      <header className="game-header" style={storyVisuals?.bannerStyle} data-has-banner={storyVisuals?.hasBannerImage ?? false}>
-        <div>
-          <p className="eyebrow">故事</p>
-          <h1>{session?.manifest.name ?? "载入故事"}</h1>
+    <main className="game-shell grid min-h-screen grid-cols-1 gap-4 bg-[var(--page-bg)] p-3 text-[var(--ink)] lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] lg:grid-rows-[auto_minmax(0,1fr)_auto] lg:p-5" style={storyVisuals?.cssVars} data-testid="game-shell">
+      <header className="game-header relative order-1 col-span-full overflow-hidden rounded-lg border border-[var(--line)] bg-[var(--story-bg)] bg-cover bg-center p-4 text-[var(--story-text)] shadow-[0_18px_48px_rgba(39,34,28,0.1)]" style={storyVisuals?.bannerStyle} data-has-banner={storyVisuals?.hasBannerImage ?? false}>
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.92),rgba(255,255,255,0.68))]" />
+        <div className="relative z-10 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="min-w-0">
+            <p className="eyebrow mb-1 flex items-center gap-2 text-sm font-bold text-[var(--accent-strong)]">
+              <BookOpen className="h-4 w-4" aria-hidden="true" />
+              故事
+            </p>
+            <h1 className="text-2xl font-bold leading-tight sm:text-3xl">{session?.manifest.name ?? "载入故事"}</h1>
+          </div>
+          <dl className="game-header__meta grid gap-2 sm:grid-cols-3" aria-label="故事状态">
+            <div className="rounded-md border border-[var(--line)] bg-white/[0.88] px-3 py-2" data-testid="story-stat">
+              <dt className="flex items-center gap-2 text-xs font-semibold text-[var(--muted)]">
+                <MapPin className="h-4 w-4" aria-hidden="true" />
+                {labels.location}
+              </dt>
+              <dd className="mt-1 font-bold [overflow-wrap:anywhere]">{state ? labelEntity(entityMaps.locations, state.currentLocationId) : "..."}</dd>
+            </div>
+            <div className="rounded-md border border-[var(--line)] bg-white/[0.88] px-3 py-2" data-testid="story-stat">
+              <dt className="flex items-center gap-2 text-xs font-semibold text-[var(--muted)]">
+                <Clock className="h-4 w-4" aria-hidden="true" />
+                回合
+              </dt>
+              <dd className="mt-1 font-bold">{state?.turn ?? 0}</dd>
+            </div>
+            <div className="rounded-md border border-[var(--line)] bg-white/[0.88] px-3 py-2" data-testid="story-stat">
+              <dt className="flex items-center gap-2 text-xs font-semibold text-[var(--muted)]">
+                <Activity className="h-4 w-4" aria-hidden="true" />
+                状态
+              </dt>
+              <dd className="mt-1 font-bold [overflow-wrap:anywhere]">{status}</dd>
+            </div>
+          </dl>
         </div>
-        <dl className="game-header__meta" aria-label="故事状态">
-          <div>
-            <dt>{labels.location}</dt>
-            <dd>{state ? labelEntity(entityMaps.locations, state.currentLocationId) : "..."}</dd>
-          </div>
-          <div>
-            <dt>回合</dt>
-            <dd>{state?.turn ?? 0}</dd>
-          </div>
-          <div>
-            <dt>状态</dt>
-            <dd>{status}</dd>
-          </div>
-        </dl>
       </header>
 
-      {error ? <p className="notice" role="status">{error}</p> : null}
+      {error ? <p className="notice order-2 col-span-full rounded-lg border border-[rgba(169,75,67,0.24)] bg-[rgba(169,75,67,0.08)] px-3 py-2 text-[var(--danger)]" role="status">{error}</p> : null}
 
       <Timeline events={events} entityMaps={entityMaps} />
-
-      <StateSidebar state={state} labels={labels} entityMaps={entityMaps} />
 
       <ActionComposer
         input={input}
@@ -160,6 +174,8 @@ export function GameShell({ packId }: { packId: string }) {
         onQuickAction={(command) => setInput(command)}
         onSubmit={submit}
       />
+
+      <StateSidebar state={state} labels={labels} entityMaps={entityMaps} />
 
       <DebugDrawer trace={trace} />
     </main>

@@ -20,7 +20,7 @@ export function ActionComposer({
   onSubmit: (event: FormEvent) => void;
 }) {
   return (
-    <form className="action-composer grid gap-3 rounded-lg border border-[var(--line)] bg-white/90 p-3 shadow-[0_16px_42px_rgba(39,34,28,0.1)] backdrop-blur" onSubmit={onSubmit} data-testid="action-composer">
+    <form className="action-composer order-3 grid gap-3 rounded-lg border border-[var(--line)] bg-white/90 p-3 shadow-[0_16px_42px_rgba(39,34,28,0.1)] backdrop-blur lg:col-start-1 lg:row-start-3" onSubmit={onSubmit} data-testid="action-composer">
       <div className="action-row grid gap-3 md:grid-cols-[minmax(0,1fr)_112px]">
         <textarea
           className="min-h-24 min-w-0 resize-y rounded-md border border-[var(--line)] bg-white px-4 py-3 leading-7 text-[var(--ink)] outline-none transition focus:border-[var(--accent)]"
