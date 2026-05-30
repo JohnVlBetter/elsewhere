@@ -1,6 +1,11 @@
 export async function readTurnEventStream<T>(
   response: Response,
-  options: { onStatus?: (message: string) => void }
+  options: {
+    onStatus?: (message: string) => void;
+    onActionStart?: (event: { actionIndex: number; inputText: string }) => void;
+    onActionResult?: (event: { actionIndex: number; inputText: string; result: T }) => void;
+    onActionError?: (event: { actionIndex?: number; inputText?: string; message: string }) => void;
+  }
 ): Promise<T> {
   if (!response.ok) {
     throw new Error(await readErrorResponse(response));
@@ -28,6 +33,18 @@ export async function readTurnEventStream<T>(
 
       if (event.name === "status") {
         options.onStatus?.(readStatusMessage(event.data));
+      } else if (event.name === "action:start") {
+        options.onActionStart?.(JSON.parse(event.data) as { actionIndex: number; inputText: string });
+      } else if (event.name === "action:result") {
+        const body = JSON.parse(event.data) as { actionIndex: number; inputText: string; result: T };
+        options.onActionResult?.(body);
+      } else if (event.name === "action:error") {
+        const body = JSON.parse(event.data) as { actionIndex?: number; inputText?: string; message?: string };
+        const message = playerSafeError(body.message ?? "行动处理失败。");
+        options.onActionError?.({ ...body, message });
+        throw new Error(message);
+      } else if (event.name === "turn:done") {
+        return JSON.parse(event.data) as T;
       } else if (event.name === "result") {
         return JSON.parse(event.data) as T;
       } else if (event.name === "error") {

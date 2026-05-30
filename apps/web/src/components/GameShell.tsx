@@ -33,12 +33,12 @@ export type SessionResponse = {
 };
 
 type TurnResponse = {
-  outputText: string;
+  outputText?: string;
   timelineEvents?: TimelineEvent[];
   state: SessionState;
-  acceptedPatches: unknown[];
-  rejectedPatches: unknown[];
-  trace: Record<string, unknown>;
+  acceptedPatches?: unknown[];
+  rejectedPatches?: unknown[];
+  trace?: Record<string, unknown>;
 };
 
 const WAITING_TEXT = "文字正在延展";
@@ -97,20 +97,36 @@ export function GameShell({ packId }: { packId: string }) {
     setStatus(WAITING_TEXT);
 
     try {
+      let hasStreamedActionResults = false;
       const response = await fetch("/api/turn/stream", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ sessionId: session.sessionId, inputText: command })
       });
       const body = await readTurnEventStream<TurnResponse>(response, {
-        onStatus: (message) => setStatus(message)
+        onStatus: (message) => setStatus(message),
+        onActionStart: (event) => setStatus(`正在执行：${event.inputText}`),
+        onActionResult: (event) => {
+          hasStreamedActionResults = true;
+          setState(event.result.state);
+          if (event.result.trace) setTrace(event.result.trace);
+          setEvents((current) => [
+            ...current,
+            ...visibleTimelineEvents(event.result, event.inputText)
+          ]);
+        },
+        onActionError: (event) => {
+          setEvents((current) => [...current, createLocalNoticeEvent(event.message)]);
+        }
       });
       setState(body.state);
-      setTrace(body.trace);
-      setEvents((current) => [
-        ...current,
-        ...visibleTimelineEvents(body, command)
-      ]);
+      if (body.trace) setTrace(body.trace);
+      if (!hasStreamedActionResults || body.timelineEvents?.length) {
+        setEvents((current) => [
+          ...current,
+          ...visibleTimelineEvents(body, command)
+        ]);
+      }
       setStatus(READY_TEXT);
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : "行动处理失败。";

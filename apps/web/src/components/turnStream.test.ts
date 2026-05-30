@@ -135,4 +135,21 @@ describe("readTurnEventStream", () => {
     await expect(readTurnEventStream(new Response("Bad gateway", { status: 502 }), {}))
       .rejects.not.toThrow("Turn stream request failed");
   });
+
+  it("calls action result callbacks before returning turn done", async () => {
+    const actionResults: string[] = [];
+    const response = streamResponse([
+      "event: turn:start\ndata: {\"inputText\":\"检查怀表并走向书房\"}\n\n",
+      "event: action:start\ndata: {\"actionIndex\":0,\"inputText\":\"检查怀表\"}\n\n",
+      "event: action:result\ndata: {\"actionIndex\":0,\"inputText\":\"检查怀表\",\"result\":{\"outputText\":\"发现怀表。\",\"timelineEvents\":[],\"state\":{\"currentLocationId\":\"foyer\",\"turn\":1,\"inventory\":[],\"knownFacts\":[\"broken_watch\"],\"resources\":{},\"relationships\":{},\"flags\":{},\"objectiveStages\":{}},\"acceptedPatches\":[],\"rejectedPatches\":[],\"trace\":{}}}\n\n",
+      "event: turn:done\ndata: {\"state\":{\"currentLocationId\":\"foyer\",\"turn\":1,\"inventory\":[],\"knownFacts\":[\"broken_watch\"],\"resources\":{},\"relationships\":{},\"flags\":{},\"objectiveStages\":{}},\"actionCount\":1}\n\n"
+    ]);
+
+    const result = await readTurnEventStream<{ state: { turn: number } }>(response, {
+      onActionResult: (event) => actionResults.push(event.inputText)
+    });
+
+    expect(actionResults).toEqual(["检查怀表"]);
+    expect(result.state.turn).toBe(1);
+  });
 });

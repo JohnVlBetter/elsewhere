@@ -165,4 +165,64 @@ describe("GameShell", () => {
       expect(document.body.textContent).not.toContain("閫");
     });
   });
+
+  it("appends streamed action results before turn completion", async () => {
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(JSON.stringify(sessionBody())))
+      .mockResolvedValueOnce(turnStreamResponse([
+        {
+          event: "action:result",
+          data: {
+            actionIndex: 0,
+            inputText: "检查怀表",
+            result: {
+              outputText: "破损怀表。",
+              timelineEvents: [
+                { id: "evt_action", kind: "player_action", actorId: "player", text: "检查怀表", timestamp: "2026-05-30T12:00:00.000Z", visibleToPlayer: true },
+                { id: "evt_evidence", kind: "evidence", refId: "missed_note", text: "银质怀表停在 8:47。", timestamp: "2026-05-30T12:00:00.000Z", visibleToPlayer: true }
+              ],
+              state: {
+                currentLocationId: "classroom",
+                turn: 1,
+                inventory: [],
+                knownFacts: ["missed_note"],
+                resources: { courage: 1 },
+                relationships: { lin: 0 },
+                flags: {},
+                objectiveStages: { repair_lunch: "awkward" }
+              },
+              acceptedPatches: [],
+              rejectedPatches: [],
+              trace: {}
+            }
+          }
+        },
+        {
+          event: "turn:done",
+          data: {
+            state: {
+              currentLocationId: "classroom",
+              turn: 1,
+              inventory: [],
+              knownFacts: ["missed_note"],
+              resources: { courage: 1 },
+              relationships: { lin: 0 },
+              flags: {},
+              objectiveStages: { repair_lunch: "awkward" }
+            },
+            actionCount: 1
+          }
+        }
+      ]));
+
+    render(<GameShell packId="campus-lunch" />);
+    await screen.findByRole("heading", { name: "Campus Lunch" });
+
+    fireEvent.change(screen.getByPlaceholderText("写下你的行动"), { target: { value: "检查怀表" } });
+    fireEvent.click(screen.getByRole("button", { name: "发送" }));
+
+    expect(await screen.findByText("银质怀表停在 8:47。")).toBeTruthy();
+    await waitFor(() => expect(screen.getByLabelText("故事状态").textContent).toContain("准备继续"));
+    expect(screen.getByLabelText("故事状态").textContent).toContain("1");
+  });
 });
