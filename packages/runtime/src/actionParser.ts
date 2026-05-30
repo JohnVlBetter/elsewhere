@@ -65,7 +65,7 @@ function parseNaturalAction(rawText: string, lexicon: ActionLexicon): GameAction
   const groupTalk = parseGroupTalk(rawText);
   if (groupTalk) return groupTalk;
 
-  if (hasAny(rawText, ["询问", "问", "追问", "盘问", "请教"]) && character) {
+  if (hasAny(rawText, ["询问", "问", "追问", "盘问", "请教", "说", "告诉", "打招呼"]) && character) {
     return {
       type: "talk",
       characterId: character.entity.id,
@@ -92,7 +92,7 @@ function parseNaturalAction(rawText: string, lexicon: ActionLexicon): GameAction
     return { type: "inspect", targetId: (item ?? fact)?.entity.id ?? "", rawText };
   }
 
-  if (hasAny(rawText, ["前往", "去", "移动到", "进入", "走到"]) && location) {
+  if (hasAny(rawText, ["前往", "去", "移动到", "进入", "走到", "走向"]) && location) {
     return { type: "move", locationId: location.entity.id, rawText };
   }
 
@@ -223,7 +223,7 @@ function inferTopic(rawText: string, matchedEntity: string): string {
   const stripped = rawText
     .replace(matchedEntity, "")
     .replace(/[，。、"'“”]/g, " ")
-    .replace(/询问|追问|盘问|请教|问/g, " ")
+    .replace(/询问|追问|盘问|请教|告诉|打招呼|说|问|与|和|对/g, " ")
     .replace(/\s+/g, " ")
     .trim();
   return stripped || "general";

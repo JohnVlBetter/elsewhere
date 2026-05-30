@@ -100,6 +100,31 @@ describe("parseAction", () => {
     });
   });
 
+  it("parses natural Chinese inspection with the item alias itself", () => {
+    expect(parseAction("检查怀表", lexicon)).toEqual({
+      type: "inspect",
+      targetId: "silver_watch",
+      rawText: "检查怀表"
+    });
+  });
+
+  it("parses natural Chinese speech to a visible character", () => {
+    expect(parseAction("与管家说“你好”", lexicon)).toEqual({
+      type: "talk",
+      characterId: "butler",
+      topic: "你好",
+      rawText: "与管家说“你好”"
+    });
+  });
+
+  it("parses natural Chinese movement using 走向", () => {
+    expect(parseAction("走向书房", lexicon)).toEqual({
+      type: "move",
+      locationId: "study",
+      rawText: "走向书房"
+    });
+  });
+
   it("parses natural Chinese profile actions", () => {
     expect(parseAction("我要突破", cultivationLexicon)).toEqual({
       type: "act",
