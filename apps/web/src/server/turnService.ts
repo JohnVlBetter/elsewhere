@@ -1,4 +1,5 @@
-import { runTurn } from "@aigame/runtime";
+import { runMultiActionTurn, runTurn } from "@aigame/runtime";
+import type { TurnResult } from "@aigame/runtime";
 import { createRuntimeModelConfig } from "./modelProvider";
 import { loadPackById } from "./packRegistry";
 import { sessionStore } from "./sessionStore";
@@ -7,6 +8,10 @@ export interface TurnRequestBody {
   sessionId: string;
   inputText: string;
 }
+
+export type StoredTurnStreamEvent =
+  | { type: "action:start"; actionIndex: number; inputText: string }
+  | { type: "action:result"; actionIndex: number; inputText: string; result: TurnResult };
 
 const sessionTurnLocks = new Map<string, Promise<void>>();
 
@@ -41,6 +46,15 @@ export async function runStoredTurn(
   return withSessionTurnLock(body.sessionId, () => runStoredTurnUnlocked(body, onStatus, signal));
 }
 
+export async function runStoredTurnStream(
+  body: TurnRequestBody,
+  onEvent: (event: StoredTurnStreamEvent) => void,
+  onStatus?: (message: string) => void,
+  signal?: AbortSignal
+) {
+  return withSessionTurnLock(body.sessionId, () => runStoredTurnStreamUnlocked(body, onEvent, onStatus, signal));
+}
+
 async function runStoredTurnUnlocked(
   body: TurnRequestBody,
   onStatus?: (message: string) => void,
@@ -68,6 +82,46 @@ async function runStoredTurnUnlocked(
   onStatus?.("故事已记录");
   await sessionStore.updateSessionState(body.sessionId, result.state);
   await sessionStore.appendTimelineEvents(body.sessionId, result.timelineEvents);
+
+  return result;
+}
+
+async function runStoredTurnStreamUnlocked(
+  body: TurnRequestBody,
+  onEvent: (event: StoredTurnStreamEvent) => void,
+  onStatus?: (message: string) => void,
+  signal?: AbortSignal
+) {
+  throwIfAborted(signal);
+  const session = await sessionStore.getSession(body.sessionId);
+  if (!session) {
+    throw new TurnRequestError("Session not found", 404);
+  }
+  const pack = loadPackById(session.packId);
+
+  const runtimeModel = createRuntimeModelConfig();
+  onStatus?.("文字正在延展");
+
+  const result = await runMultiActionTurn({
+    pack,
+    state: session.state,
+    inputText: body.inputText,
+    model: runtimeModel.model,
+    modelName: runtimeModel.modelName,
+    signal,
+    onActionStart: ({ actionIndex, inputText }) => {
+      onEvent({ type: "action:start", actionIndex, inputText });
+    },
+    onActionResult: async ({ actionIndex, inputText, result: actionResult }) => {
+      throwIfAborted(signal);
+      await sessionStore.updateSessionState(body.sessionId, actionResult.state);
+      await sessionStore.appendTimelineEvents(body.sessionId, actionResult.timelineEvents);
+      onEvent({ type: "action:result", actionIndex, inputText, result: actionResult });
+    }
+  });
+
+  throwIfAborted(signal);
+  onStatus?.("故事已记录");
 
   return result;
 }

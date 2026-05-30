@@ -79,6 +79,34 @@ describe("POST /api/turn/stream", () => {
     expect(text).not.toContain("Runtime model");
   });
 
+  it("streams each action result before the final turn completion event", async () => {
+    vi.resetModules();
+    process.env.AIGAME_SESSION_ROOT = mkdtempSync(join(tmpdir(), `stream-route-${randomUUID()}-`));
+    process.env.AIGAME_MODEL_PROVIDER = "fake";
+
+    const { POST: createSession } = await import("../../session/route");
+    const sessionResponse = await createSession(new Request("http://test.local/api/session", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ packId: "rain-tower" })
+    }));
+    const sessionBody = await sessionResponse.json() as { sessionId: string };
+
+    const { POST } = await import("./route");
+    const response = await POST(new Request("http://test.local/api/turn/stream", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ sessionId: sessionBody.sessionId, inputText: "检查怀表并走向书房" })
+    }) as Parameters<typeof POST>[0]);
+    const text = await response.text();
+
+    expect(text).toContain("event: turn:start");
+    expect(text).toContain("event: action:start");
+    expect(text).toContain("event: action:result");
+    expect(text).toContain("event: turn:done");
+    expect(text.indexOf("event: action:result")).toBeLessThan(text.indexOf("event: turn:done"));
+  });
+
   it("formats known stream failures without exposing runtime internals", () => {
     const failures = [
       {
@@ -128,31 +156,44 @@ function restoreEnv(name: keyof typeof originalEnv, value: string | undefined) {
 }
 
 function mockRuntimeTurnWithDebugEvent() {
+  const buildResult = (input: { state: { turn: number }; inputText: string }) => ({
+    action: { type: "look", rawText: input.inputText },
+    outputText: "Visible turn result.",
+    messages: [],
+    timelineEvents: [
+      {
+        id: "evt_scene",
+        kind: "scene",
+        text: "Visible turn result.",
+        timestamp: "2026-05-29T12:00:00.000Z",
+        visibleToPlayer: true
+      },
+      {
+        id: "evt_debug",
+        kind: "debug",
+        text: "Runtime model: fake-provider",
+        timestamp: "2026-05-29T12:00:00.000Z",
+        visibleToPlayer: true
+      }
+    ],
+    state: { ...input.state, turn: input.state.turn + 1 },
+    acceptedPatches: [],
+    rejectedPatches: [],
+    trace: { modelName: "fake" }
+  });
+
   vi.doMock("@aigame/runtime", () => ({
-    runTurn: vi.fn(async (input: { state: { turn: number }; inputText: string }) => ({
-      action: { type: "look", rawText: input.inputText },
-      outputText: "Visible turn result.",
-      messages: [],
-      timelineEvents: [
-        {
-          id: "evt_scene",
-          kind: "scene",
-          text: "Visible turn result.",
-          timestamp: "2026-05-29T12:00:00.000Z",
-          visibleToPlayer: true
-        },
-        {
-          id: "evt_debug",
-          kind: "debug",
-          text: "Runtime model: fake-provider",
-          timestamp: "2026-05-29T12:00:00.000Z",
-          visibleToPlayer: true
-        }
-      ],
-      state: { ...input.state, turn: input.state.turn + 1 },
-      acceptedPatches: [],
-      rejectedPatches: [],
-      trace: { modelName: "fake" }
-    }))
+    runTurn: vi.fn(async (input: { state: { turn: number }; inputText: string }) => buildResult(input)),
+    runMultiActionTurn: vi.fn(async (input: {
+      state: { turn: number };
+      inputText: string;
+      onActionStart?: (event: { actionIndex: number; inputText: string }) => void;
+      onActionResult?: (event: { actionIndex: number; inputText: string; result: ReturnType<typeof buildResult> }) => void | Promise<void>;
+    }) => {
+      input.onActionStart?.({ actionIndex: 0, inputText: input.inputText });
+      const result = buildResult(input);
+      await input.onActionResult?.({ actionIndex: 0, inputText: input.inputText, result });
+      return { actionResults: [result], state: result.state };
+    })
   }));
 }

@@ -22,15 +22,15 @@ export async function runMultiActionTurn(input: {
   model?: ModelProvider;
   modelName?: string;
   signal?: AbortSignal;
-  onActionStart?: (event: MultiActionTurnEvent) => void;
-  onActionResult?: (event: MultiActionTurnEvent & { result: TurnResult }) => void;
+  onActionStart?: (event: MultiActionTurnEvent) => void | Promise<void>;
+  onActionResult?: (event: MultiActionTurnEvent & { result: TurnResult }) => void | Promise<void>;
 }): Promise<MultiActionTurnResult> {
   const segments = planActionSegments(input.inputText);
   const actionResults: TurnResult[] = [];
   let state = input.state;
 
   for (const [actionIndex, inputText] of segments.entries()) {
-    input.onActionStart?.({ actionIndex, inputText });
+    await input.onActionStart?.({ actionIndex, inputText });
     const result = await runTurn({
       pack: input.pack,
       state,
@@ -42,7 +42,7 @@ export async function runMultiActionTurn(input: {
 
     actionResults.push(result);
     state = result.state;
-    input.onActionResult?.({ actionIndex, inputText, result });
+    await input.onActionResult?.({ actionIndex, inputText, result });
 
     if (isFailedActionResult(result)) {
       return {

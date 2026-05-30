@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { toPlayerTurnResult } from "../../../../src/server/playerTurnResult";
-import { formatTurnFailure, parseTurnRequestBody, runStoredTurn, TurnRequestError } from "../../../../src/server/turnService";
+import { formatTurnFailure, parseTurnRequestBody, runStoredTurnStream, TurnRequestError } from "../../../../src/server/turnService";
 
 export async function POST(request: NextRequest) {
   let body: ReturnType<typeof parseTurnRequestBody>;
@@ -19,9 +19,32 @@ export async function POST(request: NextRequest) {
       };
 
       try {
-        send("status", { message: "文字正在延展" });
-        const result = await runStoredTurn(body, (message) => send("status", { message }), request.signal);
-        send("result", toPlayerTurnResult(result));
+        send("turn:start", { inputText: body.inputText });
+        const result = await runStoredTurnStream(
+          body,
+          (event) => {
+            if (event.type === "action:start") {
+              send("action:start", { actionIndex: event.actionIndex, inputText: event.inputText });
+            } else {
+              send("action:result", {
+                actionIndex: event.actionIndex,
+                inputText: event.inputText,
+                result: toPlayerTurnResult(event.result)
+              });
+            }
+          },
+          (message) => send("status", { message }),
+          request.signal
+        );
+        send("turn:done", {
+          state: result.state,
+          stoppedAt: result.stoppedAt,
+          actionCount: result.actionResults.length
+        });
+        const lastResult = result.actionResults.at(-1);
+        if (lastResult) {
+          send("result", toPlayerTurnResult(lastResult));
+        }
       } catch (error) {
         const failure = formatTurnFailure(error);
         send("error", { message: failure.error });
