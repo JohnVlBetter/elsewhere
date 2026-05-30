@@ -65,7 +65,7 @@ function isFailedActionResult(result: TurnResult): boolean {
 }
 
 function isFailedPrecheck(value: unknown): boolean {
-  return Boolean(value) && typeof value === "object" && "ok" in value && (value as { ok?: unknown }).ok === false;
+  return value !== null && typeof value === "object" && "ok" in value && (value as { ok?: unknown }).ok === false;
 }
 
 function failureReason(result: TurnResult): string {

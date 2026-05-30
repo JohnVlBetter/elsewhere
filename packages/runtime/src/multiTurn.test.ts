@@ -76,8 +76,12 @@ describe("runMultiActionTurn", () => {
       state: initialState,
       inputText: "检查怀表并走向书房",
       model: new FakeModelProvider(),
-      onActionStart: (event) => events.push(`start:${event.inputText}`),
-      onActionResult: (event) => events.push(`result:${event.inputText}`)
+      onActionStart: (event) => {
+        events.push(`start:${event.inputText}`);
+      },
+      onActionResult: (event) => {
+        events.push(`result:${event.inputText}`);
+      }
     });
 
     expect(events).toEqual([
