@@ -314,4 +314,23 @@ describe("runTurn", () => {
     expect(result.trace.precheck).toEqual({ ok: false, reason: "Location is not reachable: greenhouse" });
     expect(result.trace.agentRawOutput).toBeUndefined();
   });
+
+  it("returns a notice for unknown actions without calling the model", async () => {
+    const model: ModelProvider = {
+      async generateStructured<T>(): Promise<T> {
+        throw new Error("model should not be called for unknown actions");
+      }
+    };
+
+    const result = await runTurn({
+      pack,
+      state: initialState,
+      inputText: "跳舞三小时",
+      model
+    });
+
+    expect(result.action).toEqual({ type: "unknown", rawText: "跳舞三小时" });
+    expect(result.messages).toEqual([{ type: "system", text: "这一行动没有明确落点，请换一种说法。" }]);
+    expect(result.timelineEvents.map((event) => event.kind)).toEqual(["player_action", "notice"]);
+  });
 });

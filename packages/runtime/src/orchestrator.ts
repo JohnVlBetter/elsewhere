@@ -297,6 +297,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function precheckAction(action: GameAction, pack: WorldPack, state: SessionState): { ok: true } | { ok: false; reason: string } {
+  if (action.type === "unknown") {
+    return { ok: false, reason: "Unknown action" };
+  }
+
   if (action.type === "move") {
     const validation = validatePatch({ type: "move_location", locationId: action.locationId, reason: "Rules precheck." }, pack, state);
     return validation.ok ? { ok: true } : validation;
@@ -390,7 +394,8 @@ function collectForbiddenPhrases(pack: WorldPack): string[] {
 }
 
 function formatBlockedAction(reason: string): string {
-  return `行动暂时无法完成：${localizeRuleReason(reason)}`;
+  const localized = localizeRuleReason(reason);
+  return reason === "Unknown action" ? localized : `行动暂时无法完成：${localized}`;
 }
 
 function localizeRuleReason(reason: string): string {
@@ -426,6 +431,8 @@ function localizeRuleReason(reason: string): string {
 
   const disallowedPatch = reason.match(/^Patch type not allowed: (.+)$/);
   if (disallowedPatch) return `规则不允许这类变更 ${disallowedPatch[1]}。`;
+
+  if (reason === "Unknown action") return "这一行动没有明确落点，请换一种说法。";
 
   return reason;
 }
