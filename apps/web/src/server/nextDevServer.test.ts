@@ -37,7 +37,40 @@ describe("Next dev server launcher", () => {
     expect(calls).toHaveLength(1);
     expect(calls[0]).toMatchObject({
       options: { isDev: true, port: 3333 },
-      envAtStart: { __NEXT_DEV_SERVER: "true" }
+      envAtStart: { AIGAME_MODEL_PROVIDER: "fake", __NEXT_DEV_SERVER: "true" }
+    });
+  });
+
+  it("does not replace an explicitly configured runtime model provider", () => {
+    const script = readFileSync("scripts/next-dev-in-process.cjs", "utf8");
+    const calls: unknown[] = [];
+    const fakeProcess = {
+      env: { AIGAME_MODEL_PROVIDER: "openai-compatible" } as Record<string, string>,
+      argv: ["node", "scripts/next-dev-in-process.cjs"],
+      exitCode: undefined as number | undefined
+    };
+
+    vm.runInNewContext(script, {
+      console,
+      process: fakeProcess,
+      require: (specifier: string) => {
+        if (specifier === "node:fs") return { existsSync: () => false };
+        if (specifier === "node:path") return path;
+        if (specifier === "next/dist/server/lib/start-server") {
+          return {
+            startServer: () => {
+              calls.push({ envAtStart: { ...fakeProcess.env } });
+              return Promise.resolve();
+            }
+          };
+        }
+        throw new Error(`Unexpected require: ${specifier}`);
+      }
+    });
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]).toMatchObject({
+      envAtStart: { AIGAME_MODEL_PROVIDER: "openai-compatible", __NEXT_DEV_SERVER: "true" }
     });
   });
 
