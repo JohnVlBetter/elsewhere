@@ -211,7 +211,7 @@ export const TimelineEventSchema = z.discriminatedUnion("kind", [
   }),
   z.object({
     id: z.string(),
-    kind: z.enum(["evidence", "item", "progress", "location_change", "notice"]),
+    kind: z.enum(["evidence", "item", "progress", "location_change", "relationship", "resource", "notice"]),
     text: z.string(),
     timestamp: z.string(),
     refId: IdSchema.optional(),

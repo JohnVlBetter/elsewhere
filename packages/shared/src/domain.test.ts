@@ -287,4 +287,24 @@ describe("v0.2 domain schema", () => {
 
     expect(event.metadata?.characterId).toBe("lin");
   });
+
+  it("parses resource and relationship timeline events", () => {
+    expect(TimelineEventSchema.parse({
+      id: "evt_resource",
+      kind: "resource",
+      text: "勇气 +1",
+      timestamp: "2026-05-30T12:00:00.000Z",
+      refId: "courage",
+      visibleToPlayer: true
+    }).kind).toBe("resource");
+
+    expect(TimelineEventSchema.parse({
+      id: "evt_relationship",
+      kind: "relationship",
+      text: "管家维尔关系 +1",
+      timestamp: "2026-05-30T12:00:00.000Z",
+      refId: "butler",
+      visibleToPlayer: true
+    }).kind).toBe("relationship");
+  });
 });

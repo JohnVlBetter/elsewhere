@@ -34,7 +34,14 @@ export function buildTimelineEvents(input: {
 
 function messageToTimelineEvent(message: TurnMessage, timestamp: string): TimelineEvent | undefined {
   if (message.type === "environment" || message.type === "narration") {
-    return { id: randomUUID(), kind: "scene", text: message.text, timestamp, visibleToPlayer: true };
+    return {
+      id: randomUUID(),
+      kind: "scene",
+      text: message.text,
+      timestamp,
+      visibleToPlayer: true,
+      metadata: { messageType: message.type }
+    };
   }
 
   if (message.type === "character" && message.characterId) {
@@ -103,9 +110,49 @@ function patchToTimelineEvent(patch: GamePatch, timestamp: string, pack: WorldPa
     };
   }
 
+  if (patch.type === "adjust_relationship") {
+    const relationshipName = pack?.relationships.find((relationship) => relationship.characterId === patch.characterId)?.name ?? patch.characterId;
+    return {
+      id: randomUUID(),
+      kind: "relationship",
+      refId: patch.characterId,
+      text: `${relationshipName} ${formatSignedDelta(patch.delta)}`,
+      timestamp,
+      visibleToPlayer: true
+    };
+  }
+
+  if (patch.type === "adjust_resource") {
+    const resourceName = pack?.resources.find((resource) => resource.id === patch.resourceId)?.name ?? patch.resourceId;
+    return {
+      id: randomUUID(),
+      kind: "resource",
+      refId: patch.resourceId,
+      text: `${resourceName} ${formatSignedDelta(patch.delta)}`,
+      timestamp,
+      visibleToPlayer: true
+    };
+  }
+
+  if (patch.type === "set_resource") {
+    const resourceName = pack?.resources.find((resource) => resource.id === patch.resourceId)?.name ?? patch.resourceId;
+    return {
+      id: randomUUID(),
+      kind: "resource",
+      refId: patch.resourceId,
+      text: `${resourceName} = ${patch.value}`,
+      timestamp,
+      visibleToPlayer: true
+    };
+  }
+
   return undefined;
 }
 
 function formatLabelledText(label: string | undefined, text: string): string {
   return label ? `${label} - ${text}` : text;
+}
+
+function formatSignedDelta(delta: number): string {
+  return delta >= 0 ? `+${delta}` : String(delta);
 }
