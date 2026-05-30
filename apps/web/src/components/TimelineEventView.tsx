@@ -5,7 +5,7 @@ import type { TimelineEvent } from "@aigame/shared";
 import type { EntityMaps } from "./entityLabels";
 import { cssUrl, normalizeTimelineEvent } from "./packVisuals";
 
-const EVENT_ICONS: Partial<Record<TimelineEvent["kind"], ComponentType<LucideProps>>> = {
+const EVENT_ICONS: Partial<Record<string, ComponentType<LucideProps>>> = {
   dialogue: MessageCircle,
   evidence: Search,
   item: Package,

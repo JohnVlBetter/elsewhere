@@ -30,7 +30,8 @@ type TimelineMetadata = {
   messageType?: string;
 };
 
-type NormalizableTimelineEvent = TimelineEvent & {
+type NormalizableTimelineEvent = Omit<TimelineEvent, "kind" | "metadata"> & {
+  kind: string;
   metadata?: TimelineMetadata;
   speakerId?: string;
   speakerName?: string;
@@ -58,7 +59,7 @@ export type StoryVisuals = {
 
 export type TimelineEventViewModel = {
   id: string;
-  kind: TimelineEvent["kind"];
+  kind: string;
   text: string;
   title?: string;
   avatar?: string;
@@ -158,8 +159,8 @@ export function normalizeTimelineEvent(event: NormalizableTimelineEvent, entityM
 
     return {
       ...base,
-      title: event.metadata?.speakerName ?? event.speakerName ?? labelEntity(entityMaps.characters, characterId),
-      avatar: entityMaps.assets.get(characterId)?.avatar
+      title: event.metadata?.speakerName ?? event.speakerName ?? (characterId ? labelEntity(entityMaps.characters, characterId) : "角色"),
+      avatar: characterId ? entityMaps.assets.get(characterId)?.avatar : undefined
     };
   }
 
