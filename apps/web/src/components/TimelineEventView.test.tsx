@@ -142,4 +142,50 @@ describe("TimelineEventView", () => {
     expect(document.querySelector("[data-event-kind='progress'] [data-testid='timeline-event-icon']")).toBeTruthy();
     expect(document.querySelector("[data-event-kind='location_change'] [data-testid='timeline-event-icon']")).toBeTruthy();
   });
+
+  it("renders environment and narration scene roles with distinct hooks", () => {
+    render(<>
+      <TimelineEventView entityMaps={maps} event={{
+        id: "evt_env",
+        kind: "scene",
+        text: "雨水沿着地砖流动。",
+        timestamp: "2026-05-30T12:00:00.000Z",
+        visibleToPlayer: true,
+        metadata: { messageType: "environment" }
+      }} />
+      <TimelineEventView entityMaps={maps} event={{
+        id: "evt_narration",
+        kind: "scene",
+        text: "时间线在这里发生了偏移。",
+        timestamp: "2026-05-30T12:00:00.000Z",
+        visibleToPlayer: true,
+        metadata: { messageType: "narration" }
+      }} />
+    </>);
+
+    expect(document.querySelector("[data-event-role='environment']")).toBeTruthy();
+    expect(document.querySelector("[data-event-role='narration']")).toBeTruthy();
+  });
+
+  it("renders resource and relationship events with state-change hooks", () => {
+    render(<>
+      <TimelineEventView entityMaps={maps} event={{
+        id: "evt_resource",
+        kind: "resource",
+        text: "勇气 +1",
+        timestamp: "2026-05-30T12:00:00.000Z",
+        visibleToPlayer: true
+      }} />
+      <TimelineEventView entityMaps={maps} event={{
+        id: "evt_relationship",
+        kind: "relationship",
+        text: "林同学好感 +2",
+        timestamp: "2026-05-30T12:00:00.000Z",
+        visibleToPlayer: true
+      }} />
+    </>);
+
+    expect(document.querySelector("[data-event-kind='resource']")).toBeTruthy();
+    expect(document.querySelector("[data-event-kind='relationship']")).toBeTruthy();
+  });
 });

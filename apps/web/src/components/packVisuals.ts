@@ -27,6 +27,7 @@ type TimelineMetadata = {
   itemName?: string;
   locationId?: string;
   locationName?: string;
+  messageType?: string;
 };
 
 type NormalizableTimelineEvent = TimelineEvent & {
@@ -62,6 +63,7 @@ export type TimelineEventViewModel = {
   title?: string;
   avatar?: string;
   refId?: string;
+  role?: string;
 };
 
 const DEFAULT_TONE: StoryTone = "neutral";
@@ -147,7 +149,8 @@ export function normalizeTimelineEvent(event: NormalizableTimelineEvent, entityM
   const base = {
     id: event.id,
     kind: event.kind,
-    text: event.text
+    text: event.text,
+    role: typeof event.metadata?.messageType === "string" ? event.metadata.messageType : undefined
   };
 
   if (event.kind === "dialogue") {
@@ -187,6 +190,22 @@ export function normalizeTimelineEvent(event: NormalizableTimelineEvent, entityM
       ...base,
       title: event.metadata?.locationName ?? (locationId ? labelEntity(entityMaps.locations, locationId) : "地点变化"),
       refId: locationId
+    };
+  }
+
+  if (event.kind === "relationship") {
+    return {
+      ...base,
+      title: "关系变化",
+      refId: "refId" in event ? event.refId : undefined
+    };
+  }
+
+  if (event.kind === "resource") {
+    return {
+      ...base,
+      title: "状态变化",
+      refId: "refId" in event ? event.refId : undefined
     };
   }
 

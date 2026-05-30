@@ -59,6 +59,8 @@ test("renders different event classes for action dialogue and evidence", async (
           characters: [{ id: "butler", name: "管家", assets: { avatar: "generated/avatars/butler.webp" } }],
           items: [],
           facts: [{ id: "butler_kitchen", name: "厨房证词" }],
+          resources: [{ id: "focus", name: "专注" }],
+          relationships: [{ id: "butler", name: "管家维尔关系" }],
           objectives: [{ id: "solve_murder", name: "查明真相", stages: ["investigate"] }]
         },
         intro: "雨声压低了所有人的声音。",
@@ -67,8 +69,8 @@ test("renders different event classes for action dialogue and evidence", async (
           turn: 0,
           inventory: [],
           knownFacts: [],
-          resources: {},
-          relationships: {},
+          resources: { focus: 0 },
+          relationships: { butler: 0 },
           flags: {},
           objectiveStages: { solve_murder: "investigate" }
         }
@@ -86,15 +88,17 @@ test("renders different event classes for action dialogue and evidence", async (
           turn: 1,
           inventory: [],
           knownFacts: ["butler_kitchen"],
-          resources: {},
-          relationships: {},
+          resources: { focus: 1 },
+          relationships: { butler: 1 },
           flags: {},
           objectiveStages: { solve_murder: "investigate" }
         },
         timelineEvents: [
           { id: "evt_1", kind: "player_action", actorId: "player", text: "询问管家", timestamp: "2026-05-29T12:00:00.000Z", visibleToPlayer: true },
           { id: "evt_2", kind: "dialogue", speakerId: "butler", speakerName: "管家", text: "我一直在厨房。", timestamp: "2026-05-29T12:00:00.000Z", visibleToPlayer: true },
-          { id: "evt_3", kind: "evidence", refId: "butler_kitchen", text: "管家声称自己整晚在厨房。", timestamp: "2026-05-29T12:00:00.000Z", visibleToPlayer: true }
+          { id: "evt_3", kind: "evidence", refId: "butler_kitchen", text: "管家声称自己整晚在厨房。", timestamp: "2026-05-29T12:00:00.000Z", visibleToPlayer: true },
+          { id: "evt_4", kind: "resource", text: "专注 +1", timestamp: "2026-05-29T12:00:00.000Z", visibleToPlayer: true },
+          { id: "evt_5", kind: "relationship", text: "管家维尔关系 +1", timestamp: "2026-05-29T12:00:00.000Z", visibleToPlayer: true }
         ],
         acceptedPatches: [],
         rejectedPatches: [],
@@ -110,4 +114,6 @@ test("renders different event classes for action dialogue and evidence", async (
   await expect(page.locator("[data-event-kind='player_action']")).toBeVisible();
   await expect(page.locator("[data-event-kind='dialogue']")).toBeVisible();
   await expect(page.locator("[data-event-kind='evidence']")).toBeVisible();
+  await expect(page.locator("[data-event-kind='resource']")).toBeVisible();
+  await expect(page.locator("[data-event-kind='relationship']")).toBeVisible();
 });

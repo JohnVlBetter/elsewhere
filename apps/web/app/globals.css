@@ -71,3 +71,67 @@
     background: rgba(47, 80, 104, 0.22);
   }
 }
+
+@layer components {
+  .timeline {
+    font-size: 15px;
+  }
+
+  .timeline-event--scene {
+    max-width: 760px;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+  }
+
+  .timeline-event--environment p {
+    color: var(--muted);
+    font-size: 0.96rem;
+    line-height: 1.85;
+  }
+
+  .timeline-event--narration p {
+    color: var(--ink);
+    font-size: 1.04rem;
+    line-height: 1.95;
+  }
+
+  .timeline-event--dialogue {
+    font-size: 0.98rem;
+  }
+
+  .timeline-event--dialogue strong,
+  .timeline-event--evidence strong,
+  .timeline-event--item strong,
+  .timeline-event--progress strong,
+  .timeline-event--relationship strong,
+  .timeline-event--resource strong,
+  .timeline-event--location_change strong,
+  .timeline-event--notice strong {
+    font-size: 0.88rem;
+  }
+
+  .timeline-event--player_action {
+    font-size: 0.93rem;
+  }
+
+  .timeline-event--evidence,
+  .timeline-event--item {
+    border-color: rgba(138, 105, 58, 0.32);
+  }
+
+  .timeline-event--relationship {
+    border-color: rgba(85, 122, 81, 0.28);
+    background: rgba(85, 122, 81, 0.06);
+  }
+
+  .timeline-event--resource {
+    border-color: rgba(95, 141, 211, 0.28);
+    background: rgba(95, 141, 211, 0.07);
+  }
+
+  .timeline-event--notice {
+    border-color: rgba(169, 75, 67, 0.24);
+    background: rgba(169, 75, 67, 0.07);
+  }
+}

@@ -1,6 +1,6 @@
 import type { ComponentType } from "react";
 import type { LucideProps } from "lucide-react";
-import { CircleAlert, MapPin, MessageCircle, Package, Search, Target } from "lucide-react";
+import { CircleAlert, Gem, Handshake, MapPin, MessageCircle, Package, Search, Target } from "lucide-react";
 import type { TimelineEvent } from "@aigame/shared";
 import type { EntityMaps } from "./entityLabels";
 import { cssUrl, normalizeTimelineEvent } from "./packVisuals";
@@ -11,6 +11,8 @@ const EVENT_ICONS: Partial<Record<TimelineEvent["kind"], ComponentType<LucidePro
   item: Package,
   progress: Target,
   location_change: MapPin,
+  relationship: Handshake,
+  resource: Gem,
   notice: CircleAlert
 };
 
@@ -20,8 +22,9 @@ export function TimelineEventView({ event, entityMaps }: { event: TimelineEvent;
   const Icon = EVENT_ICONS[view.kind];
 
   if (view.kind === "scene") {
+    const role = view.role ?? "narration";
     return (
-      <article className="timeline-event timeline-event--scene max-w-3xl rounded-lg px-1 py-2 text-[1.04rem] leading-8 text-[var(--ink)]" data-event-kind={view.kind}>
+      <article className={`timeline-event timeline-event--scene timeline-event--${role} max-w-3xl px-1 py-2 text-[1.04rem] leading-8 text-[var(--ink)]`} data-event-kind={view.kind} data-event-role={role}>
         <p className="m-0 [overflow-wrap:anywhere]">{view.text}</p>
       </article>
     );
