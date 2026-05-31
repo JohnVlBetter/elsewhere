@@ -47,6 +47,11 @@ describe("POST /api/turn", () => {
 
 function mockRuntimeTurnWithDebugEvent() {
   vi.doMock("@aigame/runtime", () => ({
+    RuleBackedActionResolverProvider: class RuleBackedActionResolverProvider {
+      async generateStructured<T>(): Promise<T> {
+        return { actions: [{ rawText: "look", action: { type: "look", rawText: "look" } }] } as T;
+      }
+    },
     runTurn: vi.fn(async (input: { state: { turn: number }; inputText: string }) => ({
       action: { type: "look", rawText: input.inputText },
       outputText: "Visible turn result.",

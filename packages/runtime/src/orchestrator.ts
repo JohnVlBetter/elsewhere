@@ -4,7 +4,7 @@ import { PatchSchema } from "@aigame/shared";
 import type { GameAction, GamePatch, SessionState, TimelineEvent, TurnMessage, WorldPack } from "@aigame/shared";
 import { applyAcceptedPatch, deriveTriggerPatches, evaluateCondition, judgeEnding, validatePatch } from "@aigame/rules";
 import { parseAction } from "./actionParser";
-import type { ActionLexicon } from "./actionParser";
+import { buildActionLexicon, resolveActionSegmentsWithModel } from "./actionResolver";
 import { buildTimelineEvents } from "./timeline";
 
 export interface TurnResult {
@@ -25,12 +25,16 @@ export async function runTurn(input: {
   inputText: string;
   model?: ModelProvider;
   modelName?: string;
+  resolvedAction?: GameAction;
+  actionResolverModel?: ModelProvider;
+  actionResolverModelName?: string;
   signal?: AbortSignal;
 }): Promise<TurnResult> {
   const model = input.model ?? new FakeModelProvider();
   const modelName = input.modelName ?? "fake";
+  const actionResolverModelName = input.actionResolverModelName ?? "fake-action-resolver";
   const timestamp = new Date().toISOString();
-  const action = resolveStatefulAction(parseAction(input.inputText, buildParserLexicon(input.pack, input.state)), input.pack, input.state);
+  const action = resolveStatefulAction(await resolveTurnAction(input, actionResolverModelName), input.pack, input.state);
   const precheck = precheckAction(action, input.pack, input.state);
   if (!precheck.ok) {
     const messages: TurnMessage[] = [{ type: "system", text: formatBlockedAction(precheck.reason) }];
@@ -46,6 +50,7 @@ export async function runTurn(input: {
         action,
         contextIds: [`location:${input.state.currentLocationId}`],
         agentRole: "none",
+        actionResolverModelName: input.actionResolverModel ? actionResolverModelName : undefined,
         precheck
       }
     };
@@ -99,6 +104,7 @@ export async function runTurn(input: {
         contextIds: agentRequest.contextIds,
         agentRole: agentRequest.agentRole,
         modelName,
+        actionResolverModelName: input.actionResolverModel ? actionResolverModelName : undefined,
         agentRawOutput: response,
         precheck,
         privateNotes: response.privateNotes,
@@ -122,12 +128,39 @@ export async function runTurn(input: {
       contextIds: agentRequest.contextIds,
       agentRole: agentRequest.agentRole,
       modelName,
+      actionResolverModelName: input.actionResolverModel ? actionResolverModelName : undefined,
       agentRawOutput: response,
       precheck,
       privateNotes: response.privateNotes,
       audit
     }
   };
+}
+
+async function resolveTurnAction(input: {
+  pack: WorldPack;
+  state: SessionState;
+  inputText: string;
+  resolvedAction?: GameAction;
+  actionResolverModel?: ModelProvider;
+  signal?: AbortSignal;
+}, actionResolverModelName: string): Promise<GameAction> {
+  if (input.resolvedAction) return input.resolvedAction;
+
+  if (input.actionResolverModel) {
+    const segments = await resolveActionSegmentsWithModel({
+      pack: input.pack,
+      state: input.state,
+      inputText: input.inputText,
+      model: input.actionResolverModel,
+      modelName: actionResolverModelName,
+      signal: input.signal
+    });
+
+    return segments[0]?.action ?? { type: "unknown", rawText: input.inputText };
+  }
+
+  return parseAction(input.inputText, buildActionLexicon(input.pack, input.state));
 }
 
 interface NormalizedAgentResponse {
@@ -163,33 +196,6 @@ function normalizeProposedPatches(value: unknown): GamePatch[] {
     const parsed = PatchSchema.safeParse(candidate);
     return parsed.success ? [parsed.data] : [];
   });
-}
-
-function buildParserLexicon(pack: WorldPack, state: SessionState): ActionLexicon {
-  const location = pack.locations.find((candidate) => candidate.id === state.currentLocationId);
-  const visibleObjectIds = location?.visibleObjects ?? [];
-
-  return {
-    profile: pack.profile,
-    locations: pack.locations,
-    characters: pack.characters,
-    items: pack.items,
-    facts: pack.facts,
-    lastInterlocutorId: state.lastInterlocutorId,
-    visibleCharacterIds: location?.visibleCharacters ?? [],
-    visibleObjectIds,
-    aliases: buildVisibleAliases(pack, state, visibleObjectIds)
-  };
-}
-
-function buildVisibleAliases(pack: WorldPack, state: SessionState, visibleObjectIds: string[]): Array<{ id: string; names: string[] }> {
-  const visibleIds = new Set([...visibleObjectIds, ...state.inventory]);
-  return [...pack.items, ...pack.facts]
-    .filter((entity) => visibleIds.has(entity.id))
-    .map((entity) => ({
-      id: entity.id,
-      names: [entity.id, entity.name, ...(entity.aliases ?? [])]
-    }));
 }
 
 function resolveStatefulAction(action: GameAction, pack: WorldPack, state: SessionState): GameAction {

@@ -198,6 +198,47 @@ describe("runTurn", () => {
     expect(result.trace.agentRole).toBe("character");
   });
 
+  it("uses a fast action resolver model before the narration model", async () => {
+    const resolverRequests: Array<Parameters<ModelProvider["generateStructured"]>[0]> = [];
+    const narrationRequests: Array<Parameters<ModelProvider["generateStructured"]>[0]> = [];
+    const actionResolverModel: ModelProvider = {
+      async generateStructured<T>(request: Parameters<ModelProvider["generateStructured"]>[0]): Promise<T> {
+        resolverRequests.push(request);
+        return {
+          actions: [{ rawText: "查看门厅内", action: { type: "look" } }]
+        } as T;
+      }
+    };
+    const narrationModel: ModelProvider = {
+      async generateStructured<T>(request: Parameters<ModelProvider["generateStructured"]>[0]): Promise<T> {
+        narrationRequests.push(request);
+        return {
+          narration: "The foyer is quiet.",
+          spokenBy: [],
+          proposedPatches: [],
+          privateNotes: "narration"
+        } as T;
+      }
+    };
+
+    const result = await runTurn({
+      pack,
+      state: initialState,
+      inputText: "查看门厅内",
+      model: narrationModel,
+      modelName: "deepseek-v4-pro",
+      actionResolverModel,
+      actionResolverModelName: "deepseek-v4-flash"
+    });
+
+    expect(result.action).toEqual({ type: "look", rawText: "查看门厅内" });
+    expect(resolverRequests).toHaveLength(1);
+    expect(resolverRequests[0]?.model).toBe("deepseek-v4-flash");
+    expect(narrationRequests).toHaveLength(1);
+    expect(narrationRequests[0]?.model).toBe("deepseek-v4-pro");
+    expect(result.trace.actionResolverModelName).toBe("deepseek-v4-flash");
+  });
+
   it("reveals a topic fact when a valid talk topic declares revealsFactId", async () => {
     const result = await runTurn({
       pack,

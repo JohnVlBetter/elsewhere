@@ -1,6 +1,7 @@
 import type { ModelProvider } from "@aigame/agents";
-import type { SessionState, WorldPack } from "@aigame/shared";
+import type { GameAction, SessionState, WorldPack } from "@aigame/shared";
 import { planActionSegments } from "./actionPlanner";
+import { resolveActionSegmentsWithModel } from "./actionResolver";
 import { runTurn } from "./orchestrator";
 import type { TurnResult } from "./orchestrator";
 
@@ -21,15 +22,18 @@ export async function runMultiActionTurn(input: {
   inputText: string;
   model?: ModelProvider;
   modelName?: string;
+  actionResolverModel?: ModelProvider;
+  actionResolverModelName?: string;
   signal?: AbortSignal;
   onActionStart?: (event: MultiActionTurnEvent) => void | Promise<void>;
   onActionResult?: (event: MultiActionTurnEvent & { result: TurnResult }) => void | Promise<void>;
 }): Promise<MultiActionTurnResult> {
-  const segments = planActionSegments(input.inputText);
+  const segments = await resolveSegments(input);
   const actionResults: TurnResult[] = [];
   let state = input.state;
 
-  for (const [actionIndex, inputText] of segments.entries()) {
+  for (const [actionIndex, segment] of segments.entries()) {
+    const inputText = segment.rawText;
     await input.onActionStart?.({ actionIndex, inputText });
     const result = await runTurn({
       pack: input.pack,
@@ -37,6 +41,7 @@ export async function runMultiActionTurn(input: {
       inputText,
       model: input.model,
       modelName: input.modelName,
+      resolvedAction: segment.action,
       signal: input.signal
     });
 
@@ -58,6 +63,28 @@ export async function runMultiActionTurn(input: {
   }
 
   return { actionResults, state };
+}
+
+async function resolveSegments(input: {
+  pack: WorldPack;
+  state: SessionState;
+  inputText: string;
+  actionResolverModel?: ModelProvider;
+  actionResolverModelName?: string;
+  signal?: AbortSignal;
+}): Promise<Array<{ rawText: string; action?: GameAction }>> {
+  if (!input.actionResolverModel) {
+    return planActionSegments(input.inputText).map((rawText) => ({ rawText }));
+  }
+
+  return resolveActionSegmentsWithModel({
+    pack: input.pack,
+    state: input.state,
+    inputText: input.inputText,
+    model: input.actionResolverModel,
+    modelName: input.actionResolverModelName ?? "fake-action-resolver",
+    signal: input.signal
+  });
 }
 
 function isFailedActionResult(result: TurnResult): boolean {

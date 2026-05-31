@@ -75,6 +75,8 @@ async function runStoredTurnUnlocked(
     inputText: body.inputText,
     model: runtimeModel.model,
     modelName: runtimeModel.modelName,
+    actionResolverModel: runtimeModel.actionResolverModel,
+    actionResolverModelName: runtimeModel.actionResolverModelName,
     signal
   });
   throwIfAborted(signal);
@@ -108,6 +110,8 @@ async function runStoredTurnStreamUnlocked(
     inputText: body.inputText,
     model: runtimeModel.model,
     modelName: runtimeModel.modelName,
+    actionResolverModel: runtimeModel.actionResolverModel,
+    actionResolverModelName: runtimeModel.actionResolverModelName,
     signal,
     onActionStart: ({ actionIndex, inputText }) => {
       onEvent({ type: "action:start", actionIndex, inputText });

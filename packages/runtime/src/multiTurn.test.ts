@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { FakeModelProvider } from "@aigame/agents";
+import type { ModelProvider } from "@aigame/agents";
 import type { SessionState, WorldPack } from "@aigame/shared";
 import { runMultiActionTurn } from "./multiTurn";
 
@@ -90,5 +91,39 @@ describe("runMultiActionTurn", () => {
       "start:走向书房",
       "result:走向书房"
     ]);
+  });
+
+  it("uses the action resolver model to split and execute natural multi-action input", async () => {
+    const resolverRequests: Array<Parameters<ModelProvider["generateStructured"]>[0]> = [];
+    const actionResolverModel: ModelProvider = {
+      async generateStructured<T>(request: Parameters<ModelProvider["generateStructured"]>[0]): Promise<T> {
+        resolverRequests.push(request);
+        return {
+          actions: [
+            { rawText: "查看门厅内", action: { type: "look" } },
+            { rawText: "走向书房", action: { type: "move", locationId: "study" } }
+          ]
+        } as T;
+      }
+    };
+    const events: string[] = [];
+
+    const result = await runMultiActionTurn({
+      pack,
+      state: initialState,
+      inputText: "查看门厅内并走向书房",
+      model: new FakeModelProvider({ narration: "继续。", spokenBy: [], proposedPatches: [], privateNotes: "test" }),
+      actionResolverModel,
+      actionResolverModelName: "deepseek-v4-flash",
+      onActionStart: (event) => {
+        events.push(`start:${event.inputText}`);
+      }
+    });
+
+    expect(resolverRequests).toHaveLength(1);
+    expect(resolverRequests[0]?.model).toBe("deepseek-v4-flash");
+    expect(result.actionResults.map((turn) => turn.action.type)).toEqual(["look", "move"]);
+    expect(result.state.currentLocationId).toBe("study");
+    expect(events).toEqual(["start:查看门厅内", "start:走向书房"]);
   });
 });
